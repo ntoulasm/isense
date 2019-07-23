@@ -13,8 +13,18 @@ function activate(context) {
 	let disposable = vscode.commands.registerCommand('extension.isense', function () {
 		vscode.window.showInformationMessage('Extension isense says Hello World!');
 	});
-
 	context.subscriptions.push(disposable);
+
+	let hover = vscode.languages.registerHoverProvider('javascript', {
+		provideHover(document, position, token) {
+		  return {
+			contents: ['aaaaa']
+		  };
+		}
+	});
+	context.subscriptions.push(hover);
+
+
 }
 exports.activate = activate;
 
