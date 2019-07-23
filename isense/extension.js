@@ -24,8 +24,23 @@ function activate(context) {
 	});
 	context.subscriptions.push(hover);
 
+	let code_completion = vscode.languages.registerCompletionItemProvider('javascript', {
+		provideCompletionItems(document, position, token) {
+			return [{
+				detail: "sample",
+				kind: vscode.CompletionItemKind.Class,
+				filterText: "h",
+				insertText: "blablabla",
+				label: "hahahah"
+			}];
+		}
+	}, ['.']);
+	context.subscriptions.push(code_completion);
+	
+
 
 }
+
 exports.activate = activate;
 
 function deactivate() {
