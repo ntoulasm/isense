@@ -37,7 +37,27 @@ function activate(context) {
 	}, ['.']);
 	context.subscriptions.push(code_completion);
 	
-
+	let signature_helper = vscode.languages.registerSignatureHelpProvider('javascript', {
+		provideSignatureHelp(document, position, token) {
+			return {
+				activeParameter: 0,
+				activeSignature: 0,
+				signatures: [
+					{
+						documentation: "aaaa",
+						label: "function1",
+						parameters: [new vscode.ParameterInformation("a", "aaa"), {label: "b", documentation: "bbb"}, {label: "c", documentation: "ccc"}]
+					},
+					{
+						documentation: "bbbbb",
+						label: "function2",
+						parameters: [new vscode.ParameterInformation("a", "aaa")]
+					}
+				]
+			}
+		}
+	}, ["(", ","]);
+	context.subscriptions.push(signature_helper);
 
 }
 
