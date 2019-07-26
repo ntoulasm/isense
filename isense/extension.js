@@ -5,6 +5,8 @@ const vscode = require('vscode');
  */
 function activate(context) {
 
+	const jsScheme = { language: 'javascript', scheme: 'file' };
+
 	console.log('isense activated');
 
 	// The command has been defined in the package.json file
@@ -15,7 +17,7 @@ function activate(context) {
 	});
 	context.subscriptions.push(disposable);
 
-	let hover = vscode.languages.registerHoverProvider('javascript', {
+	let hover = vscode.languages.registerHoverProvider(jsScheme, {
 		provideHover(document, position, token) {
 		  return {
 			contents: ['aaaaa']
@@ -24,8 +26,9 @@ function activate(context) {
 	});
 	context.subscriptions.push(hover);
 
-	let code_completion = vscode.languages.registerCompletionItemProvider('javascript', {
+	let code_completion = vscode.languages.registerCompletionItemProvider(jsScheme, {
 		provideCompletionItems(document, position, token) {
+			console.log(document.getText());
 			return [{
 				detail: "sample",
 				kind: vscode.CompletionItemKind.Class,
@@ -37,7 +40,7 @@ function activate(context) {
 	}, ['.']);
 	context.subscriptions.push(code_completion);
 	
-	let signature_helper = vscode.languages.registerSignatureHelpProvider('javascript', {
+	let signature_helper = vscode.languages.registerSignatureHelpProvider(jsScheme, {
 		provideSignatureHelp(document, position, token) {
 			return {
 				activeParameter: 0,

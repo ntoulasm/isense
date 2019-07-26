@@ -30,6 +30,7 @@
 		"@types/node": "^10.12.21",
 		"@types/vscode": "^1.36.0",
 		"eslint": "^5.13.0",
+		"fs": "0.0.1-security",
 		"glob": "^7.1.4",
 		"mocha": "^6.1.4",
 		"typescript": "^3.3.1",
