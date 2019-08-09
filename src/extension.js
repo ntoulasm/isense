@@ -1,20 +1,43 @@
 const vscode = require('vscode');
+const ts = require('typescript');
+const utility = require('./utility/utility.js');
+
+const asts = {};
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
 
-	const jsScheme = { language: 'javascript', scheme: 'file' };
-
 	console.log('isense activated');
 
-	let disposable = vscode.commands.registerCommand('extension.isense', function () {
+	vscode.workspace.onDidChangeTextDocument(function(params) {
+
+		if(!utility.isJavaScriptDocument(params.document)) { return; }
+		
+		const document = params.document;
+		const fileName = document.fileName;
+		const newText = document.getText();
+
+		if(asts[fileName] === undefined) {
+			asts[fileName] = ts.createSourceFile(fileName, newText);
+		} else {
+			for(const change of params.contentChanges) {
+				const span = ts.createTextSpan(change.rangeOffset, change.rangeLength);
+				const changeRange = ts.createTextChangeRange(span, change.text.length);
+				asts[fileName] = ts.updateSourceFile(asts[fileName], newText, changeRange);
+			}
+			console.log(asts[fileName]);
+		}
+
+	});
+
+	const disposable = vscode.commands.registerCommand('extension.isense', function () {
 		vscode.window.showInformationMessage('Extension isense says Hello World!');
 	});
 	context.subscriptions.push(disposable);
 
-	let hover = vscode.languages.registerHoverProvider(jsScheme, {
+	const hover = vscode.languages.registerHoverProvider(utility.javaScriptDocumentScheme, {
 		provideHover(document, position, token) {
 		  return {
 			contents: ['aaaaa']
@@ -23,9 +46,8 @@ function activate(context) {
 	});
 	context.subscriptions.push(hover);
 
-	let code_completion = vscode.languages.registerCompletionItemProvider(jsScheme, {
+	const code_completion = vscode.languages.registerCompletionItemProvider(utility.javaScriptDocumentScheme, {
 		provideCompletionItems(document, position, token) {
-			console.log(document.getText());
 			return [{
 				detail: "sample",
 				kind: vscode.CompletionItemKind.Class,
@@ -36,8 +58,8 @@ function activate(context) {
 		}
 	}, ['.']);
 	context.subscriptions.push(code_completion);
-	
-	let signature_helper = vscode.languages.registerSignatureHelpProvider(jsScheme, {
+
+	const signature_helper = vscode.languages.registerSignatureHelpProvider(utility.javaScriptDocumentScheme, {
 		provideSignatureHelp(document, position, token) {
 			return {
 				activeParameter: 0,
@@ -58,6 +80,21 @@ function activate(context) {
 		}
 	}, ["(", ","]);
 	context.subscriptions.push(signature_helper);
+
+	const symbolProvider = vscode.languages.registerDocumentSymbolProvider(utility.javaScriptDocumentScheme, {
+		provideDocumentSymbols(document, token) {
+			return [
+				new vscode.DocumentSymbol(
+					"symbol_name", 
+					"TODO: add details", 
+					vscode.SymbolKind.Boolean, 
+					new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)),
+					new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0))
+				)
+			];
+		}
+	});
+	context.subscriptions.push(symbolProvider);
 
 }
 
