@@ -1,0 +1,18 @@
+{
+	"name": "isense-server",
+	"description": "isense language server in node.",
+	"version": "1.0.0",
+	"author": "ntoulasm",
+	"license": "MIT",
+	"engines": {
+		"node": "*"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ntoulasm/isense"
+	},
+	"dependencies": {
+		"vscode-languageserver": "^5.2.1"
+	},
+	"scripts": {}
+}

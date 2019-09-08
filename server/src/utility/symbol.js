@@ -1,5 +1,5 @@
 
-const vscode = require("vscode");
+const vscodeLanguageServer = require("vscode-languageserver");
 
 const Symbol = {};
 
@@ -32,22 +32,22 @@ Symbol.createSymbol = function(name, symbolType, start, end, isConst = false) {
 Symbol.symbolTypeToVSCodeSymbolKind = function(type) {
     switch(type) {
         case Symbol.SymbolType.Variable: {
-            return vscode.SymbolKind.Variable;
+            return vscodeLanguageServer.SymbolKind.Variable;
         }
         case Symbol.SymbolType.Function: {
-            return vscode.SymbolKind.Function;
+            return vscodeLanguageServer.SymbolKind.Function;
         }
         case Symbol.SymbolType.Formal: {
-            return vscode.SymbolKind.Variable;
+            return vscodeLanguageServer.SymbolKind.Variable;
         }
         case Symbol.SymbolType.Class: {
-            return vscode.SymbolKind.Class;
+            return vscodeLanguageServer.SymbolKind.Class;
         }
         case Symbol.SymbolType.Constructor: {
-            return vscode.SymbolKind.Constructor;
+            return vscodeLanguageServer.SymbolKind.Constructor;
         }
         case Symbol.SymbolType.Method: {
-            return vscode.SymbolKind.Method;
+            return vscodeLanguageServer.SymbolKind.Method;
         }
         default: {
             console.assert(false);

@@ -1,43 +1,63 @@
 {
 	"name": "isense",
-	"displayName": "isense",
+	"description": "Intellisense for JavaScript",
 	"publisher": "ntoulasm",
-	"description": "",
-	"version": "0.0.1",
-	"engines": {
-		"vscode": "^1.36.0"
+	"author": "ntoulasm",
+	"license": "MIT",
+	"version": "1.0.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ntoulasm/isense"
 	},
 	"categories": [
 		"Programming Languages",
 		"Linters",
 		"Other"
 	],
+	"keywords": [
+		"multi-root ready"
+	],
+	"engines": {
+		"vscode": "^1.33.0"
+	},
 	"activationEvents": [
 		"onLanguage:javascript"
 	],
-	"main": "./src/extension.js",
+	"main": "./client/src/extension.js",
 	"contributes": {
-		"commands": [
-			{
-				"command": "extension.isense",
-				"title": "isense"
+		"configuration": {
+			"type": "object",
+			"title": "Example configuration",
+			"properties": {
+				"languageServerExample.maxNumberOfProblems": {
+					"scope": "resource",
+					"type": "number",
+					"default": 100,
+					"description": "Controls the maximum number of problems produced by the server."
+				},
+				"languageServerExample.trace.server": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"default": "off",
+					"description": "Traces the communication between VS Code and the language server."
+				}
 			}
-		]
+		}
 	},
 	"scripts": {
-		"test": "node ./test/runTest.js"
+		"vscode:prepublish": "cd client && npm run update-vscode && cd .. ",
+		"postinstall": "cd client && npm install && cd ../server && npm install && cd .."
 	},
 	"devDependencies": {
-		"@types/glob": "^7.1.1",
-		"@types/mocha": "^5.2.6",
-		"@types/node": "^10.12.21",
-		"@types/vscode": "^1.36.0",
-		"eslint": "^5.13.0",
-		"fs": "0.0.1-security",
-		"glob": "^7.1.4",
-		"mocha": "^6.1.4",
-		"typescript": "^3.5.3",
-		"vscode-test": "^1.0.0-next.0"
-	},
-	"dependencies": {}
+		"@types/mocha": "^5.2.0",
+		"@types/node": "^8.0.0",
+		"eslint": "^6.3.0",
+		"tslint": "^5.16.0",
+		"typescript": "^3.5.1"
+	}
 }
