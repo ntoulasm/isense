@@ -208,8 +208,12 @@ connection.onDidOpenTextDocument((params) => {
 	const fileName = document.uri;
 	const text = document.text;
 	const ast = asts[fileName] = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true);
+	clearDiagnostics(ast);
 	symbolTables[fileName] = SymbolTable.createSymbolTable();
-	if(Utility.hasParseError(ast)) { return; }
+	if(Utility.hasParseError(ast)) { 
+		provideDiagnostics(ast);
+		return; 
+	}
 	symbolTables[fileName] = Analyzer.analyze(ast);
 });
 
