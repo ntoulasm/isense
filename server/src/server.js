@@ -13,6 +13,7 @@ let hasDiagnosticRelatedInformationCapability = false;
 const asts = {};
 const symbolTables = {};
 
+
 connection.onInitialize((params) => {
 
 	const capabilities = params.capabilities;
@@ -85,58 +86,46 @@ function getDocumentSettings(resource) {
 	return result;
 }
 
-async function provideDiagnostics() {
-	
+/**
+ * @param {ts.SourceFile} ast 
+ */
+async function clearDiagnostics(ast) {
+	connection.sendDiagnostics({
+		uri: ast.fileName,
+		diagnostics: []
+	});
 }
 
-// async function validateTextDocument(textDocument) {
-// 	// In this simple example we get the settings for every validate run.
-// 	let settings = await getDocumentSettings(textDocument.uri);
+/**
+ * @param {ts.SourceFile} ast
+ */
+async function provideDiagnostics(ast) {
 
-// 	// The validator creates diagnostics for all uppercase words length 2 and more
-// 	let text = textDocument.getText();
-// 	let pattern = /\b[A-Z]{2,}\b/g;
-// 	let m;
+	const diagnostics = [];
 
-// 	let problems = 0;
-// 	let diagnostics = [];
-// 	while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
-// 		problems++;
-// 		let diagnostic = {
-// 			severity: vscodeLanguageServer.DiagnosticSeverity.Warning,
-// 			range: {
-// 				start: textDocument.positionAt(m.index),
-// 				end: textDocument.positionAt(m.index + m[0].length)
-// 			},
-// 			message: `${m[0]} is all uppercase.`,
-// 			source: 'ex'
-// 		};
-// 		if (hasDiagnosticRelatedInformationCapability) {
-// 			diagnostic.relatedInformation = [
-// 				{
-// 					location: {
-// 						uri: textDocument.uri,
-// 						range: Object.assign({}, diagnostic.range)
-// 					},
-// 					message: 'Spelling matters'
-// 				},
-// 				{
-// 					location: {
-// 						uri: textDocument.uri,
-// 						range: Object.assign({}, diagnostic.range)
-// 					},
-// 					message: 'Particularly for names'
-// 				}
-// 			];
-// 		}
-// 		diagnostics.push(diagnostic);
-// 	}
+	ast.parseDiagnostics.forEach(error => {
+		const start = ast.getLineAndCharacterOfPosition(error.start);
+		const end = ast.getLineAndCharacterOfPosition(error.start + error.length);
+		const range = vscodeLanguageServer.Range.create(
+			vscodeLanguageServer.Position.create(start.line, start.character),
+			vscodeLanguageServer.Position.create(end.line, end.character)
+		);
+		const diagnostic = vscodeLanguageServer.Diagnostic.create(
+			range, 
+			error.messageText, 
+			Utility.typescriptDiagnosticCategoryToVSCodeDiagnosticSeverity(error.category)
+		);
+		diagnostics.push(diagnostic);
+	});
 
-// 	// Send the computed diagnostics to VSCode.
-// 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
-// }
+	connection.sendDiagnostics({
+		uri: ast.fileName,
+		diagnostics 
+	});
 
-connection.onDidChangeWatchedFiles(_change => {
+}
+
+connection.onDidChangeWatchedFiles(change => {
 	connection.console.log('We received an file change event');
 });
 
@@ -231,6 +220,8 @@ connection.onDidChangeTextDocument((params) => {
 	let ast = asts[fileName];
 	let text = ast.getFullText();
 
+	clearDiagnostics(ast);
+
 	for(const change of params.contentChanges) {
 		const changeOffset = ast.getPositionOfLineAndCharacter(change.range.start.line, change.range.start.character);
 		const span = ts.createTextSpan(changeOffset, change.rangeLength);
@@ -240,7 +231,10 @@ connection.onDidChangeTextDocument((params) => {
 		text = newText;
 	}
 
-	if(Utility.hasParseError(ast)) { return; }
+	if(Utility.hasParseError(ast)) {
+		provideDiagnostics(ast);
+		return; 
+	}
 
 	try{
 		symbolTables[fileName] = Analyzer.analyze(ast);

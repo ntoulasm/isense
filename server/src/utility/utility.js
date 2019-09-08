@@ -1,3 +1,4 @@
+const vscodeLanguageServer = require('vscode-languageserver');
 const ts = require('typescript');
 
 const Utility = {};
@@ -141,6 +142,26 @@ Utility.computeActiveParameter = function(code, offset) {
 
     return activeParameter;
 
+};
+
+Utility.typescriptDiagnosticCategoryToVSCodeDiagnosticSeverity = function(diagnosticCategory) {
+    switch(diagnosticCategory) {
+        case ts.DiagnosticCategory.Error: {
+            return vscodeLanguageServer.DiagnosticSeverity.Error;
+        }
+        case ts.DiagnosticCategory.Warning: {
+            return vscodeLanguageServer.DiagnosticSeverity.Warning;
+        }
+        case ts.DiagnosticCategory.Suggestion: {
+            return vscodeLanguageServer.DiagnosticSeverity.Hint;
+        }
+        case ts.DiagnosticCategory.Message: {
+            return vscodeLanguageServer.DiagnosticSeverity.Information;
+        }
+        default: {
+            console.assert(false);
+        }
+    }
 };
 
 module.exports = Utility;
