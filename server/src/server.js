@@ -85,6 +85,10 @@ function getDocumentSettings(resource) {
 	return result;
 }
 
+async function provideDiagnostics() {
+	
+}
+
 // async function validateTextDocument(textDocument) {
 // 	// In this simple example we get the settings for every validate run.
 // 	let settings = await getDocumentSettings(textDocument.uri);

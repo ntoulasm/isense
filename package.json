@@ -15,7 +15,9 @@
 		"Other"
 	],
 	"keywords": [
-		"multi-root ready"
+		"isense",
+		"Intellisense",
+		"JavaScript"
 	],
 	"engines": {
 		"vscode": "^1.33.0"
@@ -56,8 +58,7 @@
 	"devDependencies": {
 		"@types/mocha": "^5.2.0",
 		"@types/node": "^8.0.0",
-		"eslint": "^6.3.0",
-		"tslint": "^5.16.0",
+		"eslint": "^5.13.0",
 		"typescript": "^3.5.1"
 	}
 }
