@@ -167,7 +167,41 @@ connection.onDocumentSymbol((info) => {
 });
 
 connection.onSignatureHelp((info) => {
-	return [];
+
+	const document = info.textDocument;
+	const fileName = document.uri;
+	const ast = asts[fileName];
+	const position = info.position;
+	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
+	const callExpression = Utility.getInnermostNodeAtOffset(ast, offset, ts.SyntaxKind.CallExpression);
+	const text = ast.getFullText();
+
+	console.log("Call: ", callExpression);
+
+	return {
+		activeParameter: Utility.computeActiveParameter(text, offset),
+		activeSignature: 0,
+		signatures: [
+			{
+				documentation: "documentation for signature1",
+				label: "function(a, b, c)",
+				parameters: [
+					vscodeLanguageServer.ParameterInformation.create("a", "documentation of parameter a"), 
+					vscodeLanguageServer.ParameterInformation.create("b", "documentation of parameter b"),
+					vscodeLanguageServer.ParameterInformation.create("c", "documentation of parameter c")
+				]
+			},
+			{
+				documentation: "documentation for signature2",
+				label: "function2",
+				parameters: [{
+					label: "a", 
+					documentation: "documentation of parameter a"
+				}]
+			}
+		]
+	};
+
 });
 
 connection.onCompletion((info) => {
