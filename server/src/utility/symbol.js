@@ -19,13 +19,14 @@ Symbol.SymbolType = {
  * @param {number} end
  * @param {boolean} isConst
  */
-Symbol.createSymbol = function(name, symbolType, start, end, isConst = false) {
+Symbol.createSymbol = function(name, symbolType, start, end, isConst = false, isInitialized = true) {
     return {
         name,
         symbolType,
         start,
         end,
-        isConst
+        isConst,
+        isInitialized
     };
 }
 
@@ -48,6 +49,32 @@ Symbol.symbolTypeToVSCodeSymbolKind = function(type) {
         }
         case Symbol.SymbolType.Method: {
             return vscodeLanguageServer.SymbolKind.Method;
+        }
+        default: {
+            console.assert(false);
+        }
+    }
+};
+
+Symbol.symbolTypeToVSCodeCompletionItemKind = function(type) {
+    switch(type) {
+        case Symbol.SymbolType.Variable: {
+            return vscodeLanguageServer.CompletionItemKind.Variable;
+        }
+        case Symbol.SymbolType.Function: {
+            return vscodeLanguageServer.CompletionItemKind.Function;
+        }
+        case Symbol.SymbolType.Formal: {
+            return vscodeLanguageServer.CompletionItemKind.Variable;
+        }
+        case Symbol.SymbolType.Class: {
+            return vscodeLanguageServer.CompletionItemKind.Class;
+        }
+        case Symbol.SymbolType.Constructor: {
+            return vscodeLanguageServer.CompletionItemKind.Constructor;
+        }
+        case Symbol.SymbolType.Method: {
+            return vscodeLanguageServer.CompletionItemKind.Method;
         }
         default: {
             console.assert(false);

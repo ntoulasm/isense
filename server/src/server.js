@@ -171,7 +171,36 @@ connection.onSignatureHelp((info) => {
 });
 
 connection.onCompletion((info) => {
-	return [];
+	
+	const document = info.textDocument;
+	const fileName = document.uri;
+	const ast = asts[fileName];
+	const position = info.position;
+	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
+	const completionItems = [];
+	const triggerCharacter = info.context.triggerCharacter;
+
+	if(triggerCharacter === '.') {
+		console.log("Get property: ", Utility.getNodeAtOffset(ast, offset, ts.SyntaxKind.PropertyAccessExpression));
+	} else {
+		const currentNode = Utility.getInnermostNodeAtOffset(ast, offset, ts.SyntaxKind.Identifier);
+		console.assert(currentNode);
+		Utility.forEachSymbolReversed(
+			currentNode,
+			function(symbol) {
+				if(symbol.isInitialized || offset > symbol.start) {
+					completionItems.push(
+						vscodeLanguageServer.CompletionItem.create(
+							symbol.name, 
+							Symbol.symbolTypeToVSCodeCompletionItemKind(symbol.symbolType)
+						)
+					);
+				}
+			}
+		);
+	}
+
+	return completionItems;
 });
 
 connection.onCompletionResolve((item) => {
