@@ -144,6 +144,78 @@ Utility.computeActiveParameter = function(code, offset) {
 
 };
 
+/**
+ * @param {ts.Node} node
+ */
+Utility.computeChildren = function(node) {
+    const children = [];
+    ts.forEachChild(node, child => {
+        children.push(child);
+    });
+    return children;
+};
+
+/**
+ * @param {ts.Node} node
+ */
+Utility.computeSiblings = function(node) {
+    const parent = node.parent;
+    if(parent === undefined) { return [node]; }
+    return Utility.computeChildren(parent);
+};
+
+/**
+ * @param {ts.Node} node
+ */
+Utility.findLeftSibling = function(node) {
+    const siblings = Utility.computeSiblings(node);
+    const nodeIndex = siblings.indexOf(node);
+    return nodeIndex === 0 ? undefined : siblings[nodeIndex - 1];
+};
+
+/**
+ * @param {ts.Node} node
+ * @param {function} cb
+ */
+Utility.forEachSymbol = function(node, cb) {
+    function forEachSymbol(node) {
+        if(node.symbols) {
+            for(const [, symbol] of Object.entries(node.symbols.getSymbols())) {
+                cb(symbol);
+            }
+        }
+        if(node.innerSymbols) {
+            for(const [, symbol] of Object.entries(node.innerSymbols.getSymbols())) {
+                cb(symbol);
+            }
+        }
+        ts.forEachChild(node, forEachSymbol);
+    }
+    forEachSymbol(node);
+};
+
+/**
+ * @param {ts.Node} node
+ * @param {function} cb
+ */
+Utility.forEachSymbolReversed = function(node, cb) {
+    if(node.symbols) { 
+        for(const [, symbol] of Object.entries(node.symbols.getSymbols())) {
+            if(cb(symbol)) { return symbol; }
+        }
+    }
+    const parent = node.parent;
+    if(!parent) { return undefined; }
+    const left_sibling = Utility.findLeftSibling(node);
+    if(left_sibling) { return Utility.forEachSymbolReversed(left_sibling, cb); }
+    if(parent.innerSymbols) {
+        for(const [, symbol] of Object.entries(parent.innerSymbols.getSymbols())) {
+            if(cb(symbol)) { return symbol; }
+        }
+    }
+    return Utility.forEachSymbolReversed(parent, cb);
+};
+
 Utility.typescriptDiagnosticCategoryToVSCodeDiagnosticSeverity = function(diagnosticCategory) {
     switch(diagnosticCategory) {
         case ts.DiagnosticCategory.Error: {

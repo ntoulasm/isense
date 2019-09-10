@@ -1,6 +1,5 @@
 const Utility = require('./utility/utility');
 const Symbol = require('./utility/symbol');
-const SymbolTable = require('./utility/symbol_table');
 const Analyzer = require('./analyzer/analyzer');
 
 const vscodeLanguageServer = require('vscode-languageserver');
@@ -11,8 +10,6 @@ let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
 const asts = {};
-const symbolTables = {};
-
 
 connection.onInitialize((params) => {
 
@@ -139,47 +136,32 @@ connection.onDocumentSymbol((info) => {
 
 	const fileName = info.textDocument.uri;
 	const ast = asts[fileName];
-	const symbolTable = symbolTables[fileName];
 	const symbols = [];
 
-	function populateSymbols(symbolTable) {
+	Utility.forEachSymbol(ast, function(symbol) {
 
-		const symbolTableSymbols = symbolTable.getSymbols();
+		const description = "";
+		const startPosition = ast.getLineAndCharacterOfPosition(symbol.start);
+		const endPosition = ast.getLineAndCharacterOfPosition(symbol.end);
+		const range = vscodeLanguageServer.Range.create(
+			vscodeLanguageServer.Position.create(startPosition.line, startPosition.character), 
+			vscodeLanguageServer.Position.create(endPosition.line, endPosition.character)
+		);
+		const selectionRange = vscodeLanguageServer.Range.create(
+			vscodeLanguageServer.Position.create(startPosition.line, startPosition.character), 
+			vscodeLanguageServer.Position.create(endPosition.line, endPosition.character)
+		);
+	
+		symbols.push(vscodeLanguageServer.DocumentSymbol.create(
+			symbol.name,
+			description,
+			Symbol.symbolTypeToVSCodeSymbolKind(symbol.symbolType),
+			range,
+			selectionRange
+		));
 
-		for(const symbolName in symbolTableSymbols) {
+	});
 
-			if(!symbolTableSymbols.hasOwnProperty(symbolName)) { continue; }
-			
-			const symbol = symbolTableSymbols[symbolName];
-			const description = "";
-			const startPosition = ast.getLineAndCharacterOfPosition(symbol.start);
-			const endPosition = ast.getLineAndCharacterOfPosition(symbol.end);
-			const range = vscodeLanguageServer.Range.create(
-				vscodeLanguageServer.Position.create(startPosition.line, startPosition.character), 
-				vscodeLanguageServer.Position.create(endPosition.line, endPosition.character)
-			);
-			const selectionRange = vscodeLanguageServer.Range.create(
-				vscodeLanguageServer.Position.create(startPosition.line, startPosition.character), 
-				vscodeLanguageServer.Position.create(endPosition.line, endPosition.character)
-			);
-		
-			symbols.push(vscodeLanguageServer.DocumentSymbol.create(
-				symbolName,
-				description,
-				Symbol.symbolTypeToVSCodeSymbolKind(symbol.symbolType),
-				range,
-				selectionRange
-			));
-		
-		}
-		
-		for(const innerSymbolTable of symbolTable.getInner()) {
-			populateSymbols(innerSymbolTable);
-		}
-
-	}
-
-	populateSymbols(symbolTable);
 	return symbols;
 
 });
@@ -209,12 +191,11 @@ connection.onDidOpenTextDocument((params) => {
 	const text = document.text;
 	const ast = asts[fileName] = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true);
 	clearDiagnostics(ast);
-	symbolTables[fileName] = SymbolTable.createSymbolTable();
 	if(Utility.hasParseError(ast)) { 
 		provideDiagnostics(ast);
 		return; 
 	}
-	symbolTables[fileName] = Analyzer.analyze(ast);
+	Analyzer.analyze(ast);
 });
 
 connection.onDidChangeTextDocument((params) => {
@@ -241,13 +222,15 @@ connection.onDidChangeTextDocument((params) => {
 	}
 
 	try{
-		symbolTables[fileName] = Analyzer.analyze(ast);
+		Analyzer.analyze(ast);
 	} catch (e) {
 		console.log(e);
 	}
 
 	console.log("---------------");
-	symbolTables[fileName].print();
+	Utility.forEachSymbol(ast, symbol => {
+		console.log(symbol);
+	}); 
 	console.log("---------------");
 
 });
