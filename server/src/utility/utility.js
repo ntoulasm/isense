@@ -206,8 +206,8 @@ Utility.forEachSymbolReversed = function(node, cb) {
     }
     const parent = node.parent;
     if(!parent) { return undefined; }
-    const left_sibling = Utility.findLeftSibling(node);
-    if(left_sibling) { return Utility.forEachSymbolReversed(left_sibling, cb); }
+    const leftSibling = Utility.findLeftSibling(node);
+    if(leftSibling) { return Utility.forEachSymbolReversed(leftSibling, cb); }
     if(parent.innerSymbols) {
         for(const [, symbol] of Object.entries(parent.innerSymbols.getSymbols())) {
             if(cb(symbol)) { return symbol; }
