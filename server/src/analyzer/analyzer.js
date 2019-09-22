@@ -16,24 +16,63 @@ Analyzer.analyze = function(ast) {
 
     ast.symbols = SymbolTable.createSymbolTable();
     ast.innerSymbols = SymbolTable.createSymbolTable();
-    
-    /**
-     * @param {ts.Node} node 
-     * @param {string} name 
-     */
-    function lookUp(node, name) {
-        return Utility.forEachSymbolReversed(node, function(symbol) {
-            return symbol.name === name;
-        });
+
+    function computeTypeCarrier(node, start) {
+        if(node === undefined) {
+            return {type: "undefined", start};
+        }
+        switch(node.kind) {
+            case ts.SyntaxKind.NumericLiteral: {
+                return {type: "number", value: node.text, start};
+            }
+            case ts.SyntaxKind.StringLiteral: {
+                return {type: "string", value: node.text, start};
+            }
+            case ts.SyntaxKind.TrueKeyword: {
+                return {type: "boolean", value: true, start};
+            }
+            case ts.SyntaxKind.FalseKeyword: {
+                return {type: "boolean", value: false, start};
+            }
+            case ts.SyntaxKind.ArrayLiteralExpression: {
+                return {type: "array", start};
+            }
+            case ts.SyntaxKind.ObjectLiteralExpression: {
+                return {type: "object", start};
+            }
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.ArrowFunction: {
+                return {type: "function", start};
+            }
+            case ts.SyntaxKind.ClassExpression : {
+                return {type: "class", start};
+            }
+            case ts.SyntaxKind.NullKeyword: {
+                return {type: "null", start};
+            }
+            case ts.SyntaxKind.UndefinedKeyword: {
+                return {type: "undefined", start};
+            }
+            case ts.SyntaxKind.Identifier: {
+                const symbol = Utility.lookUp(node, node.text);
+                offset = node.getStart();
+                if(symbol === undefined) { return {type: "undefined", start} };
+                const typeCarrier = Utility.findActiveTypeCarrier(symbol, offset);
+                return {
+                    type: typeCarrier.type,
+                    value: typeCarrier.value,
+                    start
+                };
+            }
+        }
     }
 
     /**
      * @param {ts.SourceFile} node 
      * @param {symbolTable} symbolTable 
-     * @param {number} symbolType 
      * @param {boolean} isConst 
      */
-    function visitDestructuringDeclerations(symbolTable, node, symbolType, isConst = false, isInitialized = true) {
+    function visitDestructuringDeclerations(symbolTable, node, isConst = false, isInitialized = true) {
         function visitDestructuringDeclarations(node) {
             switch(node.kind) {
                 case ts.SyntaxKind.BindingElement: {
@@ -42,7 +81,7 @@ Analyzer.analyze = function(ast) {
                         const name = node.name.text;
                         const start = node.name.getStart();
                         const end = node.name.end;
-                        const symbol = Symbol.createSymbol(name, symbolType, start, end, isConst, isInitialized);
+                        const symbol = Symbol.createSymbol(name, start, end, isConst, isInitialized);
                         symbolTable.insert(name, symbol);
                     }
 
@@ -68,6 +107,7 @@ Analyzer.analyze = function(ast) {
      * @param {ts.Node} node
      */
     function hoistFunctionScopedDeclarations(node) {
+        const scopeStart = node.getStart();
         const functionSymbolTable = node.innerSymbols;
         function hoistFunctionScopedDeclarations(node) {
             switch(node.kind) {
@@ -77,12 +117,13 @@ Analyzer.analyze = function(ast) {
                             const name = node.name.text;
                             const start = node.name.getStart();
                             const end = node.name.end;
-                            const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Variable, start, end);
+                            const symbol = Symbol.createSymbol(name, start, end);
+                            symbol.typeCarriers.push({type: "undefined", start: scopeStart});
+                            symbol.typeCarriers.push(computeTypeCarrier(node.initializer, node.getStart()));
                             functionSymbolTable.insert(name, symbol);
                         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
-                            visitDestructuringDeclerations(functionSymbolTable, node.name, Symbol.SymbolType.Variable);
+                            visitDestructuringDeclerations(functionSymbolTable, node.name);
                         }
-
                     }
                     ts.forEachChild(node, hoistFunctionScopedDeclarations);
                     break;
@@ -92,8 +133,8 @@ Analyzer.analyze = function(ast) {
                     const name = node.name.text;
                     const start = node.getStart();
                     const end = node.end;
-                    const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Function, start, end);
-
+                    const symbol = Symbol.createSymbol(name, start, end);
+                    symbol.typeCarriers.push({type: "function", start: scopeStart});
                     functionSymbolTable.insert(name, symbol);
 
                     break;
@@ -128,10 +169,11 @@ Analyzer.analyze = function(ast) {
                             const name = node.name.text;
                             const start = node.name.getStart();
                             const end = node.name.end;
-                            const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Variable, start, end, isConst, false);
+                            const symbol = Symbol.createSymbol(name, start, end, isConst, false);
+                            symbol.typeCarriers.push(computeTypeCarrier(node.initializer, node.getStart()));
                             symbolTable.insert(name, symbol);
                         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
-                            visitDestructuringDeclerations(symbolTable, node.name, Symbol.SymbolType.Variable, isConst, false);
+                            visitDestructuringDeclerations(symbolTable, node.name, isConst, false);
                         } else {
                             console.assert(false);
                         }
@@ -164,13 +206,15 @@ Analyzer.analyze = function(ast) {
 		switch(node.kind) {
 			case ts.SyntaxKind.ImportClause: {  // import x, ...
 
+                const importDeclaration = node.parent;
+                importDeclaration.symbols = SymbolTable.createSymbolTable();
+
 				if(node.hasOwnProperty("name") && node.name.kind === ts.SyntaxKind.Identifier) {
                     const name = node.name.escapedText;
 					const start = node.name.getStart();
 					const end = node.name.end;
-                    const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Variable, start, end);
-                    node.symbols = SymbolTable.createSymbolTable();
-                    node.symbols.insert(name, symbol);
+                    const symbol = Symbol.createSymbol(name, start, end);
+                    importDeclaration.symbols.insert(name, symbol);
                 }
                 
                 ts.forEachChild(node, visitDeclarations);
@@ -179,23 +223,23 @@ Analyzer.analyze = function(ast) {
             }
             case ts.SyntaxKind.NamespaceImport: {   // import * as ...
 
+                const importDeclaration = node.parent.parent;
                 const name = node.name.text;
                 const start = node.name.getStart();
                 const end = node.name.end;
-                const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Variable, start, end);
-                node.symbols = SymbolTable.createSymbolTable();
-                node.symbols.insert(name, symbol);
+                const symbol = Symbol.createSymbol(name, start, end);
+                importDeclaration.symbols.insert(name, symbol);
                 break;
 
             } 
             case ts.SyntaxKind.ImportSpecifier: {   // import {x, y} ...
 
+                const importDeclaration = node.parent.parent.parent;
                 const name = node.name.text;
                 const start = node.name.getStart();
                 const end = node.name.end;
-                const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Variable, start, end);
-                node.symbols = SymbolTable.createSymbolTable();
-                node.symbols.insert(name, symbol);
+                const symbol = Symbol.createSymbol(name, start, end);
+                importDeclaration.symbols.insert(name, symbol);
 
                 break;
 
@@ -206,13 +250,16 @@ Analyzer.analyze = function(ast) {
 				
 				if(node.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
 					if(node.left.kind === ts.SyntaxKind.Identifier) {
-						const name = node.left.escapedText;
-						if(lookUp(node, name)) { break; }
-						const start = node.left.getStart();
-						const end = node.left.end;
-                        const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Variable, start, end, false, false);
-                        ast.innerSymbols.insert(name, symbol);
-					}
+                        const name = node.left.escapedText;
+                        const start = node.left.getStart();
+                        let symbol;
+						if(!(symbol = Utility.lookUp(node, name))) { 
+                            const end = node.left.end;
+                            symbol = Symbol.createSymbol(name, start, end, false, false);
+                            ast.innerSymbols.insert(name, symbol);
+                        }
+                        symbol.typeCarriers.push(computeTypeCarrier(node.right, start));
+                    }
 				}
 				
 				break;
@@ -225,10 +272,10 @@ Analyzer.analyze = function(ast) {
 					const name = node.name.text;
 					const start = node.name.getStart();
                     const end = node.name.end;
-                    const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Formal, start, end);
+                    const symbol = Symbol.createSymbol(name, start, end);
                     node.symbols.insert(name, symbol);
 				} else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
-					visitDestructuringDeclerations(node.symbols, node.name, Symbol.SymbolType.Formal);
+					visitDestructuringDeclerations(node.symbols, node.name);
 				} else {
 					console.assert(false);
 				}
@@ -242,7 +289,9 @@ Analyzer.analyze = function(ast) {
 				const name = node.name.text;
 				const start = node.getStart();
 				const end = node.end;
-                const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Class, start, end);
+                const symbol = Symbol.createSymbol(name, start, end);
+                symbol.typeCarriers.push({type: "class", start});
+
                 node.symbols = SymbolTable.createSymbolTable();
                 node.symbols.insert(name, symbol);
                 node.innerSymbols = SymbolTable.createSymbolTable();
@@ -258,7 +307,8 @@ Analyzer.analyze = function(ast) {
 				const name = "constructor";
 				const start = node.getStart();
                 const end = node.end;
-                const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Constructor, start, end);
+                const symbol = Symbol.createSymbol(name, start, end);
+                symbol.typeCarriers.push({type: "function", start});
                 const classDeclaration = classStack.top();
                 classDeclaration.innerSymbols.insert(name, symbol);
                 
@@ -271,8 +321,9 @@ Analyzer.analyze = function(ast) {
                 const name = "@set_accessor_" + node.name.text;
 				const start = node.getStart();
 				const end = node.end;
-                const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Method, start, end);
-				const classDeclaration = classStack.top();
+                const symbol = Symbol.createSymbol(name, start, end);
+                symbol.typeCarriers.push({type: "function", start});
+                const classDeclaration = classStack.top();
 				classDeclaration.innerSymbols.insert(name, symbol);
 
                 ts.forEachChild(node, visitDeclarations);
@@ -284,7 +335,8 @@ Analyzer.analyze = function(ast) {
                 const name = "@get_accessor_" + node.name.text;
 				const start = node.getStart();
 				const end = node.end;
-				const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Method, start, end);
+                const symbol = Symbol.createSymbol(name, start, end);
+                symbol.typeCarriers.push({type: "function", start});
                 const classDeclaration = classStack.top();
                 classDeclaration.innerSymbols.insert(name, symbol);
                 
@@ -294,11 +346,12 @@ Analyzer.analyze = function(ast) {
             }
 			case ts.SyntaxKind.MethodDeclaration: {
 
-                if(node.parent.kind === ts.SyntaxKind.ClassExpression || node.parent.kind === ts.SyntaxKind.ClassExpression) {
+                if(node.parent.kind === ts.SyntaxKind.ClassDeclaration || node.parent.kind === ts.SyntaxKind.ClassExpression) {
                     const name = node.name.text;
                     const start = node.getStart();
                     const end = node.end;
-                    const symbol = Symbol.createSymbol(name, Symbol.SymbolType.Method, start, end);
+                    const symbol = Symbol.createSymbol(name, start, end);
+                    symbol.typeCarriers.push({type: "function", start});
                     const classDeclaration = classStack.top();
                     classDeclaration.innerSymbols.insert(name, symbol);
                 }

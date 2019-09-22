@@ -1,5 +1,4 @@
 const Utility = require('./utility/utility');
-const Symbol = require('./utility/symbol');
 const Analyzer = require('./analyzer/analyzer');
 
 const vscodeLanguageServer = require('vscode-languageserver');
@@ -127,9 +126,21 @@ connection.onDidChangeWatchedFiles(change => {
 });
 
 connection.onHover((info) => {
+
+	const document = info.textDocument;
+	const fileName = document.uri;
+	const ast = asts[fileName];
+	const position = info.position;
+	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
+	const id = Utility.getInnermostNodeAtOffset(ast, offset, ts.SyntaxKind.Identifier);
+
+	if(id === undefined) { return { contents: [] }; }
+	const symbol = Utility.lookUp(id, id.text);
+	if(symbol === undefined) { return {contents: [] }; }
 	return {
-		contents: ["Hover example 1", "Hover example 2"]
+		contents: [Utility.computeSymbolDetail(symbol, offset)]
 	};
+
 });
 
 connection.onDocumentSymbol((info) => {
@@ -138,7 +149,7 @@ connection.onDocumentSymbol((info) => {
 	const ast = asts[fileName];
 	const symbols = [];
 
-	Utility.forEachSymbol(ast, function(symbol) {
+	Utility.forEachSymbol(ast, symbol => {
 
 		const description = "";
 		const startPosition = ast.getLineAndCharacterOfPosition(symbol.start);
@@ -155,7 +166,7 @@ connection.onDocumentSymbol((info) => {
 		symbols.push(vscodeLanguageServer.DocumentSymbol.create(
 			symbol.name,
 			description,
-			Symbol.symbolTypeToVSCodeSymbolKind(symbol.symbolType),
+			Utility.computeSymbolKind(symbol, ast.end),
 			range,
 			selectionRange
 		));
@@ -177,7 +188,7 @@ connection.onSignatureHelp((info) => {
 	const text = ast.getFullText();
 
 	console.log("Call: ", callExpression);
-
+	if(callExpression === undefined) { return; }
 	return {
 		activeParameter: Utility.computeActiveParameter(text, offset),
 		activeSignature: 0,
@@ -219,46 +230,46 @@ connection.onCompletion((info) => {
 	} else {
 		const currentNode = Utility.getInnermostNodeAtOffset(ast, offset, ts.SyntaxKind.Identifier);
 		console.assert(currentNode);
-		Utility.forEachSymbolReversed(
-			currentNode,
-			function(symbol) {
-				if(symbol.isInitialized || offset > symbol.start) {
-					completionItems.push(
-						vscodeLanguageServer.CompletionItem.create(
-							symbol.name, 
-							Symbol.symbolTypeToVSCodeCompletionItemKind(symbol.symbolType)
-						)
-					);
-				}
+		Utility.forEachSymbolReversed(currentNode, symbol => {
+			if(symbol.isInitialized || offset > symbol.start) {
+				completionItems.push({
+					label: symbol.name, 
+					kind: Utility.computeCompletionItemKind(symbol, offset),
+					data: {
+						symbol,
+						offset
+					}
+				});
 			}
-		);
+		});
 	}
 
 	return completionItems;
 });
 
-connection.onCompletionResolve((item) => {
-	if (item.data === 1) {
-		item.detail = 'TypeScript details';
-		item.documentation = 'TypeScript documentation';
-	} else if (item.data === 2) {
-		item.detail = 'JavaScript details';
-		item.documentation = 'JavaScript documentation';
-	}
+connection.onCompletionResolve(item => {
+	item.detail = Utility.computeSymbolDetail(item.data.symbol, item.data.offset);
 	return item;
 });
 
 connection.onDidOpenTextDocument((params) => {
+
 	const document = params.textDocument;
 	const fileName = document.uri;
 	const text = document.text;
 	const ast = asts[fileName] = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true);
+	
 	clearDiagnostics(ast);
 	if(Utility.hasParseError(ast)) { 
 		provideDiagnostics(ast);
 		return; 
 	}
-	Analyzer.analyze(ast);
+	try {
+		Analyzer.analyze(ast);
+	} catch(e) {
+		console.log(e);
+	}
+
 });
 
 connection.onDidChangeTextDocument((params) => {
@@ -289,12 +300,6 @@ connection.onDidChangeTextDocument((params) => {
 	} catch (e) {
 		console.log(e);
 	}
-
-	console.log("---------------");
-	Utility.forEachSymbol(ast, symbol => {
-		console.log(symbol);
-	}); 
-	console.log("---------------");
 
 });
 

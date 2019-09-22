@@ -34,7 +34,7 @@ Utility.isUndefined = function(value) {
 };
 
 Utility.isNull = function(value) {
-
+    return value === null;
 };
 
 /**
@@ -234,6 +234,87 @@ Utility.typescriptDiagnosticCategoryToVSCodeDiagnosticSeverity = function(diagno
             console.assert(false);
         }
     }
+};
+
+/**
+ * @param {ts.Node} node 
+ * @param {string} name 
+ */
+Utility.lookUp = function(node, name) {
+    return Utility.forEachSymbolReversed(node, function(symbol) {
+        return symbol.name === name;
+    });
+}
+
+/**
+ * @param {object} symbol
+ * @param {number} offset
+ */
+Utility.findActiveTypeCarrier = function(symbol, offset) {
+    let activeTypeCarrier = {type: "undefined"};
+    for(const typeCarrier of symbol.typeCarriers) {
+        if(typeCarrier.start <= offset) {
+            activeTypeCarrier = typeCarrier;
+        }
+    }
+    return activeTypeCarrier;
+};
+
+/**
+ * @param {object} symbol
+ * @param {number} offset
+ */
+Utility.computeSymbolDetail = function(symbol, offset) {
+
+    const activeTypeCarrier = Utility.findActiveTypeCarrier(symbol, offset);
+    const type = activeTypeCarrier.type;
+
+    if(type === "function") {
+        return symbol.name + ": function() {}";
+    } else if(type === "class") {
+        return symbol.name + ": class {}";
+    } else {
+        return (symbol.isConst ? "const " : "") + symbol.name + ": " + activeTypeCarrier.type + (activeTypeCarrier.value ? " = " + activeTypeCarrier.value : "");
+    }
+
+};
+
+/**
+ * @param {object} symbol
+ * @param {number} offset
+ */
+Utility.computeCompletionItemKind = function(symbol, offset) {
+
+    const activeTypeCarrier = Utility.findActiveTypeCarrier(symbol, offset);
+    const type = activeTypeCarrier.type;
+
+    if(type === "function") {
+        return vscodeLanguageServer.CompletionItemKind.Function;
+    } else if(type === "class") {
+        return vscodeLanguageServer.CompletionItemKind.Class;
+    } else {
+        return vscodeLanguageServer.CompletionItemKind.Variable;
+    }
+
+};
+
+/**
+ * @param {isense.symbol} symbol
+ * @param {number} offset
+ */
+Utility.computeSymbolKind = function(symbol, offset) {
+
+    const activeTypeCarrier = Utility.findActiveTypeCarrier(symbol, offset);
+    const type = activeTypeCarrier.type;
+
+    if(type === "function") {
+        return vscodeLanguageServer.SymbolKind.Function;
+    } else if(type === "class") {
+        return vscodeLanguageServer.SymbolKind.Class;
+    } else {
+        return vscodeLanguageServer.SymbolKind.Variable;
+    }
+
 };
 
 module.exports = Utility;
