@@ -273,8 +273,10 @@ Utility.computeSymbolDetail = function(symbol, offset) {
         return symbol.name + ": function() {}";
     } else if(type === "class") {
         return symbol.name + ": class {}";
+    } else if(type === "string") {
+        return (symbol.isConst ? "const " : "") + symbol.name + ": " + activeTypeCarrier.type + (activeTypeCarrier.value !== undefined ? (" = " + '"' + activeTypeCarrier.value + '"') : "");
     } else {
-        return (symbol.isConst ? "const " : "") + symbol.name + ": " + activeTypeCarrier.type + (activeTypeCarrier.value ? " = " + activeTypeCarrier.value : "");
+        return (symbol.isConst ? "const " : "") + symbol.name + ": " + activeTypeCarrier.type + (activeTypeCarrier.value !== undefined ? " = " + activeTypeCarrier.value : "");
     }
 
 };
