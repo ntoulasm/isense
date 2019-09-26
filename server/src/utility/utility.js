@@ -274,7 +274,7 @@ Utility.computeSymbolDetail = function(symbol, offset) {
     } else if(type === "class") {
         return symbol.name + ": class {}";
     } else {
-        return (symbol.isConst ? "const " : "") + symbol.name + ": " + activeTypeCarrier.type + (activeTypeCarrier.value ? " = " + activeTypeCarrier.value : "");
+        return (symbol.isConst ? "const " : "") + symbol.name + ": " + activeTypeCarrier.type + (activeTypeCarrier.value !== undefined ? " = " + activeTypeCarrier.value : "");
     }
 
 };

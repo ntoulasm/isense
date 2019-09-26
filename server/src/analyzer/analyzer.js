@@ -26,7 +26,7 @@ Analyzer.analyze = function(ast) {
                 return {type: "number", value: node.text, start};
             }
             case ts.SyntaxKind.StringLiteral: {
-                return {type: "string", value: node.text, start};
+                return {type: "string", value: '"' + node.text + '"', start};
             }
             case ts.SyntaxKind.TrueKeyword: {
                 return {type: "boolean", value: true, start};
