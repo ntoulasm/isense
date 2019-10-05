@@ -184,21 +184,41 @@ Utility.forEachSymbol = function(node, cb) {
                 cb(symbol);
             }
         }
-        if(node.innerSymbols) {
-            for(const [, symbol] of Object.entries(node.innerSymbols.getSymbols())) {
-                cb(symbol);
-            }
-        }
         ts.forEachChild(node, forEachSymbol);
     }
     forEachSymbol(node);
+};
+
+
+/**
+ * @param {ts.Node} node
+ */
+Utility.findLeftSiblingWithoutInnerScope = node => {
+
+    let nodesWithInnerScope = [
+        ts.SyntaxKind.Block,
+        ts.SyntaxKind.ClassDeclaration,
+        ts.SyntaxKind.ClassExpression,
+        ts.SyntaxKind.ForStatement,
+        ts.SyntaxKind.ForOfStatement,
+        ts.SyntaxKind.ForInStatement,
+    ];
+
+    while(node = Utility.findLeftSibling(node)) {
+        if(nodesWithInnerScope.indexOf(node.kind) == -1) {
+            break;
+        }
+    }
+
+    return node;
+
 };
 
 /**
  * @param {ts.Node} node
  * @param {function} cb
  */
-Utility.forEachSymbolReversed = function(node, cb) {
+Utility.forEachSymbolReversed = (node, cb) => {
     if(node.symbols) { 
         for(const [, symbol] of Object.entries(node.symbols.getSymbols())) {
             if(cb(symbol)) { return symbol; }
@@ -206,13 +226,8 @@ Utility.forEachSymbolReversed = function(node, cb) {
     }
     const parent = node.parent;
     if(!parent) { return undefined; }
-    const leftSibling = Utility.findLeftSibling(node);
+    let leftSibling = Utility.findLeftSiblingWithoutInnerScope(node);
     if(leftSibling) { return Utility.forEachSymbolReversed(leftSibling, cb); }
-    if(parent.innerSymbols) {
-        for(const [, symbol] of Object.entries(parent.innerSymbols.getSymbols())) {
-            if(cb(symbol)) { return symbol; }
-        }
-    }
     return Utility.forEachSymbolReversed(parent, cb);
 };
 

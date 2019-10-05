@@ -15,7 +15,6 @@ Analyzer.analyze = function(ast) {
     const classStack = Stack.createStack();
 
     ast.symbols = SymbolTable.createSymbolTable();
-    ast.innerSymbols = SymbolTable.createSymbolTable();
 
     function computeTypeCarrier(node, start) {
         if(node === undefined) {
@@ -107,8 +106,10 @@ Analyzer.analyze = function(ast) {
      * @param {ts.Node} node
      */
     function hoistFunctionScopedDeclarations(node) {
+
         const scopeStart = node.getStart();
-        const functionSymbolTable = node.innerSymbols;
+        const functionSymbolTable = node.symbols;
+
         function hoistFunctionScopedDeclarations(node) {
             switch(node.kind) {
                 case ts.SyntaxKind.VariableDeclaration: {
@@ -152,14 +153,18 @@ Analyzer.analyze = function(ast) {
                 }
             }
         }
+
         ts.forEachChild(node, hoistFunctionScopedDeclarations);
+
     }
 
     /**
      * @param {ts.Node} node
      */
     function hoistBlockScopedDeclarations(node) {
-        const symbolTable = node.innerSymbols;
+
+        const symbolTable = node.symbols;
+        
         function hoistBlockScopedDeclarations(node) {
             switch(node.kind) {
                 case ts.SyntaxKind.VariableDeclaration: {
@@ -181,12 +186,21 @@ Analyzer.analyze = function(ast) {
                     ts.forEachChild(node, hoistBlockScopedDeclarations);
                     break;
                 }
+                case ts.SyntaxKind.ClassDeclaration: {
+                    const name = node.name.text;
+                    const start = node.getStart();
+                    const end = node.end;
+                    const symbol = Symbol.createSymbol(name, start, end);
+                    symbol.typeCarriers.push({type: "class", start});
+    
+                    symbolTable.insert(name, symbol);
+                    break;
+                }
                 case ts.SyntaxKind.Block:
                 case ts.SyntaxKind.FunctionDeclaration:
                 case ts.SyntaxKind.FunctionExpression:
                 case ts.SyntaxKind.ArrowFunction:
-                case ts.SyntaxKind.ClassDeclaration:
-                case ts.SyntaxKind.ClassExpression: {
+                case ts.SyntaxKind.ClassExpression:
                     break;
                 }
                 default: {
@@ -195,7 +209,9 @@ Analyzer.analyze = function(ast) {
                 }
             }
         }
+
         ts.forEachChild(node, hoistBlockScopedDeclarations);
+    
     }
 
 	/**
@@ -256,7 +272,7 @@ Analyzer.analyze = function(ast) {
 						if(!(symbol = Utility.lookUp(node, name))) { 
                             const end = node.left.end;
                             symbol = Symbol.createSymbol(name, start, end, false, false);
-                            ast.innerSymbols.insert(name, symbol);
+                            ast.symbols.insert(name, symbol);
                         }
                         symbol.typeCarriers.push(computeTypeCarrier(node.right, start));
                     }
@@ -286,15 +302,7 @@ Analyzer.analyze = function(ast) {
 			}
 			case ts.SyntaxKind.ClassDeclaration: {
 
-				const name = node.name.text;
-				const start = node.getStart();
-				const end = node.end;
-                const symbol = Symbol.createSymbol(name, start, end);
-                symbol.typeCarriers.push({type: "class", start});
-
                 node.symbols = SymbolTable.createSymbolTable();
-                node.symbols.insert(name, symbol);
-                node.innerSymbols = SymbolTable.createSymbolTable();
 
                 classStack.push(node);
                 ts.forEachChild(node, visitDeclarations);
@@ -310,7 +318,7 @@ Analyzer.analyze = function(ast) {
                 const symbol = Symbol.createSymbol(name, start, end);
                 symbol.typeCarriers.push({type: "function", start});
                 const classDeclaration = classStack.top();
-                classDeclaration.innerSymbols.insert(name, symbol);
+                classDeclaration.symbols.insert(name, symbol);
                 
                 ts.forEachChild(node, visitDeclarations);
 				break;
@@ -324,7 +332,7 @@ Analyzer.analyze = function(ast) {
                 const symbol = Symbol.createSymbol(name, start, end);
                 symbol.typeCarriers.push({type: "function", start});
                 const classDeclaration = classStack.top();
-				classDeclaration.innerSymbols.insert(name, symbol);
+				classDeclaration.symbols.insert(name, symbol);
 
                 ts.forEachChild(node, visitDeclarations);
 				break;
@@ -338,7 +346,7 @@ Analyzer.analyze = function(ast) {
                 const symbol = Symbol.createSymbol(name, start, end);
                 symbol.typeCarriers.push({type: "function", start});
                 const classDeclaration = classStack.top();
-                classDeclaration.innerSymbols.insert(name, symbol);
+                classDeclaration.symbols.insert(name, symbol);
                 
                 ts.forEachChild(node, visitDeclarations);
 				break;
@@ -353,7 +361,7 @@ Analyzer.analyze = function(ast) {
                     const symbol = Symbol.createSymbol(name, start, end);
                     symbol.typeCarriers.push({type: "function", start});
                     const classDeclaration = classStack.top();
-                    classDeclaration.innerSymbols.insert(name, symbol);
+                    classDeclaration.symbols.insert(name, symbol);
                 }
 
                 ts.forEachChild(node, visitDeclarations);
@@ -363,12 +371,12 @@ Analyzer.analyze = function(ast) {
             case ts.SyntaxKind.FunctionDeclaration: 
 			case ts.SyntaxKind.FunctionExpression: 
 			case ts.SyntaxKind.ArrowFunction: {
-                node.innerSymbols = SymbolTable.createSymbolTable();
+                node.symbols = SymbolTable.createSymbolTable();
                 ts.forEachChild(node, visitDeclarations);
                 break;
             }
             case ts.SyntaxKind.ClassExpression: {
-                node.innerSymbols = SymbolTable.createSymbolTable();
+                node.symbols = SymbolTable.createSymbolTable();
                 classStack.push(node);
                 ts.forEachChild(node, visitDeclarations);
                 classStack.pop();
@@ -376,7 +384,7 @@ Analyzer.analyze = function(ast) {
 			}
 			case ts.SyntaxKind.Block: {
 
-                node.innerSymbols = SymbolTable.createSymbolTable();
+                node.symbols = SymbolTable.createSymbolTable();
 
                 if(node.parent.kind === ts.SyntaxKind.FunctionDeclaration || 
                     node.parent.kind === ts.SyntaxKind.Constructor ||
