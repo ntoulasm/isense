@@ -201,6 +201,9 @@ Analyzer.analyze = function(ast) {
                 case ts.SyntaxKind.FunctionExpression:
                 case ts.SyntaxKind.ArrowFunction:
                 case ts.SyntaxKind.ClassExpression:
+                case ts.SyntaxKind.ForStatement: 
+                case ts.SyntaxKind.ForOfStatement: 
+                case ts.SyntaxKind.ForInStatement: {
                     break;
                 }
                 default: {
@@ -399,6 +402,13 @@ Analyzer.analyze = function(ast) {
 
 				break;
 
+            }
+            case ts.SyntaxKind.ForStatement:
+            case ts.SyntaxKind.ForInStatement:
+            case ts.SyntaxKind.ForOfStatement: {
+                node.symbols = SymbolTable.createSymbolTable();
+                hoistBlockScopedDeclarations(node);
+                ts.forEachChild(node, visitDeclarations);
             }
 			default: {
 				ts.forEachChild(node, visitDeclarations);
