@@ -314,6 +314,7 @@ Ast.findBinaryExpressionAncestors = node => {
  * @param {object} symbol
  */
 Ast.findClosestTypeCarrier = (node, symbol) => {
+    console.assert(node !== undefined, "Can not find closest type carrier for " + symbol.name);
     if(node.hasOwnProperty("typeCarriers")) {
         for(const typeCarrier of node.typeCarriers) {
             if(typeCarrier.getSymbol() === symbol) {
@@ -345,6 +346,13 @@ Ast.findAllTypeCarriers = node => {
 
     return typeCarriers;
 
+};
+
+/**
+ * @param {ts.SourceFile} ast
+ */
+Ast.addAnalyzeDiagnostic = (ast, diagnostic) => {
+    ast.analyzeDiagnostics.push(diagnostic);
 };
 
 module.exports = Ast;

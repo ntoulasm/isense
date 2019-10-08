@@ -4,6 +4,7 @@ const Symbol = require('../utility/symbol.js');
 const SymbolTable = require('../utility/symbol_table.js');
 const Stack = require('../utility/stack.js');
 const TypeCarrier = require('../utility/type_carrier');
+const AnalyzeDiagnostic = require('./analyze_diagnostic');
 
 const ts = require('typescript');
 
@@ -16,6 +17,7 @@ Analyzer.analyze = function(ast) {
     
     const classStack = Stack.createStack();
 
+    ast.analyzeDiagnostics = [];
     ast.symbols = SymbolTable.createSymbolTable();
 
     /**
@@ -233,14 +235,15 @@ Analyzer.analyze = function(ast) {
 				if(node.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
 					if(node.left.kind === ts.SyntaxKind.Identifier) {
                         const name = node.left.escapedText;
-                        const start = node.left.getStart();
                         let symbol;
-						if(!(symbol = Ast.lookUp(node, name))) { 
-                            const end = node.left.end;
-                            symbol = Symbol.createSymbol(name, start, end, false);
-                            ast.symbols.insert(name, symbol);
+						if(symbol = Ast.lookUp(node, name)) {
+                            Ast.addTypeCarrierToExpression(node, TypeCarrier.createTypeCarrier(symbol, Ast.deduceTypes(node.right)));
+                        } else {
+                            const startPosition = ast.getLineAndCharacterOfPosition(node.getStart());
+                            const endPosition = ast.getLineAndCharacterOfPosition(node.end);
+                            const diagnostic = AnalyzeDiagnostic.create(startPosition, endPosition, `'${name}' is not declared.`);
+                            Ast.addAnalyzeDiagnostic(ast, diagnostic);
                         }
-                        Ast.addTypeCarrierToExpression(node, TypeCarrier.createTypeCarrier(symbol, Ast.deduceTypes(node.right)));
                     }
 				}
 				

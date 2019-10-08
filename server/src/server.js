@@ -95,9 +95,9 @@ async function clearDiagnostics(ast) {
 }
 
 /**
- * @param {ts.SourceFile} ast
+ * @param {ts.SourceFile} ast 
  */
-async function provideDiagnostics(ast) {
+async function provideParseDiagnostics(ast) {
 
 	const diagnostics = [];
 
@@ -118,9 +118,19 @@ async function provideDiagnostics(ast) {
 
 	connection.sendDiagnostics({
 		uri: ast.fileName,
-		diagnostics 
+		diagnostics
 	});
 
+}
+
+/**
+ * @param {ts.SourceFile} ast 
+ */
+async function provideAnalyzeDiagnostics(ast) {
+	connection.sendDiagnostics({
+		uri: ast.fileName,
+		diagnostics: ast.analyzeDiagnostics
+	})
 }
 
 connection.onDidChangeWatchedFiles(change => {
@@ -167,7 +177,7 @@ connection.onDocumentSymbol((info) => {
 		symbols.push(vscodeLanguageServer.DocumentSymbol.create(
 			symbol.name,
 			description,
-			vscodeLanguageServer.SymbolKind.Variable,//Utility.computeSymbolKind(symbol, ast.end),
+			vscodeLanguageServer.SymbolKind.Variable,
 			range,
 			selectionRange
 		));
@@ -246,6 +256,7 @@ connection.onCompletion((info) => {
 	}
 
 	return completionItems;
+
 });
 
 connection.onCompletionResolve(item => {
@@ -262,11 +273,13 @@ connection.onDidOpenTextDocument((params) => {
 	
 	clearDiagnostics(ast);
 	if(Ast.hasParseError(ast)) { 
-		provideDiagnostics(ast);
+		provideParseDiagnostics(ast);
 		return; 
 	}
+	
 	try {
 		Analyzer.analyze(ast);
+		provideAnalyzeDiagnostics(ast);
 	} catch(e) {
 		console.log(e);
 	}
@@ -280,8 +293,6 @@ connection.onDidChangeTextDocument((params) => {
 	let ast = asts[fileName];
 	let text = ast.getFullText();
 
-	clearDiagnostics(ast);
-
 	for(const change of params.contentChanges) {
 		const changeOffset = ast.getPositionOfLineAndCharacter(change.range.start.line, change.range.start.character);
 		const span = ts.createTextSpan(changeOffset, change.rangeLength);
@@ -291,14 +302,16 @@ connection.onDidChangeTextDocument((params) => {
 		text = newText;
 	}
 
-	if(Ast.hasParseError(ast)) {
-		provideDiagnostics(ast);
+	clearDiagnostics(ast);
+	if(Ast.hasParseError(ast)) { 
+		provideParseDiagnostics(ast);
 		return; 
 	}
-
-	try{
+	
+	try {
 		Analyzer.analyze(ast);
-	} catch (e) {
+		provideAnalyzeDiagnostics(ast);
+	} catch(e) {
 		console.log(e);
 	}
 
