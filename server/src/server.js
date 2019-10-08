@@ -1,5 +1,7 @@
 const Utility = require('./utility/utility');
 const Analyzer = require('./analyzer/analyzer');
+const Ast = require('./utility/ast');
+const TypeCarrier = require('./utility/type_carrier');
 
 const vscodeLanguageServer = require('vscode-languageserver');
 const ts = require('typescript');
@@ -132,13 +134,12 @@ connection.onHover((info) => {
 	const ast = asts[fileName];
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
-	const id = Utility.getInnermostNodeAtOffset(ast, offset, ts.SyntaxKind.Identifier);
-
+	const id = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.Identifier);
 	if(id === undefined) { return { contents: [] }; }
-	const symbol = Utility.lookUp(id, id.text);
+	const symbol = Ast.lookUp(id, id.text);
 	if(symbol === undefined) { return {contents: [] }; }
 	return {
-		contents: [Utility.computeSymbolDetail(symbol, offset)]
+		contents: [Ast.findClosestTypeCarrier(id, symbol).getSignature()]
 	};
 
 });
@@ -149,7 +150,7 @@ connection.onDocumentSymbol((info) => {
 	const ast = asts[fileName];
 	const symbols = [];
 
-	Utility.forEachSymbol(ast, symbol => {
+	Ast.findAllSymbols(ast).forEach(symbol => {
 
 		const description = "";
 		const startPosition = ast.getLineAndCharacterOfPosition(symbol.start);
@@ -166,7 +167,7 @@ connection.onDocumentSymbol((info) => {
 		symbols.push(vscodeLanguageServer.DocumentSymbol.create(
 			symbol.name,
 			description,
-			Utility.computeSymbolKind(symbol, ast.end),
+			vscodeLanguageServer.SymbolKind.Variable,//Utility.computeSymbolKind(symbol, ast.end),
 			range,
 			selectionRange
 		));
@@ -184,7 +185,7 @@ connection.onSignatureHelp((info) => {
 	const ast = asts[fileName];
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
-	const callExpression = Utility.getInnermostNodeAtOffset(ast, offset, ts.SyntaxKind.CallExpression);
+	const callExpression = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
 	const text = ast.getFullText();
 
 	console.log("Call: ", callExpression);
@@ -226,21 +227,21 @@ connection.onCompletion((info) => {
 	const triggerCharacter = info.context.triggerCharacter;
 
 	if(triggerCharacter === '.') {
-		console.log("Get property: ", Utility.getNodeAtOffset(ast, offset, ts.SyntaxKind.PropertyAccessExpression));
+		console.log("Get property: ", Ast.findNode(ast, offset, ts.SyntaxKind.PropertyAccessExpression));
 	} else {
-		const currentNode = Utility.getInnermostNodeAtOffset(ast, offset, ts.SyntaxKind.Identifier);
-		console.assert(currentNode);
-		Utility.forEachSymbolReversed(currentNode, symbol => {
-			if(symbol.isInitialized || offset > symbol.start) {
-				completionItems.push({
-					label: symbol.name, 
-					kind: Utility.computeCompletionItemKind(symbol, offset),
-					data: {
-						symbol,
-						offset
-					}
-				});
-			}
+		const node = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.Identifier);
+		console.assert(node);
+		Ast.findVisibleSymbols(node).forEach(symbol => {
+			const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
+			const kind = closestTypeCarrier.hasUniqueType() ?
+				TypeCarrier.typeToVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].type) : 
+				vscodeLanguageServer.CompletionItemKind.Variable;
+			const signature = closestTypeCarrier.getSignature();
+			completionItems.push({
+				label: symbol.name, 
+				kind,
+				data: { signature }
+			});
 		});
 	}
 
@@ -248,7 +249,7 @@ connection.onCompletion((info) => {
 });
 
 connection.onCompletionResolve(item => {
-	item.detail = Utility.computeSymbolDetail(item.data.symbol, item.data.offset);
+	item.detail = item.data.signature;
 	return item;
 });
 
@@ -260,7 +261,7 @@ connection.onDidOpenTextDocument((params) => {
 	const ast = asts[fileName] = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
 	
 	clearDiagnostics(ast);
-	if(Utility.hasParseError(ast)) { 
+	if(Ast.hasParseError(ast)) { 
 		provideDiagnostics(ast);
 		return; 
 	}
@@ -290,7 +291,7 @@ connection.onDidChangeTextDocument((params) => {
 		text = newText;
 	}
 
-	if(Utility.hasParseError(ast)) {
+	if(Ast.hasParseError(ast)) {
 		provideDiagnostics(ast);
 		return; 
 	}

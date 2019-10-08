@@ -6,7 +6,7 @@ const Symbol = {};
  * @property {number} start
  * @property {number} end
  * @property {boolean} isConst
- * @property {boolean} isInitialized
+ * @property {boolean} visibleOffset
  */
 
 /**
@@ -14,18 +14,17 @@ const Symbol = {};
  * @param {number} start
  * @param {number} end
  * @param {boolean} [isConst = false]
- * @param {boolean} [isInitialized = false]
+ * @param {boolean} [visibleOffset = start]
  * 
  * @returns {isense.symbol}
  */
-Symbol.createSymbol = function(name, start, end, isConst = false, isInitialized = true) {
+Symbol.createSymbol = function(name, start, end, isConst = false, visibleOffset = start) {
     return {
         name,
         start,
         end,
         isConst,
-        isInitialized,
-        typeCarriers: []
+        visibleOffset
     };
 };
 
