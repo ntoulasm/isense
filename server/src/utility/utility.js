@@ -45,16 +45,16 @@ Utility.toArray = value => {
  * @param {string} code
  * @param {number} offset
  */
-Utility.computeActiveParameter = function(code, offset) {
+Utility.computeActiveParameter = function(code, offset, callStart) {
 
     let currentCall = 1;
     let activeParameter = 0;
     let character;
 
-    while(true) {
+    while(offset > callStart) {
         character = code[offset--];
         if(character === "(" && --currentCall === 0) {
-            break;
+            return activeParameter;
         } else if(character === ")") {
             ++currentCall;
         } else if(character === "," && currentCall === 1) { 
@@ -62,7 +62,7 @@ Utility.computeActiveParameter = function(code, offset) {
         }
     }
 
-    return activeParameter;
+    return -1;
 
 };
 

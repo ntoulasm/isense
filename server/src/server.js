@@ -189,19 +189,21 @@ connection.onDocumentSymbol((info) => {
 });
 
 connection.onSignatureHelp((info) => {
-
 	const document = info.textDocument;
 	const fileName = document.uri;
 	const ast = asts[fileName];
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
-	const callExpression = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
+	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
 	const text = ast.getFullText();
 
-	console.log("Call: ", callExpression);
-	if(callExpression === undefined) { return; }
+	if(call === undefined) { return; }
+	const activeParameter = Utility.computeActiveParameter(text, offset, call.getStart());
+	if(activeParameter < 0) {
+		return null;
+	}
 	return {
-		activeParameter: Utility.computeActiveParameter(text, offset),
+		activeParameter,
 		activeSignature: 0,
 		signatures: [
 			{
@@ -223,7 +225,6 @@ connection.onSignatureHelp((info) => {
 			}
 		]
 	};
-
 });
 
 connection.onCompletion((info) => {
