@@ -18,7 +18,7 @@ const Symbol = {};
  * 
  * @returns {isense.symbol}
  */
-Symbol.createSymbol = function(name, start, end, isConst = false, visibleOffset = start) {
+Symbol.create = function(name, start, end, isConst = false, visibleOffset = start) {
     return {
         name,
         start,

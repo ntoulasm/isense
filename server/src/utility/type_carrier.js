@@ -1,4 +1,4 @@
-const Utility = require('./utility.js');
+const Utility = require('./utility');
 
 const vscodeLanguageServer = require('vscode-languageserver');
 
@@ -84,7 +84,7 @@ function computeSignature(typeCarrier) {
  * @param {isense.symbol} symbol
  * @param {} types
  */
-TypeCarrier.createTypeCarrier = (symbol, types) => {
+TypeCarrier.create = (symbol, types) => {
 
     const typeCarrier = {};
     typeCarrier.private = {};
@@ -129,7 +129,7 @@ TypeCarrier.createTypeCarrier = (symbol, types) => {
 TypeCarrier.copyTypeCarrier = typeCarrier => {
     const symbol = typeCarrier.getSymbol();
     const types = [...typeCarrier.getTypes()];
-    return TypeCarrier.createTypeCarrier(symbol, types);
+    return TypeCarrier.create(symbol, types);
 };
 
 TypeCarrier.typeToVSCodeSymbolKind = type => {

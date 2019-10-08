@@ -1,8 +1,7 @@
-const Utility = require('../utility/utility.js');
 const Ast = require('../utility/ast');
-const Symbol = require('../utility/symbol.js');
-const SymbolTable = require('../utility/symbol_table.js');
-const Stack = require('../utility/stack.js');
+const Symbol = require('../utility/symbol');
+const SymbolTable = require('../utility/symbol_table');
+const Stack = require('../utility/stack');
 const TypeCarrier = require('../utility/type_carrier');
 const AnalyzeDiagnostic = require('./analyze_diagnostic');
 
@@ -18,7 +17,7 @@ Analyzer.analyze = function(ast) {
     const classStack = Stack.createStack();
 
     ast.analyzeDiagnostics = [];
-    ast.symbols = SymbolTable.createSymbolTable();
+    ast.symbols = SymbolTable.create();
 
     /**
      * @param {ts.SourceFile} node 
@@ -56,12 +55,9 @@ Analyzer.analyze = function(ast) {
     }
 
     /**
-     * @param {ts.Node} node
+     * @param {ts.Node} func
      */
-    function hoistFunctionScopedDeclarations(node) {
-
-        const functionNode = node;
-        const functionSymbolTable = node.symbols;
+    function hoistFunctionScopedDeclarations(func) {
 
         function hoistFunctionScopedDeclarations(node) {
             switch(node.kind) {
@@ -71,16 +67,16 @@ Analyzer.analyze = function(ast) {
                             const name = node.name.text;
                             const start = node.name.getStart();
                             const end = node.name.end;
-                            const symbol = Symbol.createSymbol(name, start, end, false, functionNode.getStart());
-                            Ast.addTypeCarrier(functionNode, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Undefined}));
-                            Ast.addTypeCarrier(node.parent.parent, TypeCarrier.createTypeCarrier(symbol, Ast.deduceTypes(node.initializer)));
-                            functionSymbolTable.insert(name, symbol);
+                            const symbol = Symbol.create(name, start, end, false, func.getStart());
+                            Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                            Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, Ast.deduceTypes(node.initializer)));
+                            func.symbols.insert(symbol);
                         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
                             visitDestructuringDeclerations(node.name, (name, start, end) => {
-                                const symbol = Symbol.createSymbol(name, start, end, false, functionNode.getStart());
-                                Ast.addTypeCarrier(functionNode, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Undefined}));
-                                Ast.addTypeCarrier(node.parent.parent, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Undefined}));
-                                functionSymbolTable.insert(name, symbol);
+                                const symbol = Symbol.create(name, start, end, false, func.getStart());
+                                Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                                Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                                func.symbols.insert(symbol);
                             });
                         }
                     }
@@ -92,9 +88,9 @@ Analyzer.analyze = function(ast) {
                     const name = node.name.text;
                     const start = node.getStart();
                     const end = node.end;
-                    const symbol = Symbol.createSymbol(name, start, end, false, functionNode.getStart());
-                    Ast.addTypeCarrier(functionNode, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Function}));
-                    functionSymbolTable.insert(name, symbol);
+                    const symbol = Symbol.create(name, start, end, false, func.getStart());
+                    Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function}));
+                    func.symbols.insert(symbol);
 
                     break;
                 
@@ -112,16 +108,14 @@ Analyzer.analyze = function(ast) {
             }
         }
 
-        ts.forEachChild(node, hoistFunctionScopedDeclarations);
+        ts.forEachChild(func, hoistFunctionScopedDeclarations);
 
     }
 
     /**
-     * @param {ts.Node} node
+     * @param {ts.Node} block
      */
-    function hoistBlockScopedDeclarations(node) {
-
-        const symbolTable = node.symbols;
+    function hoistBlockScopedDeclarations(block) {
         
         function hoistBlockScopedDeclarations(node) {
             switch(node.kind) {
@@ -132,14 +126,14 @@ Analyzer.analyze = function(ast) {
                             const name = node.name.text;
                             const start = node.name.getStart();
                             const end = node.name.end;
-                            const symbol = Symbol.createSymbol(name, start, end, isConst);
-                            Ast.addTypeCarrier(node.parent.parent, TypeCarrier.createTypeCarrier(symbol, Ast.deduceTypes(node.initializer)));
-                            symbolTable.insert(name, symbol);
+                            const symbol = Symbol.create(name, start, end, isConst);
+                            Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, Ast.deduceTypes(node.initializer)));
+                            block.symbols.insert(symbol);
                         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
                             visitDestructuringDeclerations(node.name, (name, start, end) => {
-                                const symbol = Symbol.createSymbol(name, start, end, isConst, node.name.getStart());
-                                Ast.addTypeCarrier(node.parent.parent, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Undefined}));
-                                symbolTable.insert(name, symbol);
+                                const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
+                                Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                                block.symbols.insert(symbol);
                             });
                         } else {
                             console.assert(false);
@@ -152,10 +146,10 @@ Analyzer.analyze = function(ast) {
                     const name = node.name.text;
                     const start = node.getStart();
                     const end = node.end;
-                    const symbol = Symbol.createSymbol(name, start, end, false);
-                    Ast.addTypeCarrier(node, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Class}));
+                    const symbol = Symbol.create(name, start, end);
+                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Class}));
     
-                    symbolTable.insert(name, symbol);
+                    block.symbols.insert(symbol);
                     break;
                 }
                 case ts.SyntaxKind.Block:
@@ -175,7 +169,7 @@ Analyzer.analyze = function(ast) {
             }
         }
 
-        ts.forEachChild(node, hoistBlockScopedDeclarations);
+        ts.forEachChild(block, hoistBlockScopedDeclarations);
     
     }
 
@@ -188,15 +182,15 @@ Analyzer.analyze = function(ast) {
 			case ts.SyntaxKind.ImportClause: {  // import x, ...
 
                 const importDeclaration = node.parent;
-                importDeclaration.symbols = SymbolTable.createSymbolTable();
+                importDeclaration.symbols = SymbolTable.create();
 
 				if(node.hasOwnProperty("name") && node.name.kind === ts.SyntaxKind.Identifier) {
                     const name = node.name.escapedText;
 					const start = node.name.getStart();
 					const end = node.name.end;
-                    const symbol = Symbol.createSymbol(name, start, end);
-                    importDeclaration.symbols.insert(name, symbol);
-                    Ast.addTypeCarrier(importDeclaration, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Undefined}));
+                    const symbol = Symbol.create(name, start, end);
+                    importDeclaration.symbols.insert(symbol);
+                    Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
                 }
                 
                 ts.forEachChild(node, visitDeclarations);
@@ -209,9 +203,9 @@ Analyzer.analyze = function(ast) {
                 const name = node.name.text;
                 const start = node.name.getStart();
                 const end = node.name.end;
-                const symbol = Symbol.createSymbol(name, start, end);
-                importDeclaration.symbols.insert(name, symbol);
-                Ast.addTypeCarrier(importDeclaration, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Undefined}));
+                const symbol = Symbol.create(name, start, end);
+                importDeclaration.symbols.insert(symbol);
+                Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
                 break;
 
             } 
@@ -221,9 +215,9 @@ Analyzer.analyze = function(ast) {
                 const name = node.name.text;
                 const start = node.name.getStart();
                 const end = node.name.end;
-                const symbol = Symbol.createSymbol(name, start, end);
-                importDeclaration.symbols.insert(name, symbol);
-                Ast.addTypeCarrier(importDeclaration, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Undefined}));
+                const symbol = Symbol.create(name, start, end);
+                importDeclaration.symbols.insert(symbol);
+                Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
 
                 break;
 
@@ -235,9 +229,9 @@ Analyzer.analyze = function(ast) {
 				if(node.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
 					if(node.left.kind === ts.SyntaxKind.Identifier) {
                         const name = node.left.escapedText;
-                        let symbol;
-						if(symbol = Ast.lookUp(node, name)) {
-                            Ast.addTypeCarrierToExpression(node, TypeCarrier.createTypeCarrier(symbol, Ast.deduceTypes(node.right)));
+                        const symbol = Ast.lookUp(node, name);
+						if(symbol) {
+                            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(symbol, Ast.deduceTypes(node.right)));
                         } else {
                             const startPosition = ast.getLineAndCharacterOfPosition(node.getStart());
                             const endPosition = ast.getLineAndCharacterOfPosition(node.end);
@@ -252,19 +246,19 @@ Analyzer.analyze = function(ast) {
             }
 			case ts.SyntaxKind.Parameter: {	// function x(a, ...
 
-                node.symbols = SymbolTable.createSymbolTable();
+                node.symbols = SymbolTable.create();
 				if(node.name.kind === ts.SyntaxKind.Identifier) {
 					const name = node.name.text;
 					const start = node.name.getStart();
                     const end = node.name.end;
-                    const symbol = Symbol.createSymbol(name, start, end);
-                    Ast.addTypeCarrier(node, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Undefined}));
-                    node.symbols.insert(name, symbol);
+                    const symbol = Symbol.create(name, start, end);
+                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                    node.symbols.insert(symbol);
 				} else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
 					visitDestructuringDeclerations(node.name, (name, start, end) => {
-                        const symbol = Symbol.createSymbol(name, start, end);
-                        Ast.addTypeCarrier(node, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Undefined}));
-                        node.symbols.insert(name, symbol);
+                        const symbol = Symbol.create(name, start, end);
+                        Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                        node.symbols.insert(symbol);
                     });
 				} else {
 					console.assert(false);
@@ -276,7 +270,7 @@ Analyzer.analyze = function(ast) {
 			}
 			case ts.SyntaxKind.ClassDeclaration: {
 
-                node.symbols = SymbolTable.createSymbolTable();
+                node.symbols = SymbolTable.create();
 
                 classStack.push(node);
                 ts.forEachChild(node, visitDeclarations);
@@ -289,10 +283,10 @@ Analyzer.analyze = function(ast) {
 				const name = "constructor";
 				const start = node.getStart();
                 const end = node.end;
-                const symbol = Symbol.createSymbol(name, start, end);
-                Ast.addTypeCarrier(node, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Function}));
+                const symbol = Symbol.create(name, start, end);
+                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function}));
                 const classDeclaration = classStack.top();
-                classDeclaration.symbols.insert(name, symbol);
+                classDeclaration.symbols.insert(symbol);
                 
                 ts.forEachChild(node, visitDeclarations);
 				break;
@@ -303,10 +297,10 @@ Analyzer.analyze = function(ast) {
                 const name = "@set_accessor_" + node.name.text;
 				const start = node.getStart();
 				const end = node.end;
-                const symbol = Symbol.createSymbol(name, start, end);
-                Ast.addTypeCarrier(node, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Function}));
+                const symbol = Symbol.create(name, start, end);
+                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function}));
                 const classDeclaration = classStack.top();
-				classDeclaration.symbols.insert(name, symbol);
+				classDeclaration.symbols.insert(symbol);
 
                 ts.forEachChild(node, visitDeclarations);
 				break;
@@ -317,10 +311,10 @@ Analyzer.analyze = function(ast) {
                 const name = "@get_accessor_" + node.name.text;
 				const start = node.getStart();
 				const end = node.end;
-                const symbol = Symbol.createSymbol(name, start, end);
-                Ast.addTypeCarrier(node, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Function}));
+                const symbol = Symbol.create(name, start, end);
+                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function}));
                 const classDeclaration = classStack.top();
-                classDeclaration.symbols.insert(name, symbol);
+                classDeclaration.symbols.insert(symbol);
                 
                 ts.forEachChild(node, visitDeclarations);
 				break;
@@ -332,10 +326,10 @@ Analyzer.analyze = function(ast) {
                     const name = node.name.text;
                     const start = node.getStart();
                     const end = node.end;
-                    const symbol = Symbol.createSymbol(name, start, end);
-                    Ast.addTypeCarrier(node, TypeCarrier.createTypeCarrier(symbol, {type: TypeCarrier.Type.Function}));
+                    const symbol = Symbol.create(name, start, end);
+                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function}));
                     const classDeclaration = classStack.top();
-                    classDeclaration.symbols.insert(name, symbol);
+                    classDeclaration.symbols.insert(symbol);
                 }
 
                 ts.forEachChild(node, visitDeclarations);
@@ -345,12 +339,12 @@ Analyzer.analyze = function(ast) {
             case ts.SyntaxKind.FunctionDeclaration: 
 			case ts.SyntaxKind.FunctionExpression: 
 			case ts.SyntaxKind.ArrowFunction: {
-                node.symbols = SymbolTable.createSymbolTable();
+                node.symbols = SymbolTable.create();
                 ts.forEachChild(node, visitDeclarations);
                 break;
             }
             case ts.SyntaxKind.ClassExpression: {
-                node.symbols = SymbolTable.createSymbolTable();
+                node.symbols = SymbolTable.create();
                 classStack.push(node);
                 ts.forEachChild(node, visitDeclarations);
                 classStack.pop();
@@ -358,7 +352,7 @@ Analyzer.analyze = function(ast) {
 			}
 			case ts.SyntaxKind.Block: {
 
-                node.symbols = SymbolTable.createSymbolTable();
+                node.symbols = SymbolTable.create();
 
                 if(node.parent.kind === ts.SyntaxKind.FunctionDeclaration || 
                     node.parent.kind === ts.SyntaxKind.Constructor ||
@@ -387,7 +381,7 @@ Analyzer.analyze = function(ast) {
             case ts.SyntaxKind.ForStatement:
             case ts.SyntaxKind.ForInStatement:
             case ts.SyntaxKind.ForOfStatement: {
-                node.symbols = SymbolTable.createSymbolTable();
+                node.symbols = SymbolTable.create();
                 hoistBlockScopedDeclarations(node);
                 ts.forEachChild(node, visitDeclarations);
             }

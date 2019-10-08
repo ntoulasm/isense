@@ -1,4 +1,4 @@
-const TypeCarrier = require('./type_carrier.js');
+const TypeCarrier = require('./type_carrier');
 
 const ts = require('typescript');
 
@@ -126,6 +126,8 @@ Ast.findInnermostNode = (ast, offset, kind) => {
 /**
  * @param {ts.Node} node 
  * @param {string} name 
+ * 
+ * @returns {isense.symbol}
  */
 Ast.lookUp = (node, name) => {
     const visibleSymbols = Ast.findVisibleSymbols(node);
@@ -336,13 +338,13 @@ Ast.findAllTypeCarriers = node => {
 
     const typeCarriers = [];
 
-    function findAlltypeCarriers(node) {
+    function findAllTypeCarriers(node) {
         if(node.hasOwnProperty("typeCarriers")) {
             typeCarriers.push(...node.typeCarriers);
         }
-        ts.forEachChild(node, findAlltypeCarriers);
+        ts.forEachChild(node, findAllTypeCarriers);
     }
-    findAlltypeCarriers(node);
+    findAllTypeCarriers(node);
 
     return typeCarriers;
 

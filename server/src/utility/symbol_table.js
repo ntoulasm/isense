@@ -1,17 +1,23 @@
 const SymbolTable = {};
 
-SymbolTable.createSymbolTable = function() {
+SymbolTable.create = function() {
 
 	const symbolTable = {};
 
 	const symbols = {};
 
-    symbolTable.insert = function(name, symbol) {
+    /**
+     * @param {isense.Symbol} symbol
+     */
+    symbolTable.insert = function(symbol) {
+        const name = symbol.name;
         symbols[name] = symbol;
     };
 
     /**
      * @param {string} name
+     * 
+     * @returns {isense.symbol}
      */
     symbolTable.lookUp = function(name) {
         if(symbols.hasOwnProperty(name)) {
@@ -21,10 +27,16 @@ SymbolTable.createSymbolTable = function() {
         }
     };
 
+    /**
+     * @returns {array<isense.symbol>}
+     */
     symbolTable.getSymbols = function() {
         return symbols;
     };
 
+    /**
+     * @returns {void}
+     */
     symbolTable.print = function() {
         console.log(symbolTable.getSymbols());
     };
