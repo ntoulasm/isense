@@ -31,7 +31,7 @@ connection.onInitialize((params) => {
 	return {
 		capabilities: {
 			textDocumentSync: vscodeLanguageServer.TextDocumentSyncKind.Incremental,
-			hoverProvider: "true",
+			hoverProvider: true,
 			signatureHelpProvider: {
 				triggerCharacters: ['(', ',']
 			},

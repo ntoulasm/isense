@@ -89,7 +89,7 @@ Analyzer.analyze = function(ast) {
                     const start = node.getStart();
                     const end = node.end;
                     const symbol = Symbol.create(name, start, end, false, func.getStart());
-                    Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function}));
+                    Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function, node}));
                     func.symbols.insert(symbol);
 
                     break;
@@ -339,6 +339,7 @@ Analyzer.analyze = function(ast) {
             case ts.SyntaxKind.FunctionDeclaration: 
 			case ts.SyntaxKind.FunctionExpression: 
 			case ts.SyntaxKind.ArrowFunction: {
+                node.callSites = [];
                 node.symbols = SymbolTable.create();
                 ts.forEachChild(node, visitDeclarations);
                 break;
@@ -384,6 +385,21 @@ Analyzer.analyze = function(ast) {
                 node.symbols = SymbolTable.create();
                 hoistBlockScopedDeclarations(node);
                 ts.forEachChild(node, visitDeclarations);
+                break;
+            }
+            case ts.SyntaxKind.CallExpression: {
+
+                if(node.expression.kind == ts.SyntaxKind.Identifier) {
+                    const name = node.expression.getText();
+                    const callee = Ast.findCallee(node, name);
+                    if(callee !== undefined) {
+                        Ast.addCallSite(callee, node);
+                    }
+                }
+
+                ts.forEachChild(node, visitDeclarations);
+                break;
+
             }
 			default: {
 				ts.forEachChild(node, visitDeclarations);
@@ -396,11 +412,11 @@ Analyzer.analyze = function(ast) {
 	hoistBlockScopedDeclarations(ast);
     ts.forEachChild(ast, visitDeclarations);
     
-    console.log("---------------");
-    Ast.findAllSymbols(ast).forEach(symbol => {
-        console.log(symbol);
-    });
-    console.log("---------------");
+    // console.log("---------------");
+    // Ast.findAllSymbols(ast).forEach(symbol => {
+    //     console.log(symbol);
+    // });
+    // console.log("---------------");
 
 }
 

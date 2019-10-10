@@ -213,7 +213,7 @@ Ast.deduceTypes = node => {
         }
         case ts.SyntaxKind.FunctionExpression:
         case ts.SyntaxKind.ArrowFunction: {
-            return [{type: TypeCarrier.Type.Function}];
+            return [{type: TypeCarrier.Type.Function, node}];
         }
         case ts.SyntaxKind.ClassExpression : {
             return [{type: TypeCarrier.Type.Class}];
@@ -253,29 +253,10 @@ Ast.addTypeCarrier = (node, typeCarrier) => {
     node.typeCarriers.push(typeCarrier);
 };
 
-Ast.addTypeCarrierToClosestStatement = (node, typeCarrier) => {
-    
-    const statements = [
-        ts.SyntaxKind.VariableStatement,
-        ts.SyntaxKind.ExpressionStatement,
-        ts.SyntaxKind.ForStatement,
-        ts.SyntaxKind.ForOfStatement,
-        ts.SyntaxKind.ForInStatement,
-        ts.SyntaxKind.ThrowStatement,
-        ts.SyntaxKind.ReturnStatement,
-        ts.SyntaxKind.SwitchStatement,
-        ts.SyntaxKind.Parameter
-    ];
-
-    while (statements.indexOf(node.kind) === -1) {
-        console.assert(node.parent !== undefined);
-        node = node.parent;
-    }
-
-    Ast.addTypeCarrier(node, typeCarrier);
-
-};
-
+/**
+ * @param {ts.Node} node
+ * @param {isense.typeCarrier} typeCarrier
+ */
 Ast.addTypeCarrierToExpression = (node, typeCarrier) => {
     Ast.findBinaryExpressionAncestors(node).forEach(node => {
         Ast.addTypeCarrier(node, TypeCarrier.copyTypeCarrier(typeCarrier));
@@ -355,6 +336,32 @@ Ast.findAllTypeCarriers = node => {
  */
 Ast.addAnalyzeDiagnostic = (ast, diagnostic) => {
     ast.analyzeDiagnostics.push(diagnostic);
+};
+
+/**
+ * @param {ts.Node} call
+ * @param {string} calleeName
+ */
+Ast.findCallee = (call, calleeName) => {
+    const symbol = Ast.lookUp(call, calleeName);
+    if(symbol === undefined) { return undefined; }
+    const typeCarrier = Ast.findClosestTypeCarrier(call, symbol);
+    if(!typeCarrier.hasUniqueType()) { return undefined; }
+    const type = typeCarrier.getTypes()[0];
+    return type.type === TypeCarrier.Type.Function ? type.node : undefined;
+};
+
+/**
+ * @param {ts.Node} callee
+ * @param {ts.Node} call
+ */
+Ast.addCallSite = (callee, call) => {
+    {
+        const calleePosition = callee.getSourceFile().getLineAndCharacterOfPosition(callee.getStart());
+        const callPosition = call.getSourceFile().getLineAndCharacterOfPosition(call.getStart());
+        console.log(`call at line ${callPosition.line + 1} is a call site of function declared at line ${calleePosition.line + 1}`);
+    }
+    callee.callSites.push(call);
 };
 
 module.exports = Ast;
