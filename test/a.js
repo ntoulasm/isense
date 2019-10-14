@@ -28,13 +28,17 @@ x = {};
 {	
 	var jaja = 2;
 	let a = 1;
+	x = 2;
 };
+x
 
 function y(a, {z: b, c, d},  [e, f, ...g],  {h, i, j, k: {l, m}}) {
 	let n = 2;
-	global = 5;
+	// global = 5;
 }
+y();
 y = x;
+y(); // y is now a number
 
 const [a, b, ...rest] = [1, 2, 3, 4, 5];
 let {aa, bb, ...rrest} = {
@@ -49,7 +53,7 @@ var obj = { a: 'foo' };
 var { a: whereToStoreValue } = obj;
 
 class point {
-	
+
 	constructor(x, y) {
 		this.setX(x);
 		this.setY(y);
@@ -76,3 +80,31 @@ class point {
 	}
 
 }
+point;
+point = 5;
+
+for(let i = 0; i < 5; ++i) {
+	console.log(i);
+}
+
+(x = 5) + x + (x = "") + x;;
+
+function foo() {
+
+}
+foo();
+foo = function() {
+	x = "inside foo";
+	let k = 2;
+	let z = () => { k = "inside z" };
+	z();
+	k;
+};
+foo();
+x;
+x = 10;
+x;
+foo();
+x;
+foo = () => {};
+foo();
