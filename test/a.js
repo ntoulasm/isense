@@ -106,5 +106,16 @@ x = 10;
 x;
 foo();
 x;
-foo = () => {};
+foo = () => { x = "inside foo arrow"; };
 foo();
+x;
+(function () {
+	x = 100;
+})();
+x;
+
+hoisted();
+x;
+function hoisted() {
+	x = 50;
+}

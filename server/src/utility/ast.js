@@ -398,6 +398,9 @@ Ast.findCallee = (call, calleeName) => {
  * @param {ts.Node} call
  */
 Ast.addCallSite = (callee, call) => {
+    if(!callee.hasOwnProperty("callSites")) {
+        callee.callSites = [];
+    }
     {
         const calleePosition = callee.getSourceFile().getLineAndCharacterOfPosition(callee.getStart());
         const callPosition = call.getSourceFile().getLineAndCharacterOfPosition(call.getStart());

@@ -350,7 +350,6 @@ Analyzer.analyze = function(ast) {
             case ts.SyntaxKind.FunctionDeclaration: 
 			case ts.SyntaxKind.FunctionExpression: 
 			case ts.SyntaxKind.ArrowFunction: {
-                node.callSites = [];
                 node.symbols = SymbolTable.create();
                 functionStack.push(node);
                 ts.forEachChild(node, visitDeclarations);
@@ -402,12 +401,20 @@ Analyzer.analyze = function(ast) {
             }
             case ts.SyntaxKind.CallExpression: {
 
-                if(node.expression.kind == ts.SyntaxKind.Identifier) {
+                if(node.expression.kind == ts.SyntaxKind.Identifier) {  // x(...);
                     const name = node.expression.getText();
                     const callee = Ast.findCallee(node, name);
                     if(callee !== undefined) {
                         Ast.addCallSite(callee, node);
                     }
+                } else if(node.expression.kind === ts.SyntaxKind.ParenthesizedExpression &&
+                    node.expression.expression.kind === ts.SyntaxKind.FunctionExpression) { // iife
+                    const callee = node.expression.expression;
+                    console.assert(callee !== undefined);
+                    Ast.addCallSite(callee, node);
+                } else {
+                    const line = ast.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+                    console.assert(false, "Could not recognize type of callee at line " + line);
                 }
 
                 ts.forEachChild(node, visitDeclarations);
@@ -425,11 +432,13 @@ Analyzer.analyze = function(ast) {
 	hoistBlockScopedDeclarations(ast);
     ts.forEachChild(ast, visitDeclarations);
 
-    nonPureFunctions.forEach(nonPureFunction => {
-        nonPureFunction.affectedOutOfScopeSymbols.forEach(typeCarrier => {
-            nonPureFunction.callSites.forEach(call => {
-                Ast.addTypeCarrierToClosestStatement(call, typeCarrier);
-            });
+    nonPureFunctions.forEach(func => {
+        func.affectedOutOfScopeSymbols.forEach(typeCarrier => {
+            if(func.hasOwnProperty("callSites")) {
+                func.callSites.forEach(call => {
+                    Ast.addTypeCarrierToClosestStatement(call, typeCarrier);
+                });
+            }
         });
     });
     
