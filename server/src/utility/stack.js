@@ -1,6 +1,6 @@
 const Stack = {};
 
-Stack.createStack = function() {
+Stack.create = function() {
 
     const stack = {};
     const elements = [];

@@ -124,6 +124,20 @@ Ast.findInnermostNode = (ast, offset, kind) => {
 };
 
 /**
+ * @param {ts.SourceFile} ast
+ * @param {number} offset
+ */
+Ast.findInnermostNodeOfAnyKind = (ast, offset) => {
+    function findInnermostNodeOfAnyKind(node) {
+        if(node.getStart() <= offset && node.end >= offset) {
+            const innermostNode = ts.forEachChild(node, findInnermostNodeOfAnyKind);
+            return (innermostNode) ? innermostNode : node; 
+        }
+    }
+    return ts.forEachChild(ast, findInnermostNodeOfAnyKind);
+};
+
+/**
  * @param {ts.Node} node 
  * @param {string} name 
  * 
@@ -233,6 +247,9 @@ Ast.deduceTypes = node => {
                 return typeCarrier.getTypes();
             }
         }
+        default: {
+            return [{type: TypeCarrier.Type.Undefined}];
+        }
     }
 };
 
@@ -251,6 +268,31 @@ Ast.addTypeCarrier = (node, typeCarrier) => {
         }
     }
     node.typeCarriers.push(typeCarrier);
+};
+
+/**
+ * @param {ts.Node} node
+ * @param {isense.typeCarrier} typeCarrier
+ */
+Ast.addTypeCarrierToClosestStatement = (node, typeCarrier) => { 
+    const statements = [
+        ts.SyntaxKind.VariableStatement,
+        ts.SyntaxKind.ExpressionStatement,
+        ts.SyntaxKind.ForStatement,
+        ts.SyntaxKind.ForOfStatement,
+        ts.SyntaxKind.ForInStatement,
+        ts.SyntaxKind.ThrowStatement,
+        ts.SyntaxKind.ReturnStatement,
+        ts.SyntaxKind.SwitchStatement
+    ];
+
+    while (statements.indexOf(node.kind) === -1) {
+        console.assert(node.parent !== undefined);
+        node = node.parent;
+    }
+
+    Ast.addTypeCarrier(node, typeCarrier);
+
 };
 
 /**
@@ -362,6 +404,57 @@ Ast.addCallSite = (callee, call) => {
         console.log(`call at line ${callPosition.line + 1} is a call site of function declared at line ${calleePosition.line + 1}`);
     }
     callee.callSites.push(call);
+};
+
+/**
+ * @param {ts.Node} node
+ */
+Ast.isFunction = node => {
+    const kind = node.kind;
+    return kind === ts.SyntaxKind.FunctionDeclaration || kind === ts.SyntaxKind.FunctionExpression || kind === ts.SyntaxKind.ArrowFunction;
+};
+
+/**
+ * @param {ts.Node} node
+ */
+Ast.findAncestorFunction = node => {
+    while(node !== undefined) {
+        if(Ast.isFunction(node)) {
+            return node;
+        }
+        node = node.parent;
+    }
+    return undefined;
+};
+
+/**
+ * @param {ts.Node} node
+ * @param {isense.symbol} symbol
+ * @param {ts.Node} functionNode
+ */
+Ast.isDeclaredInFunction = (node, symbol, functionNode) => {
+    if(node.hasOwnProperty("symbols") && node.symbols.hasSymbol(symbol)) {
+        return true;
+    }
+    if(node === functionNode) {
+        return false;
+    }
+    console.assert(node.parent !== undefined, "isDeclaredInFunction");
+    const leftSibling = Ast.findLeftSibling(node);
+    return leftSibling !== undefined ? 
+        Ast.isDeclaredInFunction(leftSibling, symbol, functionNode) : 
+        Ast.isDeclaredInFunction(node.parent, symbol, functionNode);
+};
+
+/**
+ * @param {ts.Node} node
+ * @param {isense.typeCarrier} typeCarrier
+ */
+Ast.addTypeCarrierToNonPureFunction = (func, typeCarrier) => {
+    if(!func.hasOwnProperty("affectedOutOfScopeSymbols")) {
+        func.affectedOutOfScopeSymbols = [];
+    }
+    func.affectedOutOfScopeSymbols.push(typeCarrier);
 };
 
 module.exports = Ast;

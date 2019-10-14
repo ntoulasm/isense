@@ -14,7 +14,9 @@ const Analyzer = {};
  */
 Analyzer.analyze = function(ast) {
     
-    const classStack = Stack.createStack();
+    const classStack = Stack.create();
+    const functionStack = Stack.create();
+    const nonPureFunctions = new Set();
 
     ast.analyzeDiagnostics = [];
     ast.symbols = SymbolTable.create();
@@ -231,7 +233,16 @@ Analyzer.analyze = function(ast) {
                         const name = node.left.escapedText;
                         const symbol = Ast.lookUp(node, name);
 						if(symbol) {
-                            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(symbol, Ast.deduceTypes(node.right)));
+                            const typeCarrier = TypeCarrier.create(symbol, Ast.deduceTypes(node.right));
+                            Ast.addTypeCarrierToExpression(node, typeCarrier);
+
+                            if(!functionStack.isEmpty()) {
+                                const func = functionStack.top();
+                                if(!Ast.isDeclaredInFunction(node, symbol, func)) {
+                                    Ast.addTypeCarrierToNonPureFunction(func, typeCarrier);
+                                    nonPureFunctions.add(func);
+                                }
+                            }
                         } else {
                             const startPosition = ast.getLineAndCharacterOfPosition(node.getStart());
                             const endPosition = ast.getLineAndCharacterOfPosition(node.end);
@@ -341,7 +352,9 @@ Analyzer.analyze = function(ast) {
 			case ts.SyntaxKind.ArrowFunction: {
                 node.callSites = [];
                 node.symbols = SymbolTable.create();
+                functionStack.push(node);
                 ts.forEachChild(node, visitDeclarations);
+                functionStack.pop();
                 break;
             }
             case ts.SyntaxKind.ClassExpression: {
@@ -411,6 +424,14 @@ Analyzer.analyze = function(ast) {
 	hoistFunctionScopedDeclarations(ast);
 	hoistBlockScopedDeclarations(ast);
     ts.forEachChild(ast, visitDeclarations);
+
+    nonPureFunctions.forEach(nonPureFunction => {
+        nonPureFunction.affectedOutOfScopeSymbols.forEach(typeCarrier => {
+            nonPureFunction.callSites.forEach(call => {
+                Ast.addTypeCarrierToClosestStatement(call, typeCarrier);
+            });
+        });
+    });
     
     // console.log("---------------");
     // Ast.findAllSymbols(ast).forEach(symbol => {

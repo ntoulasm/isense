@@ -27,6 +27,15 @@ SymbolTable.create = function() {
         }
     };
 
+    symbolTable.hasSymbol = symbol => {
+        for(const [, s] of Object.entries(symbols)) {
+            if(symbol === s) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     /**
      * @returns {array<isense.symbol>}
      */
