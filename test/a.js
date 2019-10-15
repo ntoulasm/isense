@@ -58,7 +58,7 @@ class point {
 		this.setX(x);
 		this.setY(y);
 	}
-
+	
 	set x(x) {
 		this.x = x; 
 	}
@@ -80,8 +80,8 @@ class point {
 	}
 
 }
-point;
-point = 5;
+const p = new point();
+p;
 
 for(let i = 0; i < 5; ++i) {
 	console.log(i);
@@ -119,3 +119,11 @@ x;
 function hoisted() {
 	x = 50;
 }
+
+function dog(breed, age) {
+	this.breed = breed;
+	this.age = age;
+}
+const cat = dog;
+const goodBoy1 = new dog('Beagle', 1);
+const goodBoy2 = new cat('Beagle', 2);

@@ -230,7 +230,7 @@ Ast.deduceTypes = node => {
             return [{type: TypeCarrier.Type.Function, node}];
         }
         case ts.SyntaxKind.ClassExpression : {
-            return [{type: TypeCarrier.Type.Class}];
+            return [{type: TypeCarrier.Type.Class, node}];
         }
         case ts.SyntaxKind.NullKeyword: {
             return [{type: TypeCarrier.Type.Null}];
@@ -243,8 +243,26 @@ Ast.deduceTypes = node => {
                 return [{type: TypeCarrier.Type.Undefined}];
             } else {
                 const symbol = Ast.lookUp(node, node.escapedText);
+                if(symbol === undefined) { return [{type: TypeCarrier.Type.Undefined}]; }
                 const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
+                if(typeCarrier === undefined) { return [{type: TypeCarrier.Type.Undefined}]; }
                 return typeCarrier.getTypes();
+            }
+        }
+        case ts.SyntaxKind.NewExpression: {
+            if(node.expression.kind === ts.SyntaxKind.Identifier) {
+                const symbol = Ast.lookUp(node,node.expression.getText());
+                if(symbol === undefined) { return [{type: TypeCarrier.Type.Undefined}]; }
+                const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
+                if(typeCarrier === undefined) { return [{type: TypeCarrier.Type.Undefined}]; }
+                if(typeCarrier.hasUniqueType()) {
+                    const type = typeCarrier.getTypes()[0];
+                    if(type.type === TypeCarrier.Type.Function || type.type === TypeCarrier.Type.Class) {
+                        return type.node.constructorType;
+                    }
+                }
+            } else {
+                console.assert(false, "NewExpression's expression is not an identifier");
             }
         }
         default: {

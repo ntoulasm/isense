@@ -149,7 +149,7 @@ Analyzer.analyze = function(ast) {
                     const start = node.getStart();
                     const end = node.end;
                     const symbol = Symbol.create(name, start, end);
-                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Class}));
+                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Class, node}));
     
                     block.symbols.insert(symbol);
                     break;
@@ -295,7 +295,7 @@ Analyzer.analyze = function(ast) {
 				const start = node.getStart();
                 const end = node.end;
                 const symbol = Symbol.create(name, start, end);
-                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function}));
+                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function, node}));
                 const classDeclaration = classStack.top();
                 classDeclaration.symbols.insert(symbol);
                 
@@ -309,7 +309,7 @@ Analyzer.analyze = function(ast) {
 				const start = node.getStart();
 				const end = node.end;
                 const symbol = Symbol.create(name, start, end);
-                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function}));
+                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function, node}));
                 const classDeclaration = classStack.top();
 				classDeclaration.symbols.insert(symbol);
 
@@ -323,7 +323,7 @@ Analyzer.analyze = function(ast) {
 				const start = node.getStart();
 				const end = node.end;
                 const symbol = Symbol.create(name, start, end);
-                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function}));
+                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function, node}));
                 const classDeclaration = classStack.top();
                 classDeclaration.symbols.insert(symbol);
                 
@@ -338,7 +338,7 @@ Analyzer.analyze = function(ast) {
                     const start = node.getStart();
                     const end = node.end;
                     const symbol = Symbol.create(name, start, end);
-                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function}));
+                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function, node}));
                     const classDeclaration = classStack.top();
                     classDeclaration.symbols.insert(symbol);
                 }

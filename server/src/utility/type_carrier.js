@@ -13,11 +13,12 @@ TypeCarrier.Type = {
     Array: 5,
     Object: 6,
     Undefined: 7,
-    Null: 8
+    Null: 8,
+    UserDefined: 9
 };
 
 TypeCarrier.typeToString = type => {
-    switch (type) {
+    switch (type.type) {
         case TypeCarrier.Type.Class: {
             return "class";
         }
@@ -45,8 +46,11 @@ TypeCarrier.typeToString = type => {
         case TypeCarrier.Type.Null: {
             return "null";
         }
+        case TypeCarrier.Type.UserDefined: {
+            return type.name;
+        }
         default: {
-            console.assert(false);
+            console.assert(false, "Unknown type of type carrier");
         }
     }
 };
@@ -64,7 +68,7 @@ function computeSignature(typeCarrier) {
                 return symbol.name + ": function() {}";
             }
             default: {
-                return (symbol.isConst ? "const " : "") + symbol.name + ": " + TypeCarrier.typeToString(type.type) + (type.value !== undefined ? " = " + type.value : "");
+                return (symbol.isConst ? "const " : "") + symbol.name + ": " + TypeCarrier.typeToString(type) + (type.value !== undefined ? " = " + type.value : "");
             }
         }
     }
@@ -119,6 +123,18 @@ TypeCarrier.create = (symbol, types) => {
         typeCarrier.private.symbol = symbol;
         typeCarrier.private.types = Utility.toArray(types);
         typeCarrier.private.signature = computeSignature(typeCarrier);
+
+        if(typeCarrier.hasUniqueType()) {
+            const type = typeCarrier.private.types[0];
+            if(type.type === TypeCarrier.Type.Function || type.type === TypeCarrier.Type.Class) {
+                if(!type.node.hasOwnProperty("constructorType")) {
+                    type.node.constructorType = {
+                        type: TypeCarrier.Type.UserDefined,
+                        name: symbol.name
+                    };
+                }
+            }
+        }
 
     })();
 
