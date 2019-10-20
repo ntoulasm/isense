@@ -18,7 +18,7 @@ TypeCarrier.Type = {
 };
 
 TypeCarrier.typeToString = type => {
-    switch (type.type) {
+    switch (type.id) {
         case TypeCarrier.Type.Class: {
             return "class";
         }
@@ -56,7 +56,7 @@ TypeCarrier.typeToString = type => {
 };
 
 function valueToString(type) {
-    switch(type.type) {
+    switch(type.id) {
         case TypeCarrier.Type.String: {
             return '"' + type.value + '"';
         }
@@ -64,6 +64,13 @@ function valueToString(type) {
             return type.value;
         }
     }
+}
+
+function computeSignatureValue(type) {
+    if(!type.hasOwnProperty("value") || type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
+        return "";
+    }
+    return " = " + valueToString(type);
 }
 
 function computeSignature(typeCarrier) {
@@ -79,7 +86,7 @@ function computeSignature(typeCarrier) {
                 return symbol.name + ": function() {}";
             }
             default: {
-                return (symbol.isConst ? "const " : "") + symbol.name + ": " + TypeCarrier.typeToString(type) + (type.value !== undefined ? " = " + valueToString(type) : "");
+                return (symbol.isConst ? "const " : "") + symbol.name + ": " + TypeCarrier.typeToString(type) + computeSignatureValue(type);
             }
         }
     }
@@ -137,10 +144,10 @@ TypeCarrier.create = (symbol, types) => {
 
         if(typeCarrier.hasUniqueType()) {
             const type = typeCarrier.private.types[0];
-            if(type.type === TypeCarrier.Type.Function || type.type === TypeCarrier.Type.Class) {
+            if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
                 if(!type.node.hasOwnProperty("constructorType")) {
                     type.node.constructorType = {
-                        type: TypeCarrier.Type.UserDefined,
+                        id: TypeCarrier.Type.UserDefined,
                         name: symbol.name
                     };
                 }

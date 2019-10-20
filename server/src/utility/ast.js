@@ -336,7 +336,7 @@ Ast.findCallee = (call, calleeName) => {
     const typeCarrier = Ast.findClosestTypeCarrier(call, symbol);
     if(!typeCarrier.hasUniqueType()) { return undefined; }
     const type = typeCarrier.getTypes()[0];
-    return type.type === TypeCarrier.Type.Function ? type.node : undefined;
+    return type.id === TypeCarrier.Type.Function ? type.node : undefined;
 };
 
 /**

@@ -71,14 +71,14 @@ Analyzer.analyze = function(ast) {
                             const start = node.name.getStart();
                             const end = node.name.end;
                             const symbol = Symbol.create(name, start, end, false, func.getStart());
-                            Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                            Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
                             Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.initializer)));
                             func.symbols.insert(symbol);
                         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
                             visitDestructuringDeclerations(node.name, (name, start, end) => {
                                 const symbol = Symbol.create(name, start, end, false, func.getStart());
-                                Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
-                                Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                                Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+                                Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
                                 func.symbols.insert(symbol);
                             });
                         }
@@ -92,7 +92,7 @@ Analyzer.analyze = function(ast) {
                     const start = node.getStart();
                     const end = node.end;
                     const symbol = Symbol.create(name, start, end, false, func.getStart());
-                    Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function, node}));
+                    Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Function, node}));
                     func.symbols.insert(symbol);
 
                     break;
@@ -135,7 +135,7 @@ Analyzer.analyze = function(ast) {
                         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
                             visitDestructuringDeclerations(node.name, (name, start, end) => {
                                 const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
-                                Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                                Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
                                 block.symbols.insert(symbol);
                             });
                         } else {
@@ -150,7 +150,7 @@ Analyzer.analyze = function(ast) {
                     const start = node.getStart();
                     const end = node.end;
                     const symbol = Symbol.create(name, start, end);
-                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Class, node}));
+                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Class, node}));
     
                     block.symbols.insert(symbol);
                     break;
@@ -193,7 +193,7 @@ Analyzer.analyze = function(ast) {
 					const end = node.name.end;
                     const symbol = Symbol.create(name, start, end);
                     importDeclaration.symbols.insert(symbol);
-                    Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                    Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
                 }
                 
                 ts.forEachChild(node, visitDeclarations);
@@ -208,7 +208,7 @@ Analyzer.analyze = function(ast) {
                 const end = node.name.end;
                 const symbol = Symbol.create(name, start, end);
                 importDeclaration.symbols.insert(symbol);
-                Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
                 break;
 
             } 
@@ -220,7 +220,7 @@ Analyzer.analyze = function(ast) {
                 const end = node.name.end;
                 const symbol = Symbol.create(name, start, end);
                 importDeclaration.symbols.insert(symbol);
-                Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
 
                 break;
 
@@ -264,12 +264,12 @@ Analyzer.analyze = function(ast) {
 					const start = node.name.getStart();
                     const end = node.name.end;
                     const symbol = Symbol.create(name, start, end);
-                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
                     node.symbols.insert(symbol);
 				} else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
 					visitDestructuringDeclerations(node.name, (name, start, end) => {
                         const symbol = Symbol.create(name, start, end);
-                        Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
+                        Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
                         node.symbols.insert(symbol);
                     });
 				} else {
@@ -296,7 +296,7 @@ Analyzer.analyze = function(ast) {
 				const start = node.getStart();
                 const end = node.end;
                 const symbol = Symbol.create(name, start, end);
-                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function, node}));
+                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Function, node}));
                 const classDeclaration = classStack.top();
                 classDeclaration.symbols.insert(symbol);
                 
@@ -310,7 +310,7 @@ Analyzer.analyze = function(ast) {
 				const start = node.getStart();
 				const end = node.end;
                 const symbol = Symbol.create(name, start, end);
-                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function, node}));
+                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Function, node}));
                 const classDeclaration = classStack.top();
 				classDeclaration.symbols.insert(symbol);
 
@@ -324,7 +324,7 @@ Analyzer.analyze = function(ast) {
 				const start = node.getStart();
 				const end = node.end;
                 const symbol = Symbol.create(name, start, end);
-                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function, node}));
+                Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Function, node}));
                 const classDeclaration = classStack.top();
                 classDeclaration.symbols.insert(symbol);
                 
@@ -339,7 +339,7 @@ Analyzer.analyze = function(ast) {
                     const start = node.getStart();
                     const end = node.end;
                     const symbol = Symbol.create(name, start, end);
-                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Function, node}));
+                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Function, node}));
                     const classDeclaration = classStack.top();
                     classDeclaration.symbols.insert(symbol);
                 }

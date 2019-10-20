@@ -15,7 +15,7 @@ const deduceTypesPlusExpressionFunctionTable = {};
 TypeDeducer.deduceTypes = node => {
     if(node === undefined || !deduceTypesFunctionTable.hasOwnProperty(node.kind)) {
         return [{
-            type: TypeCarrier.Type.Undefined
+            id: TypeCarrier.Type.Undefined
         }];
     }
     return deduceTypesFunctionTable[node.kind](node);
@@ -26,7 +26,7 @@ TypeDeducer.deduceTypes = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.NumericLiteral] = node => {
     return [{
-        type: TypeCarrier.Type.Number,
+        id: TypeCarrier.Type.Number,
         value: node.text
     }];
 };
@@ -36,7 +36,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.NumericLiteral] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.StringLiteral] = node => {
     return [{
-        type: TypeCarrier.Type.String,
+        id: TypeCarrier.Type.String,
         value: node.text
     }];
 };
@@ -46,7 +46,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.StringLiteral] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.TrueKeyword] = node => {
     return [{
-        type: TypeCarrier.Type.Boolean,
+        id: TypeCarrier.Type.Boolean,
         value: true
     }];
 };
@@ -56,7 +56,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.TrueKeyword] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.FalseKeyword] = node => {
     return [{
-        type: TypeCarrier.Type.Boolean,
+        id: TypeCarrier.Type.Boolean,
         value: false
     }];
 };
@@ -66,7 +66,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.FalseKeyword] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.ArrayLiteralExpression] = node => {
     return [{
-        type: TypeCarrier.Type.Array
+        id: TypeCarrier.Type.Array
     }];
 };
 
@@ -75,7 +75,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ArrayLiteralExpression] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.ObjectLiteralExpression] = node => {
     return [{
-        type: TypeCarrier.Type.Object
+        id: TypeCarrier.Type.Object
     }];
 };
 
@@ -85,7 +85,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ObjectLiteralExpression] = node => {
 deduceTypesFunctionTable[ts.SyntaxKind.FunctionExpression] =
 deduceTypesFunctionTable[ts.SyntaxKind.ArrowFunction] = node => {
     return [{
-        type: TypeCarrier.Type.Function, node
+        id: TypeCarrier.Type.Function, node
     }];
 };
 
@@ -94,7 +94,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ArrowFunction] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.ClassExpression] = node => {
     return [{
-        type: TypeCarrier.Type.Class, node}
+        id: TypeCarrier.Type.Class, node}
     ];
 };
 
@@ -103,7 +103,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ClassExpression] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.NullKeyword] = node => {
     return [{
-        type: TypeCarrier.Type.Null
+        id: TypeCarrier.Type.Null
     }];
 };
 
@@ -112,7 +112,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.NullKeyword] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.UndefinedKeyword] = node => {
     return [{
-        type: TypeCarrier.Type.Undefined
+        id: TypeCarrier.Type.Undefined
     }];
 };
 
@@ -122,19 +122,19 @@ deduceTypesFunctionTable[ts.SyntaxKind.UndefinedKeyword] = node => {
 deduceTypesFunctionTable[ts.SyntaxKind.Identifier] = node => {
     if(node.escapedText === "undefined") {
         return [{
-            type: TypeCarrier.Type.Undefined
+            id: TypeCarrier.Type.Undefined
         }];
     }
     const symbol = Ast.lookUp(node, node.escapedText);
     if(symbol === undefined) { 
         return [{
-            type: TypeCarrier.Type.Undefined
+            id: TypeCarrier.Type.Undefined
         }]; 
     }
     const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
     if(typeCarrier === undefined) {
         return [{
-            type: TypeCarrier.Type.Undefined
+            id: TypeCarrier.Type.Undefined
         }];
     }
     return typeCarrier.getTypes();
@@ -146,7 +146,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.Identifier] = node => {
 deduceTypesFunctionTable[ts.SyntaxKind.BinaryExpression] = node => {
     if(!deduceTypesBinaryExpressionFunctionTable.hasOwnProperty(node.operatorToken.kind)) {
         return [{
-            type: TypeCarrier.Type.String,
+            id: TypeCarrier.Type.String,
             value: "Binary expression '" + node.operatorToken.kind +  "' not implemented yet"
         }];
     }
@@ -166,12 +166,12 @@ deduceTypesFunctionTable[ts.SyntaxKind.ParenthesizedExpression] = node => {
 deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
     if(node.expression.kind === ts.SyntaxKind.Identifier) {
         const symbol = Ast.lookUp(node,node.expression.getText());
-        if(symbol === undefined) { return [{type: TypeCarrier.Type.Undefined}]; }
+        if(symbol === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
         const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
-        if(typeCarrier === undefined) { return [{type: TypeCarrier.Type.Undefined}]; }
+        if(typeCarrier === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
         if(typeCarrier.hasUniqueType()) {
             const type = typeCarrier.getTypes()[0];
-            if(type.type === TypeCarrier.Type.Function || type.type === TypeCarrier.Type.Class) {
+            if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
                 return type.node.constructorType;
             }
         }
@@ -193,8 +193,8 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.PlusToken] = (node) => {
 
     for(const leftType of leftTypes) {
         for(const rightType of rightTypes) {
-            console.assert(deduceTypesPlusExpressionFunctionTable.hasOwnProperty(leftType.type));
-            types.push(...deduceTypesPlusExpressionFunctionTable[leftType.type](leftType, rightType));
+            console.assert(deduceTypesPlusExpressionFunctionTable.hasOwnProperty(leftType.id));
+            types.push(...deduceTypesPlusExpressionFunctionTable[leftType.id](leftType, rightType));
         }
     }
 
@@ -214,11 +214,11 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = (node) => {
     for(const leftType of leftTypes) {
         for(const rightType of rightTypes) {
 
-            if(leftType.type === rightType.type) {
-                switch(leftType.type) {
+            if(lefttype.id === righttype.id) {
+                switch(lefttype.id) {
                     case TypeCarrier.Type.Number:
                     case TypeCarrier.Type.Boolean: {
-                        const type = { type: TypeCarrier.Type.Number };
+                        const type = { id: TypeCarrier.Type.Number };
                         if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
                             type.value = Number(leftType.value) - Number(rightType.value);
                         }
@@ -227,7 +227,7 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = (node) => {
                     }
                     case TypeCarrier.Type.Null: {
                         types.push({
-                            type: TypeCarrier.Type.Number,
+                            id: TypeCarrier.Type.Number,
                             value: 0
                         });
                         break;
@@ -240,7 +240,7 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = (node) => {
                     case TypeCarrier.Type.Undefined:
                     case TypeCarrier.Type.UserDefined: {
                         types.push({
-                            type: TypeCarrier.Type.Number,
+                            id: TypeCarrier.Type.Number,
                             value: "NaN"
                         });
                         break;
@@ -251,7 +251,7 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = (node) => {
                     }
                 }
             } else {
-                types.push({type: TypeCarrier.Type.String, value: "Binary minus not implemented on different types of operands"});
+                types.push({id: TypeCarrier.Type.String, value: "Binary minus not implemented on different types of operands"});
             }
 
         }
@@ -267,36 +267,36 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Number] = (left, right) 
 
     const type = {};
 
-    switch(right.type) {
+    switch(right.id) {
         case TypeCarrier.Type.Number: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = Number(left.value) + Number(right.value);
             }
             break;
         }
         case TypeCarrier.Type.String: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = String(left.value) + right.value;
             }
             break;
         }
         case TypeCarrier.Type.Boolean: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = Number(left.value) + Number(right.value);
             }
             break;
         }
         case TypeCarrier.Type.Array: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             type.value = "TODO: number + array";
             break;
         }
         case TypeCarrier.Type.Object:
         case TypeCarrier.Type.UserDefined: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value")) {
                 type.value = String(left.value) + "[object Object]";
             }
@@ -304,21 +304,21 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Number] = (left, right) 
         }
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value")) {
                 type.value = String(left.value) + right.node.getText();
             }
             break;
         }
         case TypeCarrier.Type.Null: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             if(left.hasOwnProperty("value")) {
                 type.value = left.value
             }
             break;
         }
         case TypeCarrier.Type.Undefined: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             type.value = "NaN";
             break;
         }
@@ -336,30 +336,30 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.String] = (left, right) 
 
     const type = {};
 
-    switch(right.type) {
+    switch(right.id) {
         case TypeCarrier.Type.Number: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = left.value + String(right.value);
             }
             break;
         }
         case TypeCarrier.Type.String: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = left.value + right.value;
             }
             break;
         }
         case TypeCarrier.Type.Boolean: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = left.value + String(right.value);
             }
             break;
         }
         case TypeCarrier.Type.Array: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = "TODO: string + array"
             }
@@ -367,7 +367,7 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.String] = (left, right) 
         }
         case TypeCarrier.Type.Object:
         case TypeCarrier.Type.UserDefined: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = left.value + "[object Object]";
             }
@@ -375,21 +375,21 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.String] = (left, right) 
         }
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = left.value + right.node.getText();
             }
             break;
         }
         case TypeCarrier.Type.Null: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value")) {
                 type.value = left.value + "null";
             }
             break;
         }
         case TypeCarrier.Type.Undefined: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value")) {
                 type.value = left.value + "undefined";
             }
@@ -409,30 +409,30 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Boolean] = (left, right)
 
     const type = {};
 
-    switch(right.type) {
+    switch(right.id) {
         case TypeCarrier.Type.Number: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = Number(left.value) + Number(right.value);
             }
             break;
         }
         case TypeCarrier.Type.String: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = String(left.value) + right.value;
             }
             break;
         }
         case TypeCarrier.Type.Boolean: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = Number(left.value) + Number(right.value);
             }
             break;
         }
         case TypeCarrier.Type.Array: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = "TODO: boolean + array";
             }
@@ -440,7 +440,7 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Boolean] = (left, right)
         }
         case TypeCarrier.Type.Object:
         case TypeCarrier.Type.UserDefined: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = String(left.value) + "[object Object]";
             }
@@ -448,21 +448,21 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Boolean] = (left, right)
         }
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value")) {
                 type.value = String(left.value) + right.node.getText();
             } 
             break;
         }
         case TypeCarrier.Type.Null: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             if(left.hasOwnProperty("value")) {
                 type.value = Number(left.value);
             }
             break;
         }
         case TypeCarrier.Type.Undefined: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             type.value = NaN;
             break;
         }
@@ -477,7 +477,7 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Boolean] = (left, right)
 };
 
 deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Array] = (left, right) => {
-    const type = { type: TypeCarrier.Type.String };
+    const type = { id: TypeCarrier.Type.String };
     if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
         type.value = "TODO: array + " + TypeCarrier.typeToString(right);
     }
@@ -489,18 +489,18 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.UserDefined] = (left, ri
 
     const type = {};
 
-    switch(right.type) {
+    switch(right.id) {
         case TypeCarrier.Type.Number:
         case TypeCarrier.Type.String:
         case TypeCarrier.Type.Boolean: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(right.hasOwnProperty("value")) {
                 type.value = "[object Object]" + String(right.value);
             }
             break;
         }
         case TypeCarrier.Type.Array: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(right.hasOwnProperty("value")) {
                 type.value = "TODO: object + array";
             }
@@ -508,23 +508,23 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.UserDefined] = (left, ri
         }
         case TypeCarrier.Type.UserDefined:
         case TypeCarrier.Type.Object: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             type.value = "[object Object][object Object]";
             break;
         }
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             type.value = "[object Object]" + right.node.getText();
             break;
         }
         case TypeCarrier.Type.Null: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             type.value = "[object Object]null";
             break;
         }
         case TypeCarrier.Type.Undefined: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             type.value = "[object Object]undefined";
             break;
         }
@@ -543,20 +543,20 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Class] = (left, right) =
 
     const type = {};
 
-    switch(right.type) {
+    switch(right.id) {
         case TypeCarrier.Type.Number:
         case TypeCarrier.Type.String:
         case TypeCarrier.Type.Boolean:
         case TypeCarrier.Type.Null:
         case TypeCarrier.Type.Undefined: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(right.hasOwnProperty("value")) {
                 type.value = left.node.getText() + String(right.value);
             }
             break;
         }
         case TypeCarrier.Type.Array: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(right.hasOwnProperty("value")) {
                 type.value = "TODO: function + array";
             }
@@ -564,13 +564,13 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Class] = (left, right) =
         }
         case TypeCarrier.Type.Object:
         case TypeCarrier.Type.UserDefined: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             type.value = left.node.getText() + "[object Object]";
             break;
         }
         case TypeCarrier.Type.Function: 
         case TypeCarrier.Type.Class: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             type.value = left.node.getText() + right.node.getText();
             break;
         }
@@ -588,24 +588,24 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Null] = (left, right) =>
 
     const type = {};
 
-    switch(right.type) {
+    switch(right.id) {
         case TypeCarrier.Type.Number:
         case TypeCarrier.Type.Boolean: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             if(right.hasOwnProperty("value")) {
                 type.value = Number(right.value);
             }
             break;
         }
         case TypeCarrier.Type.String: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(right.hasOwnProperty("value")) {
                 type.value = "null" + right.value;
             }
             break;
         }
         case TypeCarrier.Type.Array: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(right.hasOwnProperty("value")) {
                 type.value = "TODO: null + array";
             }
@@ -613,17 +613,17 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Null] = (left, right) =>
         }
         case TypeCarrier.Type.Object:
         case TypeCarrier.Type.UserDefined: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             type.value = "null[object Object]";
             break;
         }
         case TypeCarrier.Type.Null: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             type.value = 0;
             break;
         }
         case TypeCarrier.Type.Undefined: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             type.value = NaN;
         }
         default: {
@@ -640,24 +640,24 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Undefined] = (left, righ
 
     const type = {};
 
-    switch(right.type) {
+    switch(right.id) {
         case TypeCarrier.Type.Number:
         case TypeCarrier.Type.Boolean:
         case TypeCarrier.Type.Null:
         case TypeCarrier.Type.Undefined: {
-            type.type = TypeCarrier.Type.Number;
+            type.id = TypeCarrier.Type.Number;
             type.value = NaN;
             break;
         }
         case TypeCarrier.Type.String: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(right.hasOwnProperty("value")) {
                 type.value = "undefined" + right.value;
             }
             break;
         }
         case TypeCarrier.Type.Array: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             if(right.hasOwnProperty("value")) {
                 type.value = "TODO: undefined + array";
             }
@@ -665,13 +665,13 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Undefined] = (left, righ
         }
         case TypeCarrier.Type.Object:
         case TypeCarrier.Type.UserDefined: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             type.value = "undefined[object Object]";
             break;
         }
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class: {
-            type.type = TypeCarrier.Type.String;
+            type.id = TypeCarrier.Type.String;
             type.value = "undefined" + right.node.getText();
             break;
         }
