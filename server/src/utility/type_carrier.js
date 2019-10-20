@@ -55,6 +55,17 @@ TypeCarrier.typeToString = type => {
     }
 };
 
+function valueToString(type) {
+    switch(type.type) {
+        case TypeCarrier.Type.String: {
+            return '"' + type.value + '"';
+        }
+        default: {
+            return type.value;
+        }
+    }
+}
+
 function computeSignature(typeCarrier) {
 
     const symbol = typeCarrier.getSymbol();
@@ -68,7 +79,7 @@ function computeSignature(typeCarrier) {
                 return symbol.name + ": function() {}";
             }
             default: {
-                return (symbol.isConst ? "const " : "") + symbol.name + ": " + TypeCarrier.typeToString(type) + (type.value !== undefined ? " = " + type.value : "");
+                return (symbol.isConst ? "const " : "") + symbol.name + ": " + TypeCarrier.typeToString(type) + (type.value !== undefined ? " = " + valueToString(type) : "");
             }
         }
     }

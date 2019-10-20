@@ -4,6 +4,7 @@ const SymbolTable = require('../utility/symbol_table');
 const Stack = require('../utility/stack');
 const TypeCarrier = require('../utility/type_carrier');
 const AnalyzeDiagnostic = require('./analyze_diagnostic');
+const TypeDeducer = require('./type_deducer');
 
 const ts = require('typescript');
 
@@ -71,7 +72,7 @@ Analyzer.analyze = function(ast) {
                             const end = node.name.end;
                             const symbol = Symbol.create(name, start, end, false, func.getStart());
                             Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {type: TypeCarrier.Type.Undefined}));
-                            Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, Ast.deduceTypes(node.initializer)));
+                            Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.initializer)));
                             func.symbols.insert(symbol);
                         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
                             visitDestructuringDeclerations(node.name, (name, start, end) => {
@@ -129,7 +130,7 @@ Analyzer.analyze = function(ast) {
                             const start = node.name.getStart();
                             const end = node.name.end;
                             const symbol = Symbol.create(name, start, end, isConst);
-                            Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, Ast.deduceTypes(node.initializer)));
+                            Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.initializer)));
                             block.symbols.insert(symbol);
                         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
                             visitDestructuringDeclerations(node.name, (name, start, end) => {
@@ -233,7 +234,7 @@ Analyzer.analyze = function(ast) {
                         const name = node.left.escapedText;
                         const symbol = Ast.lookUp(node, name);
 						if(symbol) {
-                            const typeCarrier = TypeCarrier.create(symbol, Ast.deduceTypes(node.right));
+                            const typeCarrier = TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.right));
                             Ast.addTypeCarrierToExpression(node, typeCarrier);
 
                             if(!functionStack.isEmpty()) {
