@@ -72,3 +72,19 @@ z = ++x;
 
 /* Prefix -- */
 z = --x;
+
+z = void 2;
+
+z = typeof 2;
+z = typeof "aaa";
+z = typeof true;
+z = typeof false;
+z = typeof [];
+z = typeof {};
+z = typeof (function() {});
+z = typeof (() => {});
+z = typeof (class {});
+z = typeof null;
+z = typeof undefined;
+class p {};
+z = typeof new p();

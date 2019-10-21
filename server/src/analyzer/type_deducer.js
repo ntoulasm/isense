@@ -221,6 +221,50 @@ deduceTypesFunctionTable[ts.SyntaxKind.VoidExpression] = node => {
 };
 
 /**
+ * @param {ts.Node} node
+ */
+deduceTypesFunctionTable[ts.SyntaxKind.TypeOfExpression] = node => {
+    
+    const types = [];
+    const operandTypes = TypeDeducer.deduceTypes(node.expression);
+
+    for(const operandType of operandTypes) {
+
+        const type = {};
+        type.id = TypeCarrier.Type.String;
+
+        switch(operandType.id) {
+            case TypeCarrier.Type.Number:
+            case TypeCarrier.Type.String:
+            case TypeCarrier.Type.Boolean:
+            case TypeCarrier.Type.Object:
+            case TypeCarrier.Type.Function:
+            case TypeCarrier.Type.Undefined: {
+                type.value = TypeCarrier.typeToString(operandType);
+                break;
+            }
+            case TypeCarrier.Type.Array:
+            case TypeCarrier.Type.Class:
+            case TypeCarrier.Type.Null:
+            case TypeCarrier.Type.UserDefined: {
+                type.value = "object";
+                break;
+            }
+            default: {
+                console.assert(false, "Unknown type");
+                break;
+            }
+        }
+
+        types.push(type);
+
+    }
+
+    return types;
+
+};
+
+/**
  * @param {ts.Node} node 
  */
 deduceTypesFunctionTable[ts.SyntaxKind.BinaryExpression] = node => {
@@ -252,7 +296,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
         if(typeCarrier.hasUniqueType()) {
             const type = typeCarrier.getTypes()[0];
             if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
-                return type.node.constructorType;
+                return [type.node.constructorType];
             }
         }
     } else {
