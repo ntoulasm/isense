@@ -406,4 +406,31 @@ Ast.addTypeCarrierToNonPureFunction = (func, typeCarrier) => {
     func.affectedOutOfScopeSymbols.push(typeCarrier);
 };
 
+/**
+ * @param {ts.Node} node
+ */
+Ast.operatorTokenToString = node => {
+    switch(node.kind) {
+        case ts.SyntaxKind.PlusToken: {
+            return '+';
+        }
+        case ts.SyntaxKind.MinusToken: {
+            return '-';
+        }
+        case ts.SyntaxKind.AsteriskToken: {
+            return '*';
+        }
+        case ts.SyntaxKind.SlashToken: {
+            return '/';
+        }
+        case ts.SyntaxKind.PercentToken: {
+            return '%';
+        }
+        default: {
+            console.assert(false, "Unknown operator " + operator);
+            break;
+        }
+    }
+};
+
 module.exports = Ast;

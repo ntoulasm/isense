@@ -88,3 +88,27 @@ z = typeof null;
 z = typeof undefined;
 class p {};
 z = typeof new p();
+
+/* Binary - */
+x = 5;
+y = 10;
+
+z = x - y;
+y = "2";
+z = x - y;
+y = "a";
+z = x - y;
+z = 5 - true;
+z = 5 - false;
+z = 5 - [];
+z = 5 - {};
+z = 5 - (function() {});
+z = 5 - (class {});
+z = 5 - null;
+z = 5 - undefined;
+z = 5 - new p();
+
+/* Binary * */
+z = 3 * 3;
+z = 3 * "3";
+z = 3 * "a";

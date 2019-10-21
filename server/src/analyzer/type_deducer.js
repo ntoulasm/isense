@@ -9,6 +9,7 @@ const deduceTypesFunctionTable = {};
 const deduceTypesPrefixUnaryExpressionFunctionTable = {};
 const deduceTypesBinaryExpressionFunctionTable = {};
 const deduceTypesPlusExpressionFunctionTable = {};
+const deduceTypesBinaryArithmeticExpressionFunctionTable = {};
 
 /**
  * @param {ts.Node} node
@@ -550,7 +551,7 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.TildeToken] = operan
 /**
  * @param {ts.Node} node
  */
-deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.PlusToken] = (node) => {
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.PlusToken] = node => {
 
     const leftTypes = TypeDeducer.deduceTypes(node.left);
     const rightTypes = TypeDeducer.deduceTypes(node.right);
@@ -570,7 +571,10 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.PlusToken] = (node) => {
 /**
  * @param {ts.Node} node
  */
-deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = (node) => {
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = 
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.AsteriskToken] = 
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.SlashToken] = 
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.PercentToken] = (node) => {
 
     const leftTypes = TypeDeducer.deduceTypes(node.left);
     const rightTypes = TypeDeducer.deduceTypes(node.right);
@@ -578,47 +582,8 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = (node) => {
 
     for(const leftType of leftTypes) {
         for(const rightType of rightTypes) {
-
-            if(lefttype.id === righttype.id) {
-                switch(lefttype.id) {
-                    case TypeCarrier.Type.Number:
-                    case TypeCarrier.Type.Boolean: {
-                        const type = { id: TypeCarrier.Type.Number };
-                        if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
-                            type.value = Number(leftType.value) - Number(rightType.value);
-                        }
-                        types.push(type);
-                        break;
-                    }
-                    case TypeCarrier.Type.Null: {
-                        types.push({
-                            id: TypeCarrier.Type.Number,
-                            value: 0
-                        });
-                        break;
-                    }
-                    case TypeCarrier.Type.String:
-                    case TypeCarrier.Type.Array:
-                    case TypeCarrier.Type.Object:
-                    case TypeCarrier.Type.Function:
-                    case TypeCarrier.Type.Class: 
-                    case TypeCarrier.Type.Undefined:
-                    case TypeCarrier.Type.UserDefined: {
-                        types.push({
-                            id: TypeCarrier.Type.Number,
-                            value: "NaN"
-                        });
-                        break;
-                    }
-                    default: {
-                        console.assert(false, "Unknown type");
-                        break;
-                    }
-                }
-            } else {
-                types.push({id: TypeCarrier.Type.String, value: "Binary minus not implemented on different types of operands"});
-            }
-
+            console.assert(deduceTypesBinaryArithmeticExpressionFunctionTable.hasOwnProperty(leftType.id));
+            types.push(...deduceTypesBinaryArithmeticExpressionFunctionTable[leftType.id](leftType, rightType, node.operatorToken));
         }
     }
 
@@ -627,7 +592,7 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = (node) => {
 };
 
 // ----------------------------------------------------------------------------
-
+/* Plus Expression */
 deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Number] = (left, right) => {
 
     const type = {};
@@ -1047,6 +1012,155 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Undefined] = (left, righ
     };
 
     return [type];
+
+};
+
+// ----------------------------------------------------------------------------
+/* Arithmetic Expression */
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Number] = 
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.String] =
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Boolean] = (left, right, operator) => {
+
+    const op = Ast.operatorTokenToString(operator);
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+
+    switch(right.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = eval(Number(left.value) + op + Number(right.value));
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Undefined:
+        case TypeCarrier.Type.UserDefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            if(left.hasOwnProperty("value")) {
+                type.value = left.value;
+            } 
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return [type];
+
+};
+
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Array] = (left, right, operator) => {
+
+    const op = Ast.operatorTokenToString(operator);
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+
+    switch(right.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            // TODO: add logic
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = eval(NaN + op + Number(right.value));
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = NaN;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Undefined:
+        case TypeCarrier.Type.UserDefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            // TODO: add logic
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = NaN;
+            }
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return type;
+
+};
+
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Object] = 
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Function] = 
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Class] = 
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Undefined] = 
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.UserDefined] = (left, right) => {
+    return {
+        id: TypeCarrier.Type.Number,
+        value: NaN
+    };
+};
+
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Null] = (left, right) => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+
+    switch(right.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(right.hasOwnProperty("value")) {
+                type.value = Number(right.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic
+            if(right.hasOwnProperty("value")) {
+                type.value = NaN;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Undefined:
+        case TypeCarrier.Type.UserDefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.value = 0;
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return type;
 
 };
 
