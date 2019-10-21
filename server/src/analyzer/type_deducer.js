@@ -152,8 +152,61 @@ deduceTypesFunctionTable[ts.SyntaxKind.PrefixUnaryExpression] = node => {
     const types = [];
 
     for(const operandType of operandTypes) {
-        console.assert(deduceTypesPrefixUnaryExpressionFunctionTable.hasOwnProperty(node.operator), "Unary operator not implemented");
+        console.assert(deduceTypesPrefixUnaryExpressionFunctionTable.hasOwnProperty(node.operator), "Prefix unary operator " + node.operator + " not implemented");
         types.push(...deduceTypesPrefixUnaryExpressionFunctionTable[node.operator](operandType));
+    }
+
+    return types;
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesFunctionTable[ts.SyntaxKind.PostfixUnaryExpression] = node => {
+
+    const operandTypes = TypeDeducer.deduceTypes(node.operand);
+    const types = [];
+
+    for(const operandType of operandTypes) {
+        
+        const type = {};
+        type.id = TypeCarrier.Type.Number;
+
+        switch(operandType.id) {
+            case TypeCarrier.Type.Number:
+            case TypeCarrier.Type.String:
+            case TypeCarrier.Type.Boolean: {
+                if(operandType.hasOwnProperty("value")) {
+                    type.value = Number(operandType.value);
+                }
+                break;
+            }
+            case TypeCarrier.Type.Array: {
+                // TODO: add logic
+                type.value = NaN;
+                break;
+            }
+            case TypeCarrier.Type.Object:
+            case TypeCarrier.Type.Function:
+            case TypeCarrier.Type.Class:
+            case TypeCarrier.Type.Undefined:
+            case TypeCarrier.Type.UserDefined: {
+                type.value = NaN;
+                break;
+            }
+            case TypeCarrier.Type.Null: {
+                type.value = 0;
+                break;
+            }
+            default: {
+                console.assert(false, "Unknown Type");
+                break;
+            }
+        }
+
+        types.push(type);
+
     }
 
     return types;
@@ -201,7 +254,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
 };
 
 // ----------------------------------------------------------------------------
-/* Unary Expressions */
+/* Prefix Unary Expressions */
 
 deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.PlusToken] = operandType => {
 
