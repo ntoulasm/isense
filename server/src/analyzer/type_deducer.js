@@ -6,6 +6,7 @@ const ts = require('typescript');
 const TypeDeducer = {};
 
 const deduceTypesFunctionTable = {};
+const deduceTypesPrefixUnaryExpressionFunctionTable = {};
 const deduceTypesBinaryExpressionFunctionTable = {};
 const deduceTypesPlusExpressionFunctionTable = {};
 
@@ -85,7 +86,8 @@ deduceTypesFunctionTable[ts.SyntaxKind.ObjectLiteralExpression] = node => {
 deduceTypesFunctionTable[ts.SyntaxKind.FunctionExpression] =
 deduceTypesFunctionTable[ts.SyntaxKind.ArrowFunction] = node => {
     return [{
-        id: TypeCarrier.Type.Function, node
+        id: TypeCarrier.Type.Function,
+        node
     }];
 };
 
@@ -94,8 +96,9 @@ deduceTypesFunctionTable[ts.SyntaxKind.ArrowFunction] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.ClassExpression] = node => {
     return [{
-        id: TypeCarrier.Type.Class, node}
-    ];
+        id: TypeCarrier.Type.Class,
+        node
+    }];
 };
 
 /**
@@ -141,6 +144,23 @@ deduceTypesFunctionTable[ts.SyntaxKind.Identifier] = node => {
 };
 
 /**
+ * @param {ts.Node} node
+ */
+deduceTypesFunctionTable[ts.SyntaxKind.PrefixUnaryExpression] = node => {
+
+    const operandTypes = TypeDeducer.deduceTypes(node.operand);
+    const types = [];
+
+    for(const operandType of operandTypes) {
+        console.assert(deduceTypesPrefixUnaryExpressionFunctionTable.hasOwnProperty(node.operator), "Unary operator not implemented");
+        types.push(...deduceTypesPrefixUnaryExpressionFunctionTable[node.operator](operandType));
+    }
+
+    return types;
+
+};
+
+/**
  * @param {ts.Node} node 
  */
 deduceTypesFunctionTable[ts.SyntaxKind.BinaryExpression] = node => {
@@ -178,6 +198,247 @@ deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
     } else {
         console.assert(false, "NewExpression's expression is not an identifier");
     }
+};
+
+// ----------------------------------------------------------------------------
+/* Unary Expressions */
+
+deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.PlusToken] = operandType => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+    
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = Number(operandType.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic for array +[] = 0, +[x] = Number(x) 
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.UserDefined:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Undefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.value = 0;
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return [type];
+};
+
+deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = operandType => {
+    
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+    
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = -Number(operandType.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic for array -[] = 0, -[x] = -Number(x) 
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.UserDefined:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Undefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.value = 0;
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return [type];
+
+};
+
+deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.PlusPlusToken] = operandType => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+    
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = Number(operandType.value) + 1;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic for array
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.UserDefined:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Undefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.value = 0;
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return [type];
+
+};
+
+deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.MinusMinusToken] = operandType => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+    
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = Number(operandType.value) - 1;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic for array
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.UserDefined:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Undefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.value = 0;
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return [type];
+
+};
+
+deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.ExclamationToken] = operandType => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Boolean;
+
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = !Boolean(operandType.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array:
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.UserDefined:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class: {
+            type.value = false;
+            break;
+        }
+        case TypeCarrier.Type.Null:
+        case TypeCarrier.Type.Undefined: {
+            type.value = true;
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return [type];
+
+};
+
+deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.TildeToken] = operandType => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = ~Number(operandType.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic
+            type.value = -1;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Null:
+        case TypeCarrier.Type.Undefined:
+        case TypeCarrier.Type.UserDefined: {
+            type.value = -1;
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return [type];
+
 };
 
 // ----------------------------------------------------------------------------

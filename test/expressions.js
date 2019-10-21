@@ -33,3 +33,42 @@ z = x + false;
 z = x + [];
 z = x + null;
 z = x + undefined;
+
+x = () => {};
+y = function() {};
+z = x + y;
+
+/* Unary + */
+z = +2;
+z = +"2";
+z = +"";
+z = +"aaa";
+z = +true;
+z = +false;
+z = +[];
+z = +{};
+z = +(function() {});
+z = +(() => {});
+z = +null;
+z = +undefined;
+
+/* Unary - */
+z = -2;
+z = -"2";
+z = -"";
+z = -"aaa";
+z = -true;
+z = -false;
+z = -[];
+z = -{};
+z = -(function() {});
+z = -(() => {});
+z = -null;
+z = -undefined;
+
+/* Prefix ++ */
+x = 2;
+z = ++x;
+
+/* Prefix -- */
+z = --x;
