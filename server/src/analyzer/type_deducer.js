@@ -28,7 +28,7 @@ TypeDeducer.deduceTypes = node => {
 deduceTypesFunctionTable[ts.SyntaxKind.NumericLiteral] = node => {
     return [{
         id: TypeCarrier.Type.Number,
-        value: node.text
+        value: Number(node.text)
     }];
 };
 
@@ -211,6 +211,13 @@ deduceTypesFunctionTable[ts.SyntaxKind.PostfixUnaryExpression] = node => {
 
     return types;
 
+};
+
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesFunctionTable[ts.SyntaxKind.VoidExpression] = node => {
+    return [{ id: TypeCarrier.Type.Undefined }];
 };
 
 /**
