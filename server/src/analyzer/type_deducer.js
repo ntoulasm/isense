@@ -485,7 +485,11 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.ExclamationToken] = 
             }
             break;
         }
-        case TypeCarrier.Type.Array:
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic
+            type.value = false;
+            break;
+        }
         case TypeCarrier.Type.Object:
         case TypeCarrier.Type.UserDefined:
         case TypeCarrier.Type.Function:
@@ -595,6 +599,62 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.GreaterThanGreaterThanGre
         for(const rightType of rightTypes) {
             console.assert(deduceTypesBinaryArithmeticExpressionFunctionTable.hasOwnProperty(leftType.id));
             types.push(...deduceTypesBinaryArithmeticExpressionFunctionTable[leftType.id](leftType, rightType, node.operatorToken));
+        }
+    }
+
+    return types;
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.EqualsEqualsToken] = node => {
+    
+    const leftTypes = TypeDeducer.deduceTypes(node.left);
+    const rightTypes = TypeDeducer.deduceTypes(node.right);
+    const types = [];
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+
+            const type = {};
+            type.id = TypeCarrier.Type.Boolean;
+
+            if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
+                type.value = leftType.value == rightType.value;
+            }
+
+            types.push(type);
+
+        }
+    }
+
+    return types;
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.ExclamationEqualsToken] = node => {
+    
+    const leftTypes = TypeDeducer.deduceTypes(node.left);
+    const rightTypes = TypeDeducer.deduceTypes(node.right);
+    const types = [];
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+
+            const type = {};
+            type.id = TypeCarrier.Type.Boolean;
+
+            if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
+                type.value = leftType.value != rightType.value;
+            }
+
+            types.push(type);
+
         }
     }
 
