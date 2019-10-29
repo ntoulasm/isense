@@ -245,7 +245,7 @@ connection.onCompletion((info) => {
 		Ast.findVisibleSymbols(node).forEach(symbol => {
 			const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
 			const kind = closestTypeCarrier.hasUniqueType() ?
-				TypeCarrier.typeToVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].type) : 
+				TypeCarrier.typeToVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].id) : 
 				vscodeLanguageServer.CompletionItemKind.Variable;
 			const signature = closestTypeCarrier.getSignature();
 			completionItems.push({

@@ -36,6 +36,7 @@ function activate(context) {
 		clientOptions
 	);
 
+	
 	// This will also launch the server
 	client.start();
 }
