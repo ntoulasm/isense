@@ -596,6 +596,58 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.GreaterThanEqualsToken] =
 
 };
 
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.AmpersandAmpersandToken] = node => {
+
+    const leftTypes = TypeDeducer.deduceTypes(node.left);
+    const rightTypes = TypeDeducer.deduceTypes(node.right);
+    const types = [];
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+            
+            if(leftType.hasOwnProperty("value")) {
+                types.push(Boolean(leftType.value) ? rightType : leftType);
+            } else {
+                types.push(leftType);
+                types.push(rightType);
+            }
+
+        }
+    }
+
+    return types;
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.BarBarToken] = node => {
+
+    const leftTypes = TypeDeducer.deduceTypes(node.left);
+    const rightTypes = TypeDeducer.deduceTypes(node.right);
+    const types = [];
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+        
+            if(leftType.hasOwnProperty("value")) {
+                types.push(Boolean(leftType.value) ? leftType : rightType);
+            } else {
+                types.push(leftType);
+                types.push(rightType);
+            }
+
+        }
+    }
+
+    return types;
+
+};
+
 // ----------------------------------------------------------------------------
 /* Plus Expression */
 deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Number] = (left, right) => {
