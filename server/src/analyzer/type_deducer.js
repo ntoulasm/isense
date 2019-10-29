@@ -605,6 +605,70 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.GreaterThanGreaterThanGre
 /**
  * @param {ts.Node} node
  */
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.EqualsEqualsEqualsToken] = node => {
+    
+    const leftTypes = TypeDeducer.deduceTypes(node.left);
+    const rightTypes = TypeDeducer.deduceTypes(node.right);
+    const types = [];
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+
+            const type = {};
+            type.id = TypeCarrier.Type.Boolean;
+
+            if(leftType.id === rightType.id) {
+                if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
+                    type.value = leftType.value == rightType.value;
+                }
+            } else {
+                type.value = false;
+            }
+
+            types.push(type);
+
+        }
+    }
+
+    return types;
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.ExclamationEqualsEqualsToken] = node => {
+    
+    const leftTypes = TypeDeducer.deduceTypes(node.left);
+    const rightTypes = TypeDeducer.deduceTypes(node.right);
+    const types = [];
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+
+            const type = {};
+            type.id = TypeCarrier.Type.Boolean;
+
+            if(leftType.id === rightType.id) {
+                if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
+                    type.value = leftType.value != rightType.value;
+                }
+            } else {
+                type.value = true;
+            }
+
+            types.push(type);
+
+        }
+    }
+
+    return types;
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
 deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.AmpersandAmpersandToken] = node => {
 
     const leftTypes = TypeDeducer.deduceTypes(node.left);
