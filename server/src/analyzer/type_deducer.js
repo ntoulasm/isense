@@ -579,7 +579,13 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.AsteriskAsteriskToken] =
 deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.LessThanToken] = 
 deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.LessThanEqualsToken] = 
 deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.GreaterThanToken] = 
-deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.GreaterThanEqualsToken] = node => {
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.GreaterThanEqualsToken] =
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.AmpersandToken] =
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.BarToken] =
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.CaretToken] =
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.LessThanLessThanToken] =
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.GreaterThanGreaterThanToken] =
+deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken] = node => {
 
     const leftTypes = TypeDeducer.deduceTypes(node.left);
     const rightTypes = TypeDeducer.deduceTypes(node.right);

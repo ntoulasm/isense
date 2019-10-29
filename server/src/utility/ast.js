@@ -456,6 +456,24 @@ Ast.operatorTokenToString = node => {
         case ts.SyntaxKind.AsteriskAsteriskEqualsToken: {
             return '**=';
         }
+        case ts.SyntaxKind.AmpersandToken: {
+            return "&";
+        }
+        case ts.SyntaxKind.BarToken: {
+            return "|";
+        }
+        case ts.SyntaxKind.CaretToken: {
+            return "^";
+        }
+        case ts.SyntaxKind.LessThanLessThanToken: {
+            return "<<";
+        }
+        case ts.SyntaxKind.GreaterThanGreaterThanToken: {
+            return ">>";
+        }
+        case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken: {
+            return ">>>";
+        }
         case ts.SyntaxKind.AmpersandAmpersandToken: {
             return '&&';
         }
@@ -487,7 +505,7 @@ Ast.operatorTokenToString = node => {
             return '!==';
         }
         default: {
-            console.assert(false, "Unknown operator " + operator);
+            console.assert(false, "Unknown operator " + node.kind);
             break;
         }
     }
