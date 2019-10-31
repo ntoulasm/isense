@@ -147,9 +147,14 @@ connection.onHover((info) => {
 	const id = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.Identifier);
 	if(id === undefined) { return { contents: [] }; }
 	const symbol = Ast.lookUp(id, id.text);
-	if(symbol === undefined) { return {contents: [] }; }
+	if(symbol === undefined) { return { contents: [] }; }
+	const closestTypeCarrier = Ast.findClosestTypeCarrier(id, symbol);
+	if(closestTypeCarrier === undefined) { return { contents: [] }; }
 	return {
-		contents: [Ast.findClosestTypeCarrier(id, symbol).getSignature()]
+		contents: {
+			language: "typescript",
+			value: closestTypeCarrier.getSignature()
+		}
 	};
 
 });

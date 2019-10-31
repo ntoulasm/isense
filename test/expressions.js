@@ -143,3 +143,16 @@ z = 0 !== 0;
 z = 5 == 5;
 z = 5 == "5";
 z = 5 == 6;
+
+const shorthandProperty = 5;
+z = {
+    a: 2,
+    "b": "aaa",
+    a: 5,
+    c: {
+        a: 2
+    },
+    5: 5,
+    shorthandProperty
+};
+

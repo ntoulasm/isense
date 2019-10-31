@@ -55,15 +55,49 @@ TypeCarrier.typeToString = type => {
     }
 };
 
+let objectNesting = 0;
+const computeSpaces = () => {
+    let spaces = "";
+    for(let i = 0; i < objectNesting; ++i) {
+        spaces += "    ";
+    }
+    return spaces;
+};
+
 function valueToString(type) {
+
     switch(type.id) {
         case TypeCarrier.Type.String: {
             return '"' + type.value + '"';
+        }
+        case TypeCarrier.Type.Object: {
+
+            ++objectNesting;
+            let comma = false;
+            let value = `{\n`;
+
+            for(const [name, types] of Object.entries(type.value)) {
+                if(comma) { value += ',\n'; }
+                comma = true;
+                value += computeSpaces();
+                value += `${name}: ${TypeCarrier.typeToString(types[0])}`;
+                value += `${types[0].value ? ' = ' + valueToString(types[0]) : ''}`
+                for(let i = 1; i < types.length; ++i) {
+                    value += ` | ${TypeCarrier.typeToString(types[i])}`;
+                    value += `${types[i].value ? ' = ' + valueToString(types[i]) : ''}`;
+                }
+            }
+
+            --objectNesting;
+            value += `\n${computeSpaces()}}`;
+            return value;
+
         }
         default: {
             return type.value;
         }
     }
+
 }
 
 function computeSignatureValue(type) {
