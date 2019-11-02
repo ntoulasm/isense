@@ -72,13 +72,12 @@ Analyzer.analyze = function(ast) {
                             const end = node.name.end;
                             const symbol = Symbol.create(name, start, end, false, func.getStart());
                             Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-                            Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.initializer)));
                             func.symbols.insert(symbol);
                         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
                             visitDestructuringDeclerations(node.name, (name, start, end) => {
                                 const symbol = Symbol.create(name, start, end, false, func.getStart());
                                 Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-                                Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+                                // Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
                                 func.symbols.insert(symbol);
                             });
                         }
@@ -130,12 +129,11 @@ Analyzer.analyze = function(ast) {
                             const start = node.name.getStart();
                             const end = node.name.end;
                             const symbol = Symbol.create(name, start, end, isConst);
-                            Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.initializer)));
                             block.symbols.insert(symbol);
                         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
                             visitDestructuringDeclerations(node.name, (name, start, end) => {
                                 const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
-                                Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+                                // Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
                                 block.symbols.insert(symbol);
                             });
                         } else {
@@ -222,6 +220,19 @@ Analyzer.analyze = function(ast) {
                 importDeclaration.symbols.insert(symbol);
                 Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
 
+                break;
+
+            }
+            case ts.SyntaxKind.VariableDeclaration: {
+
+                const name = node.name.text;
+                const symbol = Ast.lookUp(node, name);
+                
+                if(node.name.kind === ts.SyntaxKind.Identifier && node.initializer !== undefined) {
+                    Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.initializer)));
+                }
+                
+                ts.forEachChild(node, visitDeclarations);
                 break;
 
             }
@@ -442,7 +453,7 @@ Analyzer.analyze = function(ast) {
             }
         });
     });
-    
+
     // console.log("---------------");
     // Ast.findAllSymbols(ast).forEach(symbol => {
     //     console.log(symbol);
