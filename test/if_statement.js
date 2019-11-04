@@ -1,5 +1,6 @@
 let x = 2;
 let y = 10;
+
 if(true) {
   x = 2;
   x = 5;
