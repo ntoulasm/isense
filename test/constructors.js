@@ -1,11 +1,23 @@
-const Person = () => {
+const Person = (firstName, lastName, age) => {
 
-  this.firstName = "Marios";
-  this.lastName = "Ntoulas";
-  this.age = 24;
+  this.firstName = firstName;
+  this.lastName = lastName;
+  this.age = age;
 
   this.getFullName = () => this.firstname + this.lastName;
 
 };
 
-const marios = new Person();
+let person = new Person();
+const j = Person;
+person = new j();
+
+class x {
+  a = 2;
+  b;
+  getA() {
+    return a;
+  }
+}
+
+let a = new x();

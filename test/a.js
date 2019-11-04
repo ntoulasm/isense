@@ -89,9 +89,7 @@ for(let i = 0; i < 5; ++i) {
 
 (x = 5) + x + (x = "") + x;;
 
-function foo() {
-
-}
+function foo() {}
 foo();
 foo = function() {
 	x = "inside foo";

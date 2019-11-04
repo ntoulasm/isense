@@ -229,8 +229,9 @@ Analyzer.analyze = function(ast) {
                 
                 if(node.name.kind === ts.SyntaxKind.Identifier && node.initializer !== undefined) {
                     Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.initializer)));
-                } 
+                }
                 
+                ts.forEachChild(node, visitDeclarations);
                 break;
 
             }
