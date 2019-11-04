@@ -204,9 +204,7 @@ Ast.findAllSymbols = node => {
  * @param {object} typeCarrier
  */
 Ast.addTypeCarrier = (node, typeCarrier) => {
-    if(!node.hasOwnProperty("typeCarriers")) {
-        node.typeCarriers = [];
-    }
+    console.assert(node.hasOwnProperty("typeCarriers"), "Trying to add typeCarrier to node without property typeCarriers");
     for(const c of node.typeCarriers) {
         if(c.getSymbol() === typeCarrier.getSymbol()) {
             c.setTypes(typeCarrier.getTypes());
@@ -286,11 +284,10 @@ Ast.findBinaryExpressionAncestors = node => {
  */
 Ast.findClosestTypeCarrier = (node, symbol) => {
     console.assert(node !== undefined, "Can not find closest type carrier for " + symbol.name);
-    if(node.hasOwnProperty("typeCarriers")) {
-        for(const typeCarrier of node.typeCarriers) {
-            if(typeCarrier.getSymbol() === symbol) {
-                return typeCarrier;
-            }
+    console.assert(node.hasOwnProperty("typeCarriers"));
+    for(const typeCarrier of node.typeCarriers) {
+        if(typeCarrier.getSymbol() === symbol) {
+            return typeCarrier;
         }
     }
     console.assert(node.parent !== undefined);
@@ -308,8 +305,8 @@ Ast.findAllTypeCarriers = node => {
     const typeCarriers = [];
 
     function findAllTypeCarriers(node) {
-        if(node.hasOwnProperty("typeCarriers")) {
             typeCarriers.push(...node.typeCarriers);
+        console.assert(node.hasOwnProperty("typeCarriers"));
         }
         ts.forEachChild(node, findAllTypeCarriers);
     }

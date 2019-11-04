@@ -409,7 +409,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ParenthesizedExpression] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
     if(node.expression.kind === ts.SyntaxKind.Identifier) {
-        const symbol = Ast.lookUp(node,node.expression.getText());
+        const symbol = Ast.lookUp(node, node.expression.getText());
         if(symbol === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
         const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
         if(typeCarrier === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }

@@ -437,7 +437,14 @@ Analyzer.analyze = function(ast) {
 				break;
 			}
 		}
-	}
+    }
+
+    ast.typeCarriers = [];
+    function initializeTypeCarriers(node) {
+        node.typeCarriers = [];
+        ts.forEachChild(node, initializeTypeCarriers);
+    };
+    initializeTypeCarriers(ast);
 
 	hoistFunctionScopedDeclarations(ast);
 	hoistBlockScopedDeclarations(ast);
