@@ -110,7 +110,7 @@ z = 5 - new p();
 
 /* Binary * */
 z = 3 * 3;
-z = 3 * "3";
+z = 3 * z * "3";
 z = 3 * "a";
 
 
@@ -144,7 +144,7 @@ z = 5 == 5;
 z = 5 == "5";
 z = 5 == 6;
 
-const shorthandProperty = 5;
+const shorthandProperty = "shorthandProperty";
 z = {
     a: 2,
     "b": "aaa",
@@ -156,3 +156,8 @@ z = {
     shorthandProperty
 };
 
+const propertyAccessA = z.a;
+let propertyAccessB = z.b;
+var propertyAccessC = z.c;
+let propertyAccess5 = z[5];
+let propertyAccessShorthand = z["shorthandProperty"];

@@ -128,21 +128,96 @@ deduceTypesFunctionTable[ts.SyntaxKind.ObjectLiteralExpression] = node => {
 /**
  * @param {ts.Node} node 
  */
+deduceTypesFunctionTable[ts.SyntaxKind.FunctionDeclaration] =
 deduceTypesFunctionTable[ts.SyntaxKind.FunctionExpression] =
 deduceTypesFunctionTable[ts.SyntaxKind.ArrowFunction] = node => {
+    
+    const members = {};
+
+    const extractMembers = node => {
+        
+        switch(node.kind) {
+            case ts.SyntaxKind.BinaryExpression: {
+
+                ts.forEachChild(node, extractMembers);
+
+                if(Utility.isMemberInitialization(node)) {
+                    members[node.left.name.escapedText] = TypeDeducer.deduceTypes(node.right);
+                }
+
+                break;
+
+            }
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression: {
+                break;
+            }
+            default: {
+                ts.forEachChild(node, extractMembers);
+                break;
+            }
+        }
+
+    };
+
+    extractMembers(node.body);
+    node.constuctorMembers = members;
+
     return [{
         id: TypeCarrier.Type.Function,
         node
     }];
+
 };
 
 /**
  * @param {ts.Node} node 
  */
+deduceTypesFunctionTable[ts.SyntaxKind.ClassDeclaration] =
 deduceTypesFunctionTable[ts.SyntaxKind.ClassExpression] = node => {
+
+    const extractMembers = node => {
+
+        const members = {};
+
+        for(const member of node.members) {
+            switch(member.kind) {
+                case ts.SyntaxKind.PropertyDeclaration: {
+                    members[member.name.escapedText] = (member.initializer === undefined) ?
+                        [{ id: TypeCarrier.Type.Undefined }] :
+                        TypeDeducer.deduceTypes(member.initializer); 
+                    break;
+                }
+                case ts.SyntaxKind.MethodDeclaration: {
+                    members[member.name.escapedText] = TypeDeducer.deduceTypes(member);
+                    break;
+                }
+            }
+        }
+
+        return members;
+
+    };
+
+    node.constuctorMembers = extractMembers(node);
+
     return [{
         id: TypeCarrier.Type.Class,
         node
+    }];
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesFunctionTable[ts.SyntaxKind.MethodDeclaration] = node => {
+    return [{
+        id: TypeCarrier.Type.Function,
+        node,
     }];
 };
 
@@ -341,7 +416,13 @@ deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
         if(typeCarrier.hasUniqueType()) {
             const type = typeCarrier.getTypes()[0];
             if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
-                return [type.node.constructorType];
+                const newExpressionType = {};
+                newExpressionType.id = TypeCarrier.Type.Object;
+                newExpressionType.value = type.node.constuctorMembers;
+                if(type.node.hasOwnProperty("constructorName")) {
+                    newExpressionType.constructorName = type.node.constructorName;
+                }
+                return [ newExpressionType ];
             }
         }
     } else {

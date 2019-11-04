@@ -91,7 +91,7 @@ Analyzer.analyze = function(ast) {
                     const start = node.getStart();
                     const end = node.end;
                     const symbol = Symbol.create(name, start, end, false, func.getStart());
-                    Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Function, node}));
+                    Ast.addTypeCarrier(func, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
                     func.symbols.insert(symbol);
 
                     break;
@@ -148,9 +148,8 @@ Analyzer.analyze = function(ast) {
                     const start = node.getStart();
                     const end = node.end;
                     const symbol = Symbol.create(name, start, end);
-                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Class, node}));
-    
                     block.symbols.insert(symbol);
+                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
                     break;
                 }
                 case ts.SyntaxKind.Block:
@@ -230,9 +229,8 @@ Analyzer.analyze = function(ast) {
                 
                 if(node.name.kind === ts.SyntaxKind.Identifier && node.initializer !== undefined) {
                     Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.initializer)));
-                }
+                } 
                 
-                ts.forEachChild(node, visitDeclarations);
                 break;
 
             }

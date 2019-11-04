@@ -17,6 +17,8 @@ TypeCarrier.Type = {
     UserDefined: 9
 };
 
+TypeCarrier.typeText = Object.keys(TypeCarrier.Type);
+
 TypeCarrier.typeToString = type => {
     switch (type.id) {
         case TypeCarrier.Type.Class: {
@@ -38,7 +40,7 @@ TypeCarrier.typeToString = type => {
             return "array";
         }
         case TypeCarrier.Type.Object: {
-            return "object";
+            return type.hasOwnProperty("constructorName") ? type.constructorName : "object";
         }
         case TypeCarrier.Type.Undefined: {
             return "undefined";
@@ -75,7 +77,6 @@ function valueToString(type) {
             ++objectNesting;
             let comma = false;
             let value = `{\n`;
-
             for(const [name, types] of Object.entries(type.value)) {
                 if(comma) { value += ',\n'; }
                 comma = true;
@@ -179,11 +180,8 @@ TypeCarrier.create = (symbol, types) => {
         if(typeCarrier.hasUniqueType()) {
             const type = typeCarrier.private.types[0];
             if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
-                if(!type.node.hasOwnProperty("constructorType")) {
-                    type.node.constructorType = {
-                        id: TypeCarrier.Type.UserDefined,
-                        name: symbol.name
-                    };
+                if(!type.node.hasOwnProperty("constructorName")) {
+                    type.node.constructorName = symbol.name;
                 }
             }
         }
