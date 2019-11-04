@@ -309,8 +309,12 @@ Ast.findAllTypeCarriers = node => {
     const typeCarriers = [];
 
     function findAllTypeCarriers(node) {
-            typeCarriers.push(...node.typeCarriers);
         console.assert(node.hasOwnProperty("typeCarriers"));
+        const symbols = typeCarriers.map(c => { return c.getSymbol(); });
+        for(const newCarrier of node.typeCarriers) {
+            const index = symbols.indexOf(newCarrier.getSymbol());
+            if(index !== -1) { typeCarriers.splice(index, 1); }
+            typeCarriers.push(newCarrier);
         }
         ts.forEachChild(node, findAllTypeCarriers);
     }
