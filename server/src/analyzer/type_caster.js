@@ -18,9 +18,6 @@ TypeCaster.toString = type => {
             return type.hasOwnProperty("value") ? type.value : undefined;
         }
         case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined: {
-            return "[object Object]";
-        }
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class: {
             return type.hasOwnProperty("node") ? type.node.getText() : undefined;

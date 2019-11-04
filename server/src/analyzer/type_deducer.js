@@ -312,8 +312,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.PostfixUnaryExpression] = node => {
             case TypeCarrier.Type.Object:
             case TypeCarrier.Type.Function:
             case TypeCarrier.Type.Class:
-            case TypeCarrier.Type.Undefined:
-            case TypeCarrier.Type.UserDefined: {
+            case TypeCarrier.Type.Undefined: {
                 type.value = NaN;
                 break;
             }
@@ -367,8 +366,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.TypeOfExpression] = node => {
             }
             case TypeCarrier.Type.Array:
             case TypeCarrier.Type.Class:
-            case TypeCarrier.Type.Null:
-            case TypeCarrier.Type.UserDefined: {
+            case TypeCarrier.Type.Null: {
                 type.value = "object";
                 break;
             }
@@ -513,7 +511,6 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.PlusToken] = operand
             break;
         }
         case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined:
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class:
         case TypeCarrier.Type.Undefined: {
@@ -553,7 +550,6 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = operan
             break;
         }
         case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined:
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class:
         case TypeCarrier.Type.Undefined: {
@@ -594,7 +590,6 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.PlusPlusToken] = ope
             break;
         }
         case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined:
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class:
         case TypeCarrier.Type.Undefined: {
@@ -635,7 +630,6 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.MinusMinusToken] = o
             break;
         }
         case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined:
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class:
         case TypeCarrier.Type.Undefined: {
@@ -676,7 +670,6 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.ExclamationToken] = 
             break;
         }
         case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined:
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class: {
             type.value = false;
@@ -720,8 +713,7 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.TildeToken] = operan
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class:
         case TypeCarrier.Type.Null:
-        case TypeCarrier.Type.Undefined:
-        case TypeCarrier.Type.UserDefined: {
+        case TypeCarrier.Type.Undefined: {
             type.value = -1;
             break;
         }
@@ -996,8 +988,7 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Number] = (left, right) 
             type.value = "TODO: number + array";
             break;
         }
-        case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined: {
+        case TypeCarrier.Type.Object: {
             type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value")) {
                 type.value = String(left.value) + "[object Object]";
@@ -1067,8 +1058,7 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.String] = (left, right) 
             }
             break;
         }
-        case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined: {
+        case TypeCarrier.Type.Object: {
             type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = left.value + "[object Object]";
@@ -1140,8 +1130,7 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Boolean] = (left, right)
             }
             break;
         }
-        case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined: {
+        case TypeCarrier.Type.Object: {
             type.id = TypeCarrier.Type.String;
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = String(left.value) + "[object Object]";
@@ -1186,8 +1175,7 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Array] = (left, right) =
     return [type];
 };
 
-deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Object] = 
-deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.UserDefined] = (left, right) => {
+deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Object] = (left, right) => {
 
     const type = {};
 
@@ -1208,7 +1196,6 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.UserDefined] = (left, ri
             }
             break;
         }
-        case TypeCarrier.Type.UserDefined:
         case TypeCarrier.Type.Object: {
             type.id = TypeCarrier.Type.String;
             type.value = "[object Object][object Object]";
@@ -1264,8 +1251,7 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Class] = (left, right) =
             }
             break;
         }
-        case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined: {
+        case TypeCarrier.Type.Object: {
             type.id = TypeCarrier.Type.String;
             type.value = left.node.getText() + "[object Object]";
             break;
@@ -1313,8 +1299,7 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Null] = (left, right) =>
             }
             break;
         }
-        case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined: {
+        case TypeCarrier.Type.Object: {
             type.id = TypeCarrier.Type.String;
             type.value = "null[object Object]";
             break;
@@ -1365,8 +1350,7 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Undefined] = (left, righ
             }
             break;
         }
-        case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.UserDefined: {
+        case TypeCarrier.Type.Object: {
             type.id = TypeCarrier.Type.String;
             type.value = "undefined[object Object]";
             break;
@@ -1414,8 +1398,7 @@ deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Boolean] = (
         case TypeCarrier.Type.Object:
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class:
-        case TypeCarrier.Type.Undefined:
-        case TypeCarrier.Type.UserDefined: {
+        case TypeCarrier.Type.Undefined: {
             type.value = NaN;
             break;
         }
@@ -1460,8 +1443,7 @@ deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Array] = (le
         case TypeCarrier.Type.Object:
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class:
-        case TypeCarrier.Type.Undefined:
-        case TypeCarrier.Type.UserDefined: {
+        case TypeCarrier.Type.Undefined: {
             type.value = NaN;
             break;
         }
@@ -1485,8 +1467,7 @@ deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Array] = (le
 deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Object] = 
 deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Function] = 
 deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Class] = 
-deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Undefined] = 
-deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.UserDefined] = (left, right) => {
+deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Undefined] = (left, right) => {
     return {
         id: TypeCarrier.Type.Number,
         value: NaN
@@ -1517,8 +1498,7 @@ deduceTypesBinaryArithmeticExpressionFunctionTable[TypeCarrier.Type.Null] = (lef
         case TypeCarrier.Type.Object:
         case TypeCarrier.Type.Function:
         case TypeCarrier.Type.Class:
-        case TypeCarrier.Undefined:
-        case TypeCarrier.Type.UserDefined: {
+        case TypeCarrier.Undefined: {
             type.value = NaN;
             break;
         }

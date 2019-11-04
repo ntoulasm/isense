@@ -13,8 +13,7 @@ TypeCarrier.Type = {
     Array: 5,
     Object: 6,
     Undefined: 7,
-    Null: 8,
-    UserDefined: 9
+    Null: 8
 };
 
 TypeCarrier.typeText = Object.keys(TypeCarrier.Type);
@@ -47,9 +46,6 @@ TypeCarrier.typeToString = type => {
         }
         case TypeCarrier.Type.Null: {
             return "null";
-        }
-        case TypeCarrier.Type.UserDefined: {
-            return type.name;
         }
         default: {
             console.assert(false, "Unknown type of type carrier");
