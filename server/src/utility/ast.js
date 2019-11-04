@@ -516,4 +516,14 @@ Ast.operatorTokenToString = node => {
     }
 };
 
+/**
+ * @param {ts.Node} node
+ */
+Ast.findTopLevelIfStatement = node => {
+    while(node.parent.kind === ts.SyntaxKind.IfStatement) { 
+        node = node.parent;
+    }
+    return node;
+};
+
 module.exports = Ast;

@@ -126,7 +126,7 @@ function computeSignature(typeCarrier) {
     let signature = computeSignature(types[0]);
 
     for(let i = 1; i < types.length; ++i) {
-        signature += "||\n" + computeSignature(types[i]);
+        signature += " ||\n" + computeSignature(types[i]);
     }
 
     return signature;

@@ -432,6 +432,11 @@ Analyzer.analyze = function(ast) {
                 break;
 
             }
+            case ts.SyntaxKind.IfStatement: {
+                ts.forEachChild(node, visitDeclarations);
+                mergeIfStatementTypeCarriers(node);
+                break;
+            }
 			default: {
 				ts.forEachChild(node, visitDeclarations);
 				break;
@@ -467,5 +472,52 @@ Analyzer.analyze = function(ast) {
     // console.log("---------------");
 
 }
+
+/**
+ * 
+ * @param {ts.Node} node
+ */
+function mergeIfStatementTypeCarriers(node) {
+
+    console.assert(node.kind === ts.SyntaxKind.IfStatement, "Trying to merge carriers in node that is not an if statement");
+    
+    const thenCarriers = node.thenStatement.typeCarriers;
+    const elseCarriers = node.elseStatement ? node.elseStatement.typeCarriers : [];
+
+    const carriers = [];
+    const notInBothCarriers = [...thenCarriers, ...elseCarriers];
+
+    for(const thenCarrier of thenCarriers) {
+        for(const elseCarrier of elseCarriers) {
+            if(thenCarrier.getSymbol() === elseCarrier.getSymbol()) {
+                const carrier = TypeCarrier.create(
+                    thenCarrier.getSymbol(),
+                    [
+                        ...thenCarrier.getTypes(),
+                        ...elseCarrier.getTypes()
+                    ]
+                );
+                notInBothCarriers.splice(notInBothCarriers.indexOf(thenCarrier), 1);
+                notInBothCarriers.splice(notInBothCarriers.indexOf(elseCarrier), 1);
+                carriers.push(carrier);
+            }
+        }
+    }
+
+    const topLevelIfStatement = Ast.findTopLevelIfStatement(node);
+
+    for(const c of notInBothCarriers) {
+        const symbol = c.getSymbol();
+        const outerCarrier = Ast.findClosestTypeCarrier(topLevelIfStatement, symbol);
+        const carrier = TypeCarrier.create(symbol, [
+            ...outerCarrier.getTypes(),
+            ...c.getTypes()
+        ]);
+        carriers.push(carrier);
+    }
+
+    node.typeCarriers = carriers;
+
+} 
 
 module.exports = Analyzer;
