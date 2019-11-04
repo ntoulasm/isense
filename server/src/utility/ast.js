@@ -283,18 +283,22 @@ Ast.findBinaryExpressionAncestors = node => {
  * @param {object} symbol
  */
 Ast.findClosestTypeCarrier = (node, symbol) => {
-    console.assert(node !== undefined, "Can not find closest type carrier for " + symbol.name);
     console.assert(node.hasOwnProperty("typeCarriers"));
     for(const typeCarrier of node.typeCarriers) {
         if(typeCarrier.getSymbol() === symbol) {
             return typeCarrier;
         }
     }
-    console.assert(node.parent !== undefined);
+    const previousNode = Ast.findPreviousNode(node);
+    return previousNode ? Ast.findClosestTypeCarrier(previousNode, symbol) : undefined;
+};
+
+/**
+ * @param {ts.Node} node
+ */
+Ast.findPreviousNode = node => {
     const leftSibling = Ast.findLeftSibling(node);
-    return leftSibling !== undefined ? 
-        Ast.findClosestTypeCarrier(leftSibling, symbol) : 
-        Ast.findClosestTypeCarrier(node.parent, symbol);
+    return leftSibling ? leftSibling : node.parent;
 };
 
 /**
