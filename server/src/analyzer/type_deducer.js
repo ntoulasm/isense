@@ -1,5 +1,7 @@
 const Ast = require('../utility/ast');
 const TypeCarrier = require('../utility/type_carrier');
+const TypeCaster = require('./type_caster');
+const Utility = require('../utility/utility');
 
 const ts = require('typescript');
 
@@ -428,6 +430,64 @@ deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
     } else {
         console.assert(false, "NewExpression's expression is not an identifier");
     }
+};
+
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesFunctionTable[ts.SyntaxKind.PropertyAccessExpression] = node => {
+    
+    const expressionTypes = TypeDeducer.deduceTypes(node.expression);
+    const propertyName = node.name.getText();
+    const types = [];
+    let typesContainUndefined = false;
+
+    for(const type of expressionTypes) {
+        if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty("value")) {
+            if(type.value.hasOwnProperty(propertyName)) {
+                types.push(...type.value[propertyName]);
+            } else if(!typesContainUndefined) {
+                types.push({ id: TypeCarrier.Type.Undefined });
+                typesContainUndefined = true;
+            }
+        }
+    }
+
+    return types;
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesFunctionTable[ts.SyntaxKind.ElementAccessExpression] = node => {
+
+    const expressionTypes = TypeDeducer.deduceTypes(node.expression);
+    const elementTypes = TypeDeducer.deduceTypes(node.argumentExpression);
+    const types = [];
+    let typesContainUndefined = false;
+
+    for(const elementType of elementTypes) {
+
+        const elementTypeString = TypeCaster.toString(elementType);
+        
+        if(elementTypeString !== undefined) {
+            for(const expressionType of expressionTypes) {
+                if(expressionType.id === TypeCarrier.Type.Object && expressionType.hasOwnProperty("value")) {
+                    if(expressionType.value.hasOwnProperty(elementTypeString)) {
+                        types.push(...expressionType.value[elementTypeString]);
+                    } else if(!typesContainUndefined) {
+                        types.push({ id: TypeCarrier.Type.Undefined });
+                        typesContainUndefined = true;
+                    }
+                }
+            }
+        }
+    
+    }
+
+    return types;
+
 };
 
 // ----------------------------------------------------------------------------

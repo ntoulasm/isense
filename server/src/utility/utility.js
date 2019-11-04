@@ -86,4 +86,32 @@ Utility.typescriptDiagnosticCategoryToVSCodeDiagnosticSeverity = function(diagno
     }
 };
 
+const ISenseAssertion = class extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ISenseAssertion';
+        Error.captureStackTrace(this, ISenseAssertion);
+    }
+};
+
+/**
+ * @param {boolean} condition
+ * @param {string} [message]
+ */
+Utility.assert = (condition, message = '') => {
+    if(!condition) {
+        throw new ISenseAssertion(message);
+    }
+};
+
+/**
+ * @param {ts.Node} node
+ */
+Utility.isMemberInitialization = node => {
+    Utility.assert(node.kind === ts.SyntaxKind.BinaryExpression);
+    return node.operatorToken.kind === ts.SyntaxKind.EqualsToken && 
+        node.left.kind === ts.SyntaxKind.PropertyAccessExpression &&
+        node.left.expression.kind === ts.SyntaxKind.ThisKeyword;
+};
+
 module.exports = Utility;
