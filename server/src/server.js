@@ -130,7 +130,7 @@ async function provideAnalyzeDiagnostics(ast) {
 	connection.sendDiagnostics({
 		uri: ast.fileName,
 		diagnostics: ast.analyzeDiagnostics
-	})
+	});
 }
 
 connection.onDidChangeWatchedFiles(change => {

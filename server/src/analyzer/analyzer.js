@@ -425,7 +425,7 @@ Analyzer.analyze = function(ast) {
                     Ast.addCallSite(callee, node);
                 } else {
                     const line = ast.getLineAndCharacterOfPosition(node.getStart()).line + 1;
-                    console.assert(false, "Could not recognize type of callee at line " + line);
+                    console.log("Could not recognize type of callee at line " + line);
                 }
 
                 ts.forEachChild(node, visitDeclarations);

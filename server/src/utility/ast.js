@@ -219,6 +219,7 @@ Ast.addTypeCarrier = (node, typeCarrier) => {
  * @param {isense.typeCarrier} typeCarrier
  */
 Ast.addTypeCarrierToClosestStatement = (node, typeCarrier) => { 
+    
     const statements = [
         ts.SyntaxKind.VariableStatement,
         ts.SyntaxKind.ExpressionStatement,
@@ -355,7 +356,7 @@ Ast.addCallSite = (callee, call) => {
     {
         const calleePosition = callee.getSourceFile().getLineAndCharacterOfPosition(callee.getStart());
         const callPosition = call.getSourceFile().getLineAndCharacterOfPosition(call.getStart());
-        console.log(`call at line ${callPosition.line + 1} is a call site of function declared at line ${calleePosition.line + 1}`);
+        console.log(`${callee.getSourceFile().fileName}: call at line ${callPosition.line + 1} is a call site of function declared at line ${calleePosition.line + 1}`);
     }
     callee.callSites.push(call);
 };

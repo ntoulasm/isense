@@ -86,5 +86,4 @@ p;
 for(let i = 0; i < 5; ++i) {
 	console.log(i);
 }
-
-(x = 5) + x + (x = "") + x;;
+(x = 5) + x + (x = "") + x;

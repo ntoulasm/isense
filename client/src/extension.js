@@ -39,6 +39,17 @@ function activate(context) {
 	
 	// This will also launch the server
 	client.start();
+
+	client.onReady().then(() => {
+		const openUris = uris => {
+			uris.forEach(uri => {
+				vscode.workspace.openTextDocument(uri);
+			});
+		}
+		vscode.workspace.findFiles(`*.js`).then(uris => { openUris(uris) });
+		vscode.workspace.findFiles('**/*.js', '**/node_modules/**').then(uris => { openUris(uris); });
+	});
+
 }
 
 function deactivate() {
