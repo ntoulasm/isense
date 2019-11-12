@@ -168,6 +168,13 @@ deduceTypesFunctionTable[ts.SyntaxKind.ObjectLiteralExpression] = node => {
 deduceTypesFunctionTable[ts.SyntaxKind.FunctionDeclaration] =
 deduceTypesFunctionTable[ts.SyntaxKind.FunctionExpression] =
 deduceTypesFunctionTable[ts.SyntaxKind.ArrowFunction] = node => {
+    return [{
+        id: TypeCarrier.Type.Function,
+        node
+    }];
+} 
+
+function extractMembers(node) {
     
     const members = {};
 
@@ -201,12 +208,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ArrowFunction] = node => {
     };
 
     extractMembers(node.body);
-    node.constuctorMembers = members;
-
-    return [{
-        id: TypeCarrier.Type.Function,
-        node
-    }];
+    return members;
 
 };
 
@@ -448,18 +450,19 @@ deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
         if(symbol === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
         const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
         if(typeCarrier === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
-        if(typeCarrier.hasUniqueType()) {
-            const type = typeCarrier.getTypes()[0];
+        const types = [];
+        for(const type of typeCarrier.getTypes()) {
             if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
                 const newExpressionType = {};
                 newExpressionType.id = TypeCarrier.Type.Object;
-                newExpressionType.value = type.node.constuctorMembers;
+                newExpressionType.value = extractMembers(type.node);
                 if(type.node.hasOwnProperty("constructorName")) {
                     newExpressionType.constructorName = type.node.constructorName;
                 }
-                return [ newExpressionType ];
+                types.push(newExpressionType);
             }
         }
+        return types;
     } else {
         console.assert(false, "NewExpression's expression is not an identifier");
     }

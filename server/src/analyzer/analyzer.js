@@ -13,7 +13,7 @@ const Analyzer = {};
 /**
  * @param {ts.SourceFile} ast 
  */
-Analyzer.analyze = function(ast) {
+Analyzer.analyze = ast => {
     
     const classStack = Stack.create();
     const functionStack = Stack.create();
@@ -223,6 +223,8 @@ Analyzer.analyze = function(ast) {
             }
             case ts.SyntaxKind.VariableDeclaration: {
 
+                ts.forEachChild(node, visitDeclarations);
+
                 const name = node.name.text;
                 const symbol = Ast.lookUp(node, name);
                 
@@ -230,7 +232,6 @@ Analyzer.analyze = function(ast) {
                     Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.initializer)));
                 }
                 
-                ts.forEachChild(node, visitDeclarations);
                 break;
 
             }
@@ -246,10 +247,10 @@ Analyzer.analyze = function(ast) {
                             const typeCarrier = TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node.right));
                             Ast.addTypeCarrierToExpression(node, typeCarrier);
 
-                            if(!functionStack.isEmpty()) {
-                                const func = functionStack.top();
-                                if(!Ast.isDeclaredInFunction(node, symbol, func)) {
-                                    Ast.addTypeCarrierToNonPureFunction(func, typeCarrier);
+                            const ancestorFunction = Ast.findAncestorFunction(node);
+                            if(ancestorFunction) {
+                                if(!Ast.isDeclaredInFunction(node, symbol, ancestorFunction)) {
+                                    Ast.addTypeCarrierToNonPureFunction(ancestorFunction, typeCarrier);
                                 }
                             }
                         } else {
@@ -416,6 +417,9 @@ Analyzer.analyze = function(ast) {
                     if(callee !== undefined) {
                         Ast.addCallSite(callee, node);
                     }
+                    addParameterTypeCarriers(callee, node.arguments);
+                    delete callee.affectedOutOfScopeSymbols;
+                    Analyzer.analyze(callee.body);
                     if(callee.hasOwnProperty("affectedOutOfScopeSymbols")) {
                         callee.affectedOutOfScopeSymbols.forEach(typeCarrier => {
                             Ast.addTypeCarrierToClosestStatement(node, typeCarrier);
@@ -434,6 +438,24 @@ Analyzer.analyze = function(ast) {
                 ts.forEachChild(node, visitDeclarations);
                 break;
 
+            }
+            case ts.SyntaxKind.NewExpression: {
+
+                ts.forEachChild(node, visitDeclarations);
+
+                if(node.expression.kind === ts.SyntaxKind.Identifier) {
+                    const symbol = Ast.lookUp(node, node.expression.getText());
+                    if(symbol === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
+                    const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
+                    if(typeCarrier === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
+                    for(const type of typeCarrier.getTypes()) {
+                        if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
+                            addParameterTypeCarriers(type.node, node.arguments);
+                            Analyzer.analyze(type.node.body);
+                        }      
+                    }
+                }
+                break;
             }
             case ts.SyntaxKind.IfStatement: {
                 ts.forEachChild(node, visitDeclarations);
@@ -465,6 +487,8 @@ Analyzer.analyze = function(ast) {
     // console.log("---------------");
 
 }
+
+// ----------------------------------------------------------------------------
 
 /**
  * 
@@ -512,5 +536,21 @@ function mergeIfStatementTypeCarriers(node) {
     node.typeCarriers = carriers;
 
 } 
+
+// ----------------------------------------------------------------------------
+
+function addParameterTypeCarriers(func, args) {
+    for(let i = 0; i < Math.min(func.parameters.length, args.length); ++i) {
+        const parameter = func.parameters[i];
+        const argument = args[i];
+        const parameterSymbol = parameter.symbols.getSymbols()[parameter.name.escapedText];
+        console.assert(parameterSymbol, "parameter without symbol?");
+        const types = TypeDeducer.deduceTypes(argument);
+        const typeCarrier = TypeCarrier.create(parameterSymbol, types);
+        Ast.addTypeCarrier(parameter, typeCarrier);
+    }
+};
+
+// ----------------------------------------------------------------------------
 
 module.exports = Analyzer;

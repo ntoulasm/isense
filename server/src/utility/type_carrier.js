@@ -222,4 +222,52 @@ TypeCarrier.typeToVSCodeCompletionItemKind = type => {
     }
 };
 
+TypeCarrier.copyType = type => {
+
+    const copy = {};
+    copy.id = type.id;
+
+    switch (type.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(type.hasOwnProperty("value")) {
+                copy.value = type.value;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic
+            break;
+        }
+        case TypeCarrier.Type.Object: {
+            copy.value = {};
+            for(const [propertyName, propertyTypes] of Object.entries(type.value)) {
+                copy.value[propertyName] = [];
+                for(const type of propertyTypes) {
+                    copy.value[propertyName].push(TypeCarrier.copyType(type));
+                }
+            }
+            break;
+        }
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class: {
+            if(type.hasOwnProperty("node")) {
+                copy.node = type.node;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Null:
+        case TypeCarrier.Type.Undefined: {
+            break;
+        }
+        default: {
+            console.assert(false, `Unknown type ${type.id}`);
+        }
+    }
+
+    return copy;
+
+};
+
 module.exports = TypeCarrier;
