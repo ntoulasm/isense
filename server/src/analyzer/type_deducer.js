@@ -79,29 +79,62 @@ deduceTypesFunctionTable[ts.SyntaxKind.ArrayLiteralExpression] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.ObjectLiteralExpression] = node => {
 
-    const type = {};
-    type.id = TypeCarrier.Type.Object;
-    type.value = {};
+    let types = [];
+
+    types.push({
+        id: TypeCarrier.Type.Object,
+        value: {}
+    });
 
     for(const property of node.properties) {
         switch(property.kind) {
             case ts.SyntaxKind.PropertyAssignment: {
 
+                const propertyTypes = TypeDeducer.deduceTypes(property.initializer);
+
                 switch(property.name.kind) {
                     case ts.SyntaxKind.Identifier: 
                     case ts.SyntaxKind.NumericLiteral: {
                         const name = property.name.getText();
-                        const propertyTypes = TypeDeducer.deduceTypes(property.initializer);
-                        type.value[name] = propertyTypes;
+                        for(const type of types) {
+                            type.value[name] = propertyTypes;
+                        }
                         break;
                     }
                     case ts.SyntaxKind.StringLiteral: {
                         const name = property.name.text;
-                        const propertyTypes = TypeDeducer.deduceTypes(property.initializer);
-                        type.value[name] = propertyTypes;
+                        for(const type of types) {
+                            type.value[name] = propertyTypes;
+                        }
                         break;
                     }
-                    // TODO: computedPropertyName
+                    case ts.SyntaxKind.ComputedPropertyName: {
+                        const nameTypes = TypeDeducer.deduceTypes(property.name.expression);
+                        if(nameTypes.length === 1) {
+                            for(const type of types) {
+                                const name = TypeCaster.toString(nameTypes[0]);
+                                if(name !== undefined) {
+                                    type.value[name] = propertyTypes;
+                                }
+                            }
+                        } else if(nameTypes.length !== 0) {
+                            const copies = [];
+                            for(const type of types) {
+                                copies.push(TypeCarrier.copyType(type));
+                            }
+                            types = [];
+                            for(const nameType of nameTypes) {
+                                const name = TypeCaster.toString(nameType);
+                                if(name === undefined) { continue; }
+                                for(const type of copies) {
+                                    const copy = TypeCarrier.copyType(type);
+                                    copy.value[name] = propertyTypes; 
+                                    types.push(copy);
+                                }
+                            }
+                        }
+                        break;
+                    }
                     default: {
                         console.assert(false, "Unknown property assignment name");
                         break;
@@ -113,7 +146,9 @@ deduceTypesFunctionTable[ts.SyntaxKind.ObjectLiteralExpression] = node => {
             case ts.SyntaxKind.ShorthandPropertyAssignment: {
                 const name = property.name.escapedText;
                 const propertyTypes = TypeDeducer.deduceTypes(property.name);
-                type.value[name] = propertyTypes;
+                for(const type of types) {
+                    type.value[name] = propertyTypes;
+                }
                 break;
             }
             // TODO: method declaration
@@ -124,7 +159,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ObjectLiteralExpression] = node => {
         }
     }
 
-    return [type];
+    return types;
 };
 
 /**
