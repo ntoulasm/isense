@@ -7,7 +7,7 @@ const Person = (firstName, lastName, age) => {
   this.getFullName = () => this.firstname + this.lastName;
 
 };
-let person = new Person();
+let person = new Person("marios", "ntoulas", 24);
 
 function dog(breed, age) {
 	this.breed = breed;

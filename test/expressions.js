@@ -145,6 +145,12 @@ z = 5 == "5";
 z = 5 == 6;
 
 const shorthandProperty = "shorthandProperty";
+let computed;
+if(true) {
+    computed = 'computed1';
+} else {
+    computed = 'computed2';
+}
 z = {
     a: 2,
     "b": "aaa",
@@ -153,7 +159,8 @@ z = {
         a: 2
     },
     5: 5,
-    shorthandProperty
+    shorthandProperty,
+    [computed]: 100
 };
 
 const propertyAccessA = z.a;
