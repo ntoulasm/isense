@@ -207,7 +207,33 @@ function extractMembers(node) {
 
     };
 
-    extractMembers(node.body);
+    switch(node.kind) {
+        case ts.SyntaxKind.FunctionDeclaration:
+        case ts.SyntaxKind.FunctionExpression:
+        case ts.SyntaxKind.ArrowFunction: {
+            extractMembers(node.body);
+            break;
+        }
+        case ts.SyntaxKind.ClassDeclaration:
+        case ts.SyntaxKind.ClassExpression: {
+            for(const member of node.members) {
+                switch(member.kind) {
+                    case ts.SyntaxKind.PropertyDeclaration: {
+                        members[member.name.escapedText] = (member.initializer === undefined) ?
+                            [{ id: TypeCarrier.Type.Undefined }] :
+                            TypeDeducer.deduceTypes(member.initializer); 
+                        break;
+                    }
+                    case ts.SyntaxKind.MethodDeclaration: {
+                        members[member.name.escapedText] = TypeDeducer.deduceTypes(member);
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+    }
+
     return members;
 
 };
@@ -217,31 +243,6 @@ function extractMembers(node) {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.ClassDeclaration] =
 deduceTypesFunctionTable[ts.SyntaxKind.ClassExpression] = node => {
-
-    const extractMembers = node => {
-
-        const members = {};
-
-        for(const member of node.members) {
-            switch(member.kind) {
-                case ts.SyntaxKind.PropertyDeclaration: {
-                    members[member.name.escapedText] = (member.initializer === undefined) ?
-                        [{ id: TypeCarrier.Type.Undefined }] :
-                        TypeDeducer.deduceTypes(member.initializer); 
-                    break;
-                }
-                case ts.SyntaxKind.MethodDeclaration: {
-                    members[member.name.escapedText] = TypeDeducer.deduceTypes(member);
-                    break;
-                }
-            }
-        }
-
-        return members;
-
-    };
-
-    node.constuctorMembers = extractMembers(node);
 
     return [{
         id: TypeCarrier.Type.Class,

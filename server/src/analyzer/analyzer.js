@@ -411,12 +411,25 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.CallExpression: {
 
+                let callee;
+
                 if(node.expression.kind == ts.SyntaxKind.Identifier) {  // x(...);
                     const name = node.expression.getText();
-                    const callee = Ast.findCallee(node, name);
+                    callee = Ast.findCallee(node, name);
                     if(callee !== undefined) {
                         Ast.addCallSite(callee, node);
                     }
+                } else if(node.expression.kind === ts.SyntaxKind.ParenthesizedExpression &&
+                    node.expression.expression.kind === ts.SyntaxKind.FunctionExpression) { // iife
+                    callee = node.expression.expression;
+                    console.assert(callee !== undefined);
+                    Ast.addCallSite(callee, node);
+                } else {
+                    const line = ast.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+                    console.log("Could not recognize type of callee at line " + line);
+                }
+
+                if(callee !== undefined) {
                     addParameterTypeCarriers(callee, node.arguments);
                     delete callee.affectedOutOfScopeSymbols;
                     Analyzer.analyze(callee.body);
@@ -425,14 +438,6 @@ Analyzer.analyze = ast => {
                             Ast.addTypeCarrierToClosestStatement(node, typeCarrier);
                         });
                     }
-                } else if(node.expression.kind === ts.SyntaxKind.ParenthesizedExpression &&
-                    node.expression.expression.kind === ts.SyntaxKind.FunctionExpression) { // iife
-                    const callee = node.expression.expression;
-                    console.assert(callee !== undefined);
-                    Ast.addCallSite(callee, node);
-                } else {
-                    const line = ast.getLineAndCharacterOfPosition(node.getStart()).line + 1;
-                    console.log("Could not recognize type of callee at line " + line);
                 }
 
                 ts.forEachChild(node, visitDeclarations);
@@ -449,10 +454,12 @@ Analyzer.analyze = ast => {
                     const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
                     if(typeCarrier === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
                     for(const type of typeCarrier.getTypes()) {
-                        if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
+                        if(type.id === TypeCarrier.Type.Function) {
                             addParameterTypeCarriers(type.node, node.arguments);
                             Analyzer.analyze(type.node.body);
-                        }      
+                        } else if (type.id === TypeCarrier.Type.Class) {
+
+                        }
                     }
                 }
                 break;
