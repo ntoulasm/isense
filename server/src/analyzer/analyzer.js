@@ -17,7 +17,6 @@ Analyzer.analyze = function(ast) {
     
     const classStack = Stack.create();
     const functionStack = Stack.create();
-    const nonPureFunctions = new Set();
 
     ast.analyzeDiagnostics = [];
     ast.symbols = SymbolTable.create();
@@ -251,7 +250,6 @@ Analyzer.analyze = function(ast) {
                                 const func = functionStack.top();
                                 if(!Ast.isDeclaredInFunction(node, symbol, func)) {
                                     Ast.addTypeCarrierToNonPureFunction(func, typeCarrier);
-                                    nonPureFunctions.add(func);
                                 }
                             }
                         } else {
@@ -418,6 +416,11 @@ Analyzer.analyze = function(ast) {
                     if(callee !== undefined) {
                         Ast.addCallSite(callee, node);
                     }
+                    if(callee.hasOwnProperty("affectedOutOfScopeSymbols")) {
+                        callee.affectedOutOfScopeSymbols.forEach(typeCarrier => {
+                            Ast.addTypeCarrierToClosestStatement(node, typeCarrier);
+                        });
+                    }
                 } else if(node.expression.kind === ts.SyntaxKind.ParenthesizedExpression &&
                     node.expression.expression.kind === ts.SyntaxKind.FunctionExpression) { // iife
                     const callee = node.expression.expression;
@@ -454,16 +457,6 @@ Analyzer.analyze = function(ast) {
 	hoistFunctionScopedDeclarations(ast);
 	hoistBlockScopedDeclarations(ast);
     ts.forEachChild(ast, visitDeclarations);
-
-    nonPureFunctions.forEach(func => {
-        func.affectedOutOfScopeSymbols.forEach(typeCarrier => {
-            if(func.hasOwnProperty("callSites")) {
-                func.callSites.forEach(call => {
-                    Ast.addTypeCarrierToClosestStatement(call, typeCarrier);
-                });
-            }
-        });
-    });
 
     // console.log("---------------");
     // Ast.findAllSymbols(ast).forEach(symbol => {
