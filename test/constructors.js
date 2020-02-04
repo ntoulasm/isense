@@ -4,10 +4,11 @@ const Person = (firstName, lastName, age) => {
   this.lastName = lastName;
   this.age = age;
 
-  this.getFullName = () => this.firstname + this.lastName;
+  this.getFullName = () => this.firstName + this.lastName;
 
 };
-let person = new Person("marios", "ntoulas", 24);
+
+let person = new Person("marios", "ntoulas", 24);;
 
 function dog(breed, age) {
 	this.breed = breed;
@@ -23,6 +24,12 @@ class x {
   getA() {
     return a;
   }
+  constructor() {
+    
+  }
 }
 
 let a = new x();
+
+
+

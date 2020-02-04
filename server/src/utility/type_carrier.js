@@ -73,16 +73,19 @@ function valueToString(type) {
             ++objectNesting;
             let comma = false;
             let value = `{\n`;
-            for(const [name, types] of Object.entries(type.value)) {
+            for(const property of type.properties) {
+                const name = property.name;
                 if(comma) { value += ',\n'; }
                 comma = true;
                 value += computeSpaces();
-                value += `${name}: ${TypeCarrier.typeToString(types[0])}`;
-                value += `${types[0].value ? ' = ' + valueToString(types[0]) : ''}`
-                for(let i = 1; i < types.length; ++i) {
-                    value += ` | ${TypeCarrier.typeToString(types[i])}`;
-                    value += `${types[i].value ? ' = ' + valueToString(types[i]) : ''}`;
-                }
+                value += `${name.split('.')[1]}: `;
+                console.log(Ast.lookUp())
+                //${TypeCarrier.typeToString(types[0])}`;
+                // value += `${types[0].value ? ' = ' + valueToString(types[0]) : ''}`
+                // for(let i = 1; i < types.length; ++i) {
+                //     value += ` | ${TypeCarrier.typeToString(types[i])}`;
+                //     value += `${types[i].value ? ' = ' + valueToString(types[i]) : ''}`;
+                // }
             }
 
             --objectNesting;
@@ -152,7 +155,7 @@ TypeCarrier.create = (symbol, types) => {
 
     typeCarrier.setTypes = (types) => {
         typeCarrier.private.types = types;
-        typeCarrier.private.signature = computeSignature(typeCarrier);
+        // typeCarrier.private.signature = computeSignature(typeCarrier);
     };
 
     typeCarrier.getTypes = () => {
@@ -171,7 +174,7 @@ TypeCarrier.create = (symbol, types) => {
         
         typeCarrier.private.symbol = symbol;
         typeCarrier.private.types = Utility.toArray(types);
-        typeCarrier.private.signature = computeSignature(typeCarrier);
+        // typeCarrier.private.signature = computeSignature(typeCarrier);
 
         if(typeCarrier.hasUniqueType()) {
             const type = typeCarrier.private.types[0];
@@ -241,13 +244,9 @@ TypeCarrier.copyType = type => {
             break;
         }
         case TypeCarrier.Type.Object: {
-            copy.value = {};
-            for(const [propertyName, propertyTypes] of Object.entries(type.value)) {
-                copy.value[propertyName] = [];
-                for(const type of propertyTypes) {
-                    copy.value[propertyName].push(TypeCarrier.copyType(type));
-                }
-            }
+            copy.value = type.value;
+            copy.properties = [...type.properties];
+            copy.references = [...type.references];
             break;
         }
         case TypeCarrier.Type.Function:

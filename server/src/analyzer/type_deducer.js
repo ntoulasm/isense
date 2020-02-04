@@ -78,88 +78,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ArrayLiteralExpression] = node => {
  * @param {ts.Node} node 
  */
 deduceTypesFunctionTable[ts.SyntaxKind.ObjectLiteralExpression] = node => {
-
-    let types = [];
-
-    types.push({
-        id: TypeCarrier.Type.Object,
-        value: {}
-    });
-
-    for(const property of node.properties) {
-        switch(property.kind) {
-            case ts.SyntaxKind.PropertyAssignment: {
-
-                const propertyTypes = TypeDeducer.deduceTypes(property.initializer);
-
-                switch(property.name.kind) {
-                    case ts.SyntaxKind.Identifier: 
-                    case ts.SyntaxKind.NumericLiteral: {
-                        const name = property.name.getText();
-                        for(const type of types) {
-                            type.value[name] = propertyTypes;
-                        }
-                        break;
-                    }
-                    case ts.SyntaxKind.StringLiteral: {
-                        const name = property.name.text;
-                        for(const type of types) {
-                            type.value[name] = propertyTypes;
-                        }
-                        break;
-                    }
-                    case ts.SyntaxKind.ComputedPropertyName: {
-                        const nameTypes = TypeDeducer.deduceTypes(property.name.expression);
-                        if(nameTypes.length === 1) {
-                            for(const type of types) {
-                                const name = TypeCaster.toString(nameTypes[0]);
-                                if(name !== undefined) {
-                                    type.value[name] = propertyTypes;
-                                }
-                            }
-                        } else if(nameTypes.length !== 0) {
-                            const copies = [];
-                            for(const type of types) {
-                                copies.push(TypeCarrier.copyType(type));
-                            }
-                            types = [];
-                            for(const nameType of nameTypes) {
-                                const name = TypeCaster.toString(nameType);
-                                if(name === undefined) { continue; }
-                                for(const type of copies) {
-                                    const copy = TypeCarrier.copyType(type);
-                                    copy.value[name] = propertyTypes; 
-                                    types.push(copy);
-                                }
-                            }
-                        }
-                        break;
-                    }
-                    default: {
-                        console.assert(false, "Unknown property assignment name");
-                        break;
-                    }
-                }
-                break;
-
-            }
-            case ts.SyntaxKind.ShorthandPropertyAssignment: {
-                const name = property.name.escapedText;
-                const propertyTypes = TypeDeducer.deduceTypes(property.name);
-                for(const type of types) {
-                    type.value[name] = propertyTypes;
-                }
-                break;
-            }
-            // TODO: method declaration
-            default: {
-                console.assert(false, "Unknown property");
-                break;
-            }
-        }
-    }
-
-    return types;
+    return [node.type];
 };
 
 /**
@@ -453,14 +372,18 @@ deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
         if(typeCarrier === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
         const types = [];
         for(const type of typeCarrier.getTypes()) {
-            if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
-                const newExpressionType = {};
-                newExpressionType.id = TypeCarrier.Type.Object;
-                newExpressionType.value = extractMembers(type.node);
+            let constructor;
+            if(type.id === TypeCarrier.Type.Function) {
+                constructor = type.node;
+                const thisTypes = Ast.findClosestTypeCarrier(type.node.body.statements[type.node.body.statements.length - 1], type.node.symbols.lookUp('this')).getTypes();
                 if(type.node.hasOwnProperty("constructorName")) {
-                    newExpressionType.constructorName = type.node.constructorName;
+                    for(const thisType of thisTypes) {
+                        thisType.constructorName = type.node.constructorName;
+                    }
                 }
-                types.push(newExpressionType);
+                types.push(...thisTypes);
+            } else if(type.id === TypeCarrier.Type.Class) {
+                constructor = Ast.findConstructor(type.node);
             }
         }
         return types;
@@ -472,20 +395,34 @@ deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
 /**
  * @param {ts.Node} node
  */
+deduceTypesFunctionTable[ts.SyntaxKind.ThisKeyword] = node => {
+
+    const symbol = Ast.lookUp(node, 'this');
+    if(symbol) {
+        return Ast.findClosestTypeCarrier(node, symbol).getTypes();
+    }
+
+    return undefined;
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
 deduceTypesFunctionTable[ts.SyntaxKind.PropertyAccessExpression] = node => {
-    
+
     const expressionTypes = TypeDeducer.deduceTypes(node.expression);
     const propertyName = node.name.getText();
     const types = [];
     let typesContainUndefined = false;
 
     for(const type of expressionTypes) {
-        if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty("value")) {
-            if(type.value.hasOwnProperty(propertyName)) {
-                types.push(...type.value[propertyName]);
-            } else if(!typesContainUndefined) {
-                types.push({ id: TypeCarrier.Type.Undefined });
-                typesContainUndefined = true;
+        if(type.id === TypeCarrier.Type.Object) {
+            const name = `@${type.value}.${propertyName}`;
+            for(const property of type.properties) {
+                if(property.name === name) {
+                    types.push(...Ast.findClosestTypeCarrier(node, property).getTypes());
+                } 
             }
         }
     }

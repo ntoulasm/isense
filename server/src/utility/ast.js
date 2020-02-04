@@ -1,4 +1,5 @@
 const TypeCarrier = require('./type_carrier');
+const Utility = require('./utility');
 
 const ts = require('typescript');
 
@@ -205,6 +206,7 @@ Ast.findAllSymbols = node => {
  */
 Ast.addTypeCarrier = (node, typeCarrier) => {
     console.assert(node.hasOwnProperty("typeCarriers"), "Trying to add typeCarrier to node without property typeCarriers");
+    typeCarrier.parent = node;
     for(const c of node.typeCarriers) {
         if(c.getSymbol() === typeCarrier.getSymbol()) {
             c.setTypes(typeCarrier.getTypes());
@@ -228,7 +230,9 @@ Ast.addTypeCarrierToClosestStatement = (node, typeCarrier) => {
         ts.SyntaxKind.ForInStatement,
         ts.SyntaxKind.ThrowStatement,
         ts.SyntaxKind.ReturnStatement,
-        ts.SyntaxKind.SwitchStatement
+        ts.SyntaxKind.SwitchStatement,
+        ts.SyntaxKind.FunctionDeclaration,
+        ts.SyntaxKind.ClassDeclaration
     ];
 
     while (statements.indexOf(node.kind) === -1) {
@@ -248,22 +252,10 @@ Ast.addTypeCarrierToExpression = (node, typeCarrier) => {
     Ast.findBinaryExpressionAncestors(node).forEach(node => {
         Ast.addTypeCarrier(node, TypeCarrier.copyTypeCarrier(typeCarrier));
     });
-    const expressionStatement = Ast.findExpressionStatementAncestor(node.parent);
-    Ast.addTypeCarrier(expressionStatement, TypeCarrier.copyTypeCarrier(typeCarrier));
+    Ast.addTypeCarrierToClosestStatement(node, TypeCarrier.copyTypeCarrier(typeCarrier));
+    // const expressionStatement = Ast.findExpressionStatementAncestor(node.parent);
+    // Ast.addTypeCarrier(expressionStatement, TypeCarrier.copyTypeCarrier(typeCarrier));
 };
-
-/**
- * @param {ts.Node} node
- */
-Ast.findExpressionStatementAncestor = node => {
-    while(node !== undefined) {
-        if(node.kind === ts.SyntaxKind.ExpressionStatement) {
-            return node;
-        }
-        node = node.parent;
-    }
-    return undefined;
-}
 
 /**
  * @param {ts.Node} node
@@ -526,5 +518,32 @@ Ast.findTopLevelIfStatement = node => {
     }
     return node;
 };
+
+/**
+ * @param {ts.Node} node
+ */
+Ast.findConstructor = node => {
+    console.assert(node.kind === ts.SyntaxKind.ClassDeclaration || ts.SyntaxKind.ClassExpression);
+    for(const member of node.members) {
+        if(member.kind === ts.SyntaxKind.Constructor) {
+            return member;
+        }
+    }
+};
+
+Ast.findAncestor = (node, kind) => {
+
+    kind = Utility.toArray(kind);
+    
+    while(node !== undefined) {
+        if(kind.indexOf(node.kind) != -1) {
+            return node;
+        }
+        node = node.parent;
+    }
+
+    return undefined;
+
+}
 
 module.exports = Ast;

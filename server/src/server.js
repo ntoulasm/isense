@@ -2,6 +2,7 @@ const Utility = require('./utility/utility');
 const Analyzer = require('./analyzer/analyzer');
 const Ast = require('./utility/ast');
 const TypeCarrier = require('./utility/type_carrier');
+const TypeDeducer = require('./analyzer/type_deducer')
 
 const vscodeLanguageServer = require('vscode-languageserver');
 const ts = require('typescript');
@@ -134,11 +135,10 @@ async function provideAnalyzeDiagnostics(ast) {
 }
 
 connection.onDidChangeWatchedFiles(change => {
-	connection.console.log('We received an file change event');
+	connection.console.log('We received a file change event');
 });
 
 connection.onHover((info) => {
-
 	const document = info.textDocument;
 	const fileName = document.uri;
 	const ast = asts[fileName];
@@ -153,10 +153,9 @@ connection.onHover((info) => {
 	return {
 		contents: {
 			language: "typescript",
-			value: closestTypeCarrier.getSignature()
+			value: computeSignature(id, closestTypeCarrier)
 		}
 	};
-
 });
 
 connection.onDocumentSymbol((info) => {
@@ -243,22 +242,70 @@ connection.onCompletion((info) => {
 	const triggerCharacter = info.context.triggerCharacter;
 
 	if(triggerCharacter === '.') {
-		console.log("Get property: ", Ast.findNode(ast, offset, ts.SyntaxKind.PropertyAccessExpression));
+
+		const node = Ast.findInnermostNode(ast, offset - 1, ts.SyntaxKind.Identifier);
+		const expressionTypes = TypeDeducer.deduceTypes(node);
+
+		for(const type of expressionTypes) {
+			if(type.id === TypeCarrier.Type.Object) {
+				for(const property of type.properties) {
+					const propertyName = property.name.split('.')[1];
+					const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
+					const kind = propertyTypeCarrier.hasUniqueType() ?
+						TypeCarrier.typeToVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].id) :
+						vscodeLanguageServer.CompletionItemKind.Variable;
+					const signature = computeSignature(node, propertyTypeCarrier);
+					completionItems.push({
+						label: propertyName,
+						kind,
+						data: {signature}
+					});
+				}
+			}
+		}
+
 	} else {
-		const node = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.Identifier);
-		console.assert(node);
-		Ast.findVisibleSymbols(node).forEach(symbol => {
-			const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
-			const kind = closestTypeCarrier.hasUniqueType() ?
-				TypeCarrier.typeToVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].id) : 
-				vscodeLanguageServer.CompletionItemKind.Variable;
-			const signature = closestTypeCarrier.getSignature();
-			completionItems.push({
-				label: symbol.name, 
-				kind,
-				data: { signature }
-			});
-		});
+		const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
+		switch(node.kind) {
+			case ts.SyntaxKind.Identifier: {
+				if(node.parent.kind === ts.SyntaxKind.PropertyAccessExpression) {
+
+					const expressionTypes = TypeDeducer.deduceTypes(node.parent.expression);
+
+					for(const type of expressionTypes) {
+						if(type.id === TypeCarrier.Type.Object) {
+							for(const property of type.properties) {
+								const propertyName = property.name.split('.')[1];
+								const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
+								const kind = propertyTypeCarrier.hasUniqueType() ?
+									TypeCarrier.typeToVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].id) :
+									vscodeLanguageServer.CompletionItemKind.Variable;
+								const signature = computeSignature(node, propertyTypeCarrier);
+								completionItems.push({
+									label: propertyName,
+									kind,
+									data: {signature}
+								});
+							}
+						}
+					}				
+					
+				} else {
+					Ast.findVisibleSymbols(node).forEach(symbol => {
+						const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
+						const kind = closestTypeCarrier.hasUniqueType() ?
+							TypeCarrier.typeToVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].id) : 
+							vscodeLanguageServer.CompletionItemKind.Variable;
+						const signature = computeSignature(node, closestTypeCarrier);
+						completionItems.push({
+							label: symbol.name, 
+							kind,
+							data: { signature }
+						});
+					});
+				}
+			}
+		}
 	}
 
 	return completionItems;
@@ -304,16 +351,24 @@ connection.onDidChangeTextDocument((params) => {
 		const span = ts.createTextSpan(changeOffset, change.rangeLength);
 		const changeRange = ts.createTextChangeRange(span, change.text.length);
 		const newText = text.slice(0, changeOffset) + change.text + text.slice(changeOffset + change.rangeLength);
+		const previous_ast = ast;
 		ast = asts[fileName] = ts.updateSourceFile(ast, newText, changeRange);
 		text = newText;
 	}
+
+	ast.forEachChild(function a(node) {
+		if(node.hasOwnProperty("symbols")) {
+			console.log(node);
+		}
+		node.forEachChild(a);
+	});
 
 	clearDiagnostics(ast);
 	if(Ast.hasParseError(ast)) { 
 		provideParseDiagnostics(ast);
 		return; 
 	}
-	
+
 	try {
 		Analyzer.analyze(ast);
 		provideAnalyzeDiagnostics(ast);
@@ -324,5 +379,114 @@ connection.onDidChangeTextDocument((params) => {
 });
 
 connection.onDidCloseTextDocument((params) => {});
+
+// connection.onNotification('custom/focusChanged', (params) => {
+
+// 	const ast = asts[params.fileName];
+// 	const offset = ast.getPositionOfLineAndCharacter(params.position.line, params.position.character); 
+// 	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
+// 	const func = Ast.findAncestorFunction(node);
+// 	if(func === undefined) { return ; }
+// 	const callSites = [];
+// 	func.callSites.forEach(callSite => {
+// 		const position = ast.getLineAndCharacterOfPosition(callSite.getStart());
+// 		callSites.push(`${callSite.getText()}:${position.line + 1}:${position.character + 1}`);
+// 	});
+// 	if(callSites.length === 0) { return ; }
+// 	if(callSites.length === 1) {
+// 		// TODO: add logic;
+// 		return ;
+// 	}
+// 	connection.sendNotification('custom/pickCallSite', {callSites});
+// });
+
+let objectNesting = 0;
+const computeSpaces = () => {
+    let spaces = "";
+    for(let i = 0; i < objectNesting; ++i) {
+        spaces += "    ";
+    }
+    return spaces;
+};
+
+const typeToString = type => {
+
+	switch(type.id) {
+		case TypeCarrier.Type.Object: {
+			return type.hasOwnProperty('constructorName') ? type.constructorName : 'Object';
+		}
+		default: {
+			return Object.keys(TypeCarrier.Type)[type.id];
+		}
+	}
+
+}
+
+function computeSignature(node, typeCarrier) {
+
+	const symbol = typeCarrier.getSymbol();
+	let firstTime = true;
+	let signature = symbol.isConst ? 'const ' : '';
+
+	function computeSignatureValue(type) {
+
+		switch(type.id) {
+			case TypeCarrier.Type.Number:
+			case TypeCarrier.Type.String:
+			case TypeCarrier.Type.Boolean: {
+				return type.value ? `= ${String(type.value)}` : '';
+			}
+			case TypeCarrier.Type.Array: {
+				return '';
+			}
+			case TypeCarrier.Type.Object: {
+
+				if(type.properties.length === 0) {
+					return '';
+				}
+
+				++objectNesting;
+				let comma = false;
+				let value = `= {\n`;
+
+				for(const property of type.properties) {
+					if(comma) { value += ',\n'; }
+					comma = true;
+					value += computeSpaces();
+					value += computeSignature(node, Ast.findClosestTypeCarrier(node, property));
+				}
+	
+				--objectNesting;
+				value += `\n${computeSpaces()}}`;
+				return value;
+
+			}
+			case TypeCarrier.Type.Function:
+			case TypeCarrier.Type.Class: {
+				return type.node ? '' : `= ${type.node.text}`;
+			}
+			case TypeCarrier.Type.Null:
+			case TypeCarrier.Type.Undefined: {
+				return '';
+			}
+			default: {
+				console.assert(false);
+			}
+		}
+	}
+
+	for(const type of typeCarrier.getTypes()) {
+		if(firstTime) { 
+			firstTime = false;
+		} else {
+			signature += ' || '
+		}
+		const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
+		signature += `${name}: ${typeToString(type)} `;
+		signature += computeSignatureValue(type);
+	}
+
+    return signature;
+}
 
 connection.listen();
