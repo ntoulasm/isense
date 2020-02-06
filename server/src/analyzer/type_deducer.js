@@ -443,7 +443,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ElementAccessExpression] = node => {
 
     for(const elementType of elementTypes) {
 
-        const elementTypeString = TypeCaster.toString(elementType);
+        const elementTypeString = TypeCaster.toString(elementType).value;
         
         if(elementTypeString !== undefined) {
             for(const expressionType of expressionTypes) {
