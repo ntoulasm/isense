@@ -3,7 +3,7 @@ const Utility = require('../utility/utility');
 
 const TypeCaster = {};
 
-TypeCarrier.toNumber = type => {
+TypeCaster.toNumber = type => {
 
     const newType = {};
     newType.id = TypeCarrier.Type.Number;

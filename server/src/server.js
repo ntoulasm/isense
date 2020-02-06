@@ -432,9 +432,11 @@ function computeSignature(node, typeCarrier) {
 
 		switch(type.id) {
 			case TypeCarrier.Type.Number:
-			case TypeCarrier.Type.String:
 			case TypeCarrier.Type.Boolean: {
-				return type.value ? `= ${String(type.value)}` : '';
+				return type.hasOwnProperty("value") ? `= ${String(type.value)}` : '';
+			}
+			case TypeCarrier.Type.String: {
+				return type.hasOwnProperty("value") ? `= \"${String(type.value)}\"` : '';
 			}
 			case TypeCarrier.Type.Array: {
 				return '';
