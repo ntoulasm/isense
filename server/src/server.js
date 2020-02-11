@@ -138,24 +138,43 @@ connection.onDidChangeWatchedFiles(change => {
 	connection.console.log('We received a file change event');
 });
 
-connection.onHover((info) => {
+connection.onHover(info => {
+
 	const document = info.textDocument;
 	const fileName = document.uri;
 	const ast = asts[fileName];
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
-	const id = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.Identifier);
-	if(id === undefined) { return { contents: [] }; }
-	const symbol = Ast.lookUp(id, id.text);
-	if(symbol === undefined) { return { contents: [] }; }
-	const closestTypeCarrier = Ast.findClosestTypeCarrier(id, symbol);
-	if(closestTypeCarrier === undefined) { return { contents: [] }; }
-	return {
-		contents: {
-			language: "typescript",
-			value: computeSignature(id, closestTypeCarrier)
+	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
+
+	if(node === undefined) { return { contents: [] }; }
+
+	switch(node.kind) {
+		case ts.SyntaxKind.VariableDeclarationList: {
+			return {
+				contents: {
+					language: "typescript",
+					value: Ast.isLetDeclaration(node) ? "let keyword" : Ast.isConstDeclaration(node) ? "const keyword" : "var keyword"
+				}
+			};
 		}
-	};
+		case ts.SyntaxKind.Identifier: {
+			const symbol = Ast.lookUp(node, node.text);
+			if(symbol === undefined) { return { contents: [] }; }
+			const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
+			if(closestTypeCarrier === undefined) { return { contents: [] }; }
+			return {
+				contents: {
+					language: "typescript",
+					value: computeSignature(node, closestTypeCarrier)
+				}
+			};
+		}
+		default: {
+			return { contents: [] };
+		}
+	}
+	
 });
 
 connection.onDocumentSymbol((info) => {
