@@ -1,3 +1,4 @@
+const SymbolTable = require('./symbol_table');
 const Utility = require('./utility');
 
 const vscodeLanguageServer = require('vscode-languageserver');
@@ -245,7 +246,7 @@ TypeCarrier.copyType = type => {
         }
         case TypeCarrier.Type.Object: {
             copy.value = type.value;
-            copy.properties = [...type.properties];
+            copy.properties = SymbolTable.copy(type.properties);
             copy.references = [...type.references];
             break;
         }

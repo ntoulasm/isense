@@ -267,7 +267,7 @@ connection.onCompletion((info) => {
 
 		for(const type of expressionTypes) {
 			if(type.id === TypeCarrier.Type.Object) {
-				for(const property of type.properties) {
+				for(const [,property] of Object.entries(type.properties.getSymbols())) {
 					const propertyName = property.name.split('.')[1];
 					const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
 					const kind = propertyTypeCarrier.hasUniqueType() ?
@@ -293,7 +293,7 @@ connection.onCompletion((info) => {
 
 					for(const type of expressionTypes) {
 						if(type.id === TypeCarrier.Type.Object) {
-							for(const property of type.properties) {
+							for(const [,property] of Object.entries(type.properties.getSymbols())) {
 								const propertyName = property.name.split('.')[1];
 								const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
 								const kind = propertyTypeCarrier.hasUniqueType() ?
@@ -462,7 +462,7 @@ function computeSignature(node, typeCarrier) {
 			}
 			case TypeCarrier.Type.Object: {
 
-				if(type.properties.length === 0) {
+				if(type.properties.getSymbols().length === 0) {
 					return '';
 				}
 
@@ -470,7 +470,7 @@ function computeSignature(node, typeCarrier) {
 				let comma = false;
 				let value = `= {\n`;
 
-				for(const property of type.properties) {
+				for(const [,property] of Object.entries(type.properties.getSymbols())) {
 					if(comma) { value += ',\n'; }
 					comma = true;
 					value += computeSpaces();

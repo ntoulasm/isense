@@ -418,7 +418,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.PropertyAccessExpression] = node => {
     for(const type of expressionTypes) {
         if(type.id === TypeCarrier.Type.Object) {
             const name = `@${type.value}.${propertyName}`;
-            for(const property of type.properties) {
+            for(const [,property] of Object.entries(type.properties.getSymbols())) {
                 if(property.name === name) {
                     types.push(...Ast.findClosestTypeCarrier(node, property).getTypes());
                 } 

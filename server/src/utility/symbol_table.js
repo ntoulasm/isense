@@ -54,4 +54,16 @@ SymbolTable.create = function() {
 
 };
 
+SymbolTable.copy = symbolTable => {
+
+    const copy = SymbolTable.create();
+
+    for(const [,symbol] of Object.entries(symbolTable.getSymbols())) {
+        copy.insert(symbol);
+    }
+
+    return copy;
+
+};
+
 module.exports = SymbolTable;

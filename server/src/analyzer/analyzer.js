@@ -537,7 +537,7 @@ Analyzer.analyze = ast => {
 
                 if(name !== undefined) {
                     const symbol = Symbol.create(`@${object.type.value}.${name}`, node.pos, node.end);
-                    object.type.properties.push(symbol);
+                    object.type.properties.insert(symbol);
                     assign(node, symbol, propertyTypes);
                 }
 
@@ -692,17 +692,13 @@ function createObject() {
     return {
         id: TypeCarrier.Type.Object,
         value: ++totalObjects,
-        properties: [],
+        properties: SymbolTable.create(),
         references: []
     };
 }
 
 function getProperty(object, name) {
-    for(const property of object.properties) {
-        if(property.name === name) {
-            return property;
-        }
-    }
+    return object.properties.lookUp(name);
 }
 
 function setProperty(node, object, name, types) {
@@ -722,7 +718,7 @@ function setProperty(node, object, name, types) {
         for(const type of previousTypeCarrier.getTypes()) {
             const newType = TypeCarrier.copyType(type);
             if(newType.id === TypeCarrier.Type.Object) {
-                newType.properties.push(symbol);
+                newType.properties.insert(symbol);
             }
             newTypes.push(newType);
         }
