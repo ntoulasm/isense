@@ -262,8 +262,8 @@ connection.onCompletion((info) => {
 
 	if(triggerCharacter === '.') {
 
-		const node = Ast.findInnermostNode(ast, offset - 1, ts.SyntaxKind.Identifier);
-		const expressionTypes = TypeDeducer.deduceTypes(node);
+		const node = Ast.findInnermostNode(ast, offset - 1, ts.SyntaxKind.PropertyAccessExpression);
+		const expressionTypes = TypeDeducer.deduceTypes(node.name.escapedText == "" ? node.expression : node);
 
 		for(const type of expressionTypes) {
 			if(type.id === TypeCarrier.Type.Object) {
@@ -370,17 +370,12 @@ connection.onDidChangeTextDocument((params) => {
 		const span = ts.createTextSpan(changeOffset, change.rangeLength);
 		const changeRange = ts.createTextChangeRange(span, change.text.length);
 		const newText = text.slice(0, changeOffset) + change.text + text.slice(changeOffset + change.rangeLength);
-		const previous_ast = ast;
+		const previousAst = ast;
 		ast = asts[fileName] = ts.updateSourceFile(ast, newText, changeRange);
+		ast.symbols = previousAst.symbols;
+		ast.typeCarriers = previousAst.typeCarriers;
 		text = newText;
 	}
-
-	ast.forEachChild(function a(node) {
-		if(node.hasOwnProperty("symbols")) {
-			console.log(node);
-		}
-		node.forEachChild(a);
-	});
 
 	clearDiagnostics(ast);
 	if(Ast.hasParseError(ast)) { 
