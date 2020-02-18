@@ -4,7 +4,7 @@ const SymbolTable = require('../utility/symbol_table');
 const Stack = require('../utility/stack');
 const TypeCarrier = require('../utility/type_carrier');
 const AnalyzeDiagnostic = require('./analyze_diagnostic');
-const TypeDeducer = require('./type_deducer');
+const TypeDeducer = require('../type-deducer/type_deducer');
 
 const ts = require('typescript');
 
