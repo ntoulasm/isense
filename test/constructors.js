@@ -8,7 +8,7 @@ const Person = (firstName, lastName, age) => {
 
 };
 
-let person = new Person("marios", "ntoulas", 24);;
+let person = new Person("marios", "ntoulas", 24);
 
 function dog(breed, age) {
 	this.breed = breed;

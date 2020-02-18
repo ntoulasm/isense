@@ -211,7 +211,11 @@ connection.onDocumentSymbol((info) => {
 
 });
 
+const computeFunctionSignature = (node, call) => `${node.name !== undefined ? node.name.getText() : call.expression.getText()}(${node.parameters.map(p => p.name.getText()).join(',')})`;
+
 connection.onSignatureHelp((info) => {
+
+	const signatures = [];
 	const document = info.textDocument;
 	const fileName = document.uri;
 	const ast = asts[fileName];
@@ -222,32 +226,50 @@ connection.onSignatureHelp((info) => {
 
 	if(call === undefined) { return; }
 	const activeParameter = Utility.computeActiveParameter(text, offset, call.getStart());
-	if(activeParameter < 0) {
-		return null;
+	if(activeParameter < 0) { return null; }
+	const callees = TypeDeducer.deduceTypes(call.expression).filter(t => t.id === TypeCarrier.Type.Function).map(t => t.node);
+
+	for(const callee of callees) {
+		const signature = {};
+		signature.documentation = "Function Documentation?";
+		signature.label = computeFunctionSignature(callee, call);
+		signature.parameters = [];
+		for(const parameter of callee.parameters) {
+			signature.parameters.push(vscodeLanguageServer.ParameterInformation.create(parameter.name.getText(), "Parameter Documentation?"));
+		}
+		signatures.push(signature);
 	}
+
 	return {
 		activeParameter,
 		activeSignature: 0,
-		signatures: [
-			{
-				documentation: "documentation for signature1",
-				label: "function(a, b, c)",
-				parameters: [
-					vscodeLanguageServer.ParameterInformation.create("a", "documentation of parameter a"), 
-					vscodeLanguageServer.ParameterInformation.create("b", "documentation of parameter b"),
-					vscodeLanguageServer.ParameterInformation.create("c", "documentation of parameter c")
-				]
-			},
-			{
-				documentation: "documentation for signature2",
-				label: "function2",
-				parameters: [{
-					label: "a", 
-					documentation: "documentation of parameter a"
-				}]
-			}
-		]
+		signatures
 	};
+
+	// return {
+	// 	activeParameter,
+	// 	activeSignature: 0,
+	// 	signatures: [
+	// 		{
+	// 			documentation: "documentation for signature1",
+	// 			label: "function(a, b, c)",
+	// 			parameters: [
+	// 				vscodeLanguageServer.ParameterInformation.create("a", "documentation of parameter a"), 
+	// 				vscodeLanguageServer.ParameterInformation.create("b", "documentation of parameter b"),
+	// 				vscodeLanguageServer.ParameterInformation.create("c", "documentation of parameter c")
+	// 			]
+	// 		},
+	// 		{
+	// 			documentation: "documentation for signature2",
+	// 			label: "function2",
+	// 			parameters: [{
+	// 				label: "a", 
+	// 				documentation: "documentation of parameter a"
+	// 			}]
+	// 		}
+	// 	]
+	// };
+
 });
 
 connection.onCompletion((info) => {

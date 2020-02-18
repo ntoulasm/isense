@@ -11,13 +11,15 @@ const ts = require('typescript');
 const Analyzer = {};
 
 let totalObjects = -1;
+const callStack = Stack.create();
+
 
 /**
  * @param {ts.SourceFile} ast 
  */
 Analyzer.analyze = ast => {
     
-    totalObjects = -1;
+    totalObjects = 0;
 
     const objectStack = Stack.create();
     const classStack = Stack.create();
@@ -298,6 +300,8 @@ Analyzer.analyze = ast => {
                         const propertyName = node.left.name.text;
                         const rightTypes = TypeDeducer.deduceTypes(node.right);
 
+                        // if(leftTypes === undefined) { break; } // TODO: maybe change?
+
                         for(const type of leftTypes) {
                             if(type.id === TypeCarrier.Type.Object) {
                                 setProperty(node, type, propertyName, rightTypes);
@@ -465,8 +469,8 @@ Analyzer.analyze = ast => {
                 let callee;
 
                 if(node.expression.kind == ts.SyntaxKind.Identifier) {  // x(...);
-                    const name = node.expression.getText();
-                    callee = Ast.findCallee(node, name);
+                    const callees = Ast.findCallees(node);
+                    callee = !callees.length ? undefined : callees[0];
                 } else if(node.expression.kind === ts.SyntaxKind.ParenthesizedExpression &&
                     node.expression.expression.kind === ts.SyntaxKind.FunctionExpression) { // iife
                     callee = node.expression.expression;
@@ -488,13 +492,12 @@ Analyzer.analyze = ast => {
                 ts.forEachChild(node, visitDeclarations);
 
                 if(node.expression.kind === ts.SyntaxKind.Identifier) {
-                    const symbol = Ast.lookUp(node, node.expression.getText());
-                    if(symbol === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
-                    const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
-                    if(typeCarrier === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
-                    for(const type of typeCarrier.getTypes()) {
+                    const types = TypeDeducer.deduceTypes(node.expression);
+                    for(const type of types) {
                         if(type.id === TypeCarrier.Type.Function) {
                             call(node, type.node);
+                            // const constructorLastStatement = type.node.body.statements.length ? type.node.body.statements[type.node.body.statements.length - 1] : undefined;
+                            // copyPropertiesTypeCarriersToCallIfObject(constructorLastStatement, ThisHolder.top(), node);
                         } else if (type.id === TypeCarrier.Type.Class) {
                             call(node, Ast.findConstructor(type.node));
                         }
@@ -544,6 +547,16 @@ Analyzer.analyze = ast => {
                 break;
             
             }
+            case ts.SyntaxKind.ReturnStatement: {
+                ts.forEachChild(node, visitDeclarations);
+                if(node.hasOwnProperty('expression') && !callStack.isEmpty()) {
+                    const returnTypes = TypeDeducer.deduceTypes(node.expression);
+                    const call = callStack.top();
+                    copyPropertiesTypeCarriersToCallIfObject(node, returnTypes, call);
+                    call.returnTypes.push(...returnTypes);
+                }
+                break;
+            }
 			default: {
 				ts.forEachChild(node, visitDeclarations);
 				break;
@@ -571,6 +584,25 @@ Analyzer.analyze = ast => {
 }
 
 // ----------------------------------------------------------------------------
+
+/**
+ * @param {ts.Node} returnStatement
+ * @param {Array} returnTypes 
+ * @param {ts.Node} call
+ */
+
+function copyPropertiesTypeCarriersToCallIfObject(returnStatement, returnTypes, call) {
+    for(const t of returnTypes) {
+        if(t.id === TypeCarrier.Type.Object) {
+            for(const [, p] of Object.entries(t.properties.getSymbols())) {
+                Ast.addTypeCarrierToClosestStatement(
+                    call, 
+                    Ast.findClosestTypeCarrier(returnStatement, p)
+                );
+            }
+        }
+    }
+}
 
 /**
  * 
@@ -609,7 +641,7 @@ function mergeIfStatementTypeCarriers(node) {
         const symbol = c.getSymbol();
         const outerCarrier = Ast.findClosestTypeCarrier(topLevelIfStatement, symbol);
         const carrier = TypeCarrier.create(symbol, [
-            ...outerCarrier.getTypes(),
+            ...(outerCarrier !== undefined ? outerCarrier.getTypes() : []),
             ...c.getTypes()
         ]);
         carriers.push(carrier);
@@ -642,6 +674,8 @@ function defineThis(node, thisObject = createObject()) {
 }
 
 function call(node, callee) {
+    callStack.push(node);
+    node.returnTypes = [];
     Ast.addCallSite(callee, node);
     addParameterTypeCarriers(callee, node.arguments);
     delete callee.affectedOutOfScopeSymbols;
@@ -652,6 +686,8 @@ function call(node, callee) {
             Ast.addTypeCarrierToClosestStatement(node, typeCarrier);
         });
     }
+    if(!node.returnTypes.length) { node.returnTypes.push({id: TypeCarrier.Type.Undefined}); }
+    callStack.pop();
 }
 
 function assign(node, symbol, types) {

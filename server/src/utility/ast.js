@@ -330,15 +330,25 @@ Ast.addAnalyzeDiagnostic = (ast, diagnostic) => {
 
 /**
  * @param {ts.Node} call
- * @param {string} calleeName
  */
-Ast.findCallee = (call, calleeName) => {
+Ast.findCallees = (call) => {
+
+    const callees = [];
+    const calleeName = call.expression.getText();
     const symbol = Ast.lookUp(call, calleeName);
+
     if(symbol === undefined) { return undefined; }
+    
     const typeCarrier = Ast.findClosestTypeCarrier(call, symbol);
-    if(!typeCarrier.hasUniqueType()) { return undefined; }
-    const type = typeCarrier.getTypes()[0];
-    return type.id === TypeCarrier.Type.Function ? type.node : undefined;
+
+    for(const type of typeCarrier.getTypes()) {
+        if(type.id === TypeCarrier.Type.Function) {
+            callees.push(type.node);
+        }
+    }
+
+    return callees;
+
 };
 
 /**
@@ -392,9 +402,7 @@ Ast.isDeclaredInFunction = (node, symbol, functionNode) => {
     }
     console.assert(node.parent !== undefined, "isDeclaredInFunction");
     const leftSibling = Ast.findLeftSibling(node);
-    return leftSibling !== undefined ? 
-        Ast.isDeclaredInFunction(leftSibling, symbol, functionNode) : 
-        Ast.isDeclaredInFunction(node.parent, symbol, functionNode);
+    return Ast.isDeclaredInFunction(leftSibling || node.parent, symbol, functionNode);
 };
 
 /**

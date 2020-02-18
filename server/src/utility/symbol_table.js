@@ -3,15 +3,16 @@ const SymbolTable = {};
 SymbolTable.create = function() {
 
 	const symbolTable = {};
+    symbolTable.private = {};
 
-	const symbols = {};
+	symbolTable.private.symbols = {};
 
     /**
      * @param {isense.Symbol} symbol
      */
     symbolTable.insert = function(symbol) {
         const name = symbol.name;
-        symbols[name] = symbol;
+        symbolTable.private.symbols[name] = symbol;
     };
 
     /**
@@ -20,15 +21,15 @@ SymbolTable.create = function() {
      * @returns {isense.symbol}
      */
     symbolTable.lookUp = function(name) {
-        if(symbols.hasOwnProperty(name)) {
-            return symbols[name];
+        if(symbolTable.private.symbols.hasOwnProperty(name)) {
+            return symbolTable.private.symbols[name];
         } else {
             return undefined;
         }
     };
 
     symbolTable.hasSymbol = symbol => {
-        for(const [, s] of Object.entries(symbols)) {
+        for(const [, s] of Object.entries(symbolTable.private.symbols)) {
             if(symbol === s) {
                 return true;
             }
@@ -40,7 +41,7 @@ SymbolTable.create = function() {
      * @returns {array<isense.symbol>}
      */
     symbolTable.getSymbols = function() {
-        return symbols;
+        return symbolTable.private.symbols;
     };
 
     /**

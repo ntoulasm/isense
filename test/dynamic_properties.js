@@ -8,7 +8,6 @@ y.b.b = {};
 x.b.b.c = 2;
 y;
 
-function foo() {
+function foo(a) {
   this;
 }
-

@@ -463,6 +463,14 @@ deduceTypesFunctionTable[ts.SyntaxKind.ElementAccessExpression] = node => {
 
 };
 
+/**
+ * @param {ts.Node} node
+ */
+deduceTypesFunctionTable[ts.SyntaxKind.CallExpression] = node => {
+    return node.returnTypes;
+};
+
+
 // ----------------------------------------------------------------------------
 /* Prefix Unary Expressions */
 
