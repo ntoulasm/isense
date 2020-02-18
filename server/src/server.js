@@ -289,6 +289,14 @@ connection.onCompletion((info) => {
 		const expressionTypes = TypeDeducer.deduceTypes(node.name.escapedText == "" ? node.expression : node);
 
 		for(const type of expressionTypes) {
+			if(type.id === TypeCarrier.Type.Number) {
+				for(const m of NumberMethods) {
+					completionItems.push({
+						label: m.name,
+						kind: vscodeLanguageServer.CompletionItemKind.Variable
+					});
+				}
+			}
 			if(type.id === TypeCarrier.Type.Object) {
 				for(const [,property] of Object.entries(type.properties.getSymbols())) {
 					const propertyName = property.name.split('.')[1];
