@@ -264,7 +264,9 @@ Replicator.replicateFunctions[ts.SyntaxKind.ComputedPropertyName] = (node, optio
 /**
  * @param {ts.TypeParameter} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.TypeParameter] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.TypeParameter] = (node, options) => {
+    // TODO: ???
+};
 
 /**
  * @param {ts.Parameter} node
@@ -294,7 +296,13 @@ Replicator.replicateFunctions[ts.SyntaxKind.Decorator] = (node, options) => {
  * @param {ts.PropertySignature} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.PropertySignature] = (node, options) => {
-    // TODO: add logic
+    return ts.createPropertySignature(
+        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+        Replicator.replicateProperty(node, 'name', options),
+        Replicator.replicateIfProperty(node, 'questionToken', options),
+        Replicator.replicateIfProperty(node, 'type', options),
+        Replicator.replicateIfProperty(node, 'initializer', options)
+    );
 };
 
 /**
@@ -315,217 +323,438 @@ Replicator.replicateFunctions[ts.SyntaxKind.PropertyDeclaration] = (node, option
  * @param {ts.MethodSignature} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.MethodSignature] = (node, options) => {
-    // TODO: add logic
+    return ts.createMethodSignature(
+        Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
+        Replicator.replicateIfProperty(node, 'type', options),
+        Replicator.replicateProperty(node, 'name', options),
+        Replicator.replicateIfProperty(node, 'questionToken', options)
+    );
 };
 
 /**
  * @param {ts.MethodDeclaration} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.MethodDeclaration] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.MethodDeclaration] = (node, options) => {
+    return ts.createMethod(
+        Replicator.replicateIfArrayProperty(node, 'decorators', options),
+        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+        Replicator.replicateIfProperty(node, 'asteriskToken', options),
+        Replicator.replicateProperty(node, 'name', options),
+        Replicator.replicateIfProperty(node, 'questionToken', options),
+        Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
+        Replicator.replicateIfProperty(node, 'type', options),
+        Replicator.replicateIfProperty(node, 'body', options)
+    );
+};
 
 /**
  * @param {ts.Constructor} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.Constructor] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.Constructor] = (node, options) => {
+    return ts.createConstructor(
+        Replicator.replicateIfArrayProperty(node, 'decorators', options),
+        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
+        Replicator.replicateIfProperty(node, 'body', options)
+    );
+};
 
 /**
  * @param {ts.GetAccessor} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.GetAccessor] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.GetAccessor] = (node, options) => {
+    return ts.createGetAccessor(
+        Replicator.replicateIfArrayProperty(node, 'decorators', options),
+        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+        Replicator.replicateProperty(node, 'name', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
+        Replicator.replicateIfProperty(node, 'type', options),
+        Replicator.replicateIfProperty(node, 'body', options)
+    );
+};
 
 /**
  * @param {ts.SetAccessor} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.SetAccessor] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.SetAccessor] = (node, options) => {
+    ts.createSetAccessor(
+        Replicator.replicateIfArrayProperty(node, 'decorators', options),
+        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+        Replicator.replicateProperty(node, 'name', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
+        Replicator.replicateIfProperty(node, 'body', options)
+    );
+};
 
 /**
  * @param {ts.CallSignature} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.CallSignature] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.CallSignature] = (node, options) => {
+    return ts.createCallSignature(
+        Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
+        Replicator.replicateIfProperty(node, 'type', options)
+    );
+};
 
 /**
  * @param {ts.ConstructSignature} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ConstructSignature] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ConstructSignature] = (node, options) => {
+    return ts.createConstructSignature(
+        Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
+        Replicator.replicateIfProperty(node, 'type', options)
+    );
+};
 
 /**
  * @param {ts.IndexSignature} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.IndexSignature] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.IndexSignature] = (node, options) => {
+    return ts.createIndexSignature(
+        Replicator.replicateIfArrayProperty(node, 'decorators', options),
+        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
+        Replicator.replicateProperty(node, 'type', options)
+    );
+};
 
 /**
  * @param {ts.TypePredicate} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.TypePredicate] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.TypePredicate] = (node, options) => {
+    return ts.createTypePredicateNode(
+        Replicator.replicateProperty(node, 'parameterName', options),
+        Replicator.replicateProperty(node, 'type', options)
+    );
+};
 
 /**
  * @param {ts.TypeReference} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.TypeReference] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.TypeReference] = (node, options) => {
+    return ts.createTypeReferenceNode(
+        Replicator.replicateProperty(node, 'typeName', options),
+        Replicator.replicateIfArrayProperty(node, 'typeArguments', options)
+    );
+};
 
 /**
  * @param {ts.FunctionType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.FunctionType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.FunctionType] = (node, options) => {
+    return ts.createFunctionTypeNode(
+        Replicator.replicateIfArrayProperty(node, 'expression', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
+        Replicator.replicateIfProperty(node, 'type', options)
+    );
+};
 
 /**
  * @param {ts.ConstructorType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ConstructorType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ConstructorType] = (node, options) => {
+    return ts.createConstructorTypeNode(
+        Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
+        Replicator.replicateIfProperty(node, 'type', options)
+    );
+};
 
 /**
  * @param {ts.TypeQuery} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.TypeQuery] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.TypeQuery] = (node, options) => {
+    return ts.createTypeQueryNode(
+        Replicator.replicateProperty(node, 'exprName', options)
+    );
+};
 
 /**
  * @param {ts.TypeLiteral} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.TypeLiteral] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.TypeLiteral] = (node, options) => {
+    return ts.createTypeLiteralNode(
+        Replicator.replicateIfArrayProperty(node, 'members', options)
+    );
+};
 
 /**
  * @param {ts.ArrayType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ArrayType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ArrayType] = (node, options) => {
+    return ts.createArrayTypeNode(
+        Replicator.replicateProperty(node, 'elementType', options)
+    );
+};
 
 /**
  * @param {ts.TupleType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.TupleType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.TupleType] = (node, options) => {
+    return ts.createTupleTypeNode(
+        Replicator.replicateArrayProperty(node, 'elementTypes', options)
+    );
+};
 
 /**
  * @param {ts.OptionalType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.OptionalType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.OptionalType] = (node, options) => {
+    return ts.createOptionalTypeNode(
+        Replicator.replicateProperty(node, 'type', options)
+    );
+};
 
 /**
  * @param {ts.RestType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.RestType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.RestType] = (node, options) => {
+    return ts.createRestTypeNode(
+        Replicator.replicateProperty(node, 'type', options)
+    );
+};
 
 /**
  * @param {ts.UnionType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.UnionType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.UnionType] = (node, options) => {
+    return ts.createUnionTypeNode(
+        Replicator.replicateArrayProperty(node, 'types', options)
+    );
+};
 
 /**
  * @param {ts.IntersectionType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.IntersectionType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.IntersectionType] = (node, options) => {
+    return ts.createIntersectionTypeNode(
+        Replicator.replicateArrayProperty(node, 'types', options)
+    );
+};
 
 /**
  * @param {ts.ConditionalType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ConditionalType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ConditionalType] = (node, options) => {
+    return ts.createConditionalTypeNode(
+        Replicator.replicateProperty(node, 'checkType', options),
+        Replicator.replicateProperty(node, 'extendsType', options),
+        Replicator.replicateProperty(node, 'trueType', options),
+        Replicator.replicateProperty(node, 'falseType', options)
+    );
+};
 
 /**
  * @param {ts.InferType} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.InferType] = (node, options) => {
-    // TODO: add
+    return ts.createInferTypeNode(
+        Replicator.replicateProperty(node, 'typeParameter', options)
+    );
 };
 
 /**
  * @param {ts.ParenthesizedType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ParenthesizedType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ParenthesizedType] = (node, options) => {
+    return ts.createParenthesizedType(
+        Replicator.replicateProperty(node, 'type', options)
+    );
+};
 
 /**
  * @param {ts.ThisType} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.ThisType] = (node, options) => {
-    // TODO: ???
+    return ts.createThisTypeNode();
 };
 
 /**
  * @param {ts.TypeOperator} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.TypeOperator] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.TypeOperator] = (node, options) => {
+    return ts.createTypeOperatorNode(
+        Replicator.replicateProperty(node, 'type', options)
+    );
+};
 
 /**
  * @param {ts.IndexedAccessType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.IndexedAccessType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.IndexedAccessType] = (node, options) => {
+    return ts.createIndexedAccessTypeNode(
+        Replicator.replicateProperty(node, 'objectType', options),
+        Replicator.replicateProperty(node, 'indexType', options)
+    )
+};
 
 /**
  * @param {ts.MappedType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.MappedType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.MappedType] = (node, options) => {
+    return ts.createMappedTypeNode(
+        Replicator.replicateIfProperty(node, 'readonlyToken', options),
+        Replicator.replicateProperty(node, 'typeParameter', options),
+        Replicator.replicateIfProperty(node, 'questionToken', options),
+        Replicator.replicateIfProperty(node, 'type', options)
+    )
+};
 
 /**
  * @param {ts.LiteralType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.LiteralType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.LiteralType] = (node, options) => {
+    return ts.createLiteralTypeNode(
+        Replicator.replicateProperty(node, 'literal', options)
+    );
+};
 
 /**
  * @param {ts.ImportType} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ImportType] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ImportType] = (node, options) => {
+    return ts.createImportTypeNode(
+        Replicator.replicateProperty(node, 'argument', options),
+        Replicator.replicateIfProperty(node, 'qualifier', options),
+        Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
+        Replicator.replicateIfProperty(node, 'isTypeOf', options)
+    );
+};
 
 /**
  * @param {ts.ObjectBindingPattern} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ObjectBindingPattern] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ObjectBindingPattern] = (node, options) => {
+    return ts.createObjectBindingPattern(
+        Replicator.replicateArrayProperty(node, 'elements', options)
+    );
+};
 
 /**
  * @param {ts.ArrayBindingPattern} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ArrayBindingPattern] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ArrayBindingPattern] = (node, options) => {
+    return ts.createArrayBindingPattern(
+        Replicator.replicateArrayProperty(node, 'elements', options)
+    );
+};
 
 /**
  * @param {ts.BindingElement} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.BindingElement] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.BindingElement] = (node, options) => {
+    return ts.createBindingElement(
+        Replicator.replicateIfProperty(node, 'dotDotDotToken', options),
+        Replicator.replicateIfProperty(node, 'propertyName', options),
+        Replicator.replicateProperty(node, 'name', options),
+        Replicator.replicateIfProperty(node, 'initializer', options)
+    );
+};
 
 /**
  * @param {ts.ArrayLiteralExpression} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ArrayLiteralExpression] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ArrayLiteralExpression] = (node, options) => {
+    return ts.createArrayLiteral(
+        Replicator.replicateIfArrayProperty(node, 'elements', options),
+        // TODO: multiline parameter?
+    );
+};
 
 /**
  * @param {ts.ObjectLiteralExpression} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ObjectLiteralExpression] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ObjectLiteralExpression] = (node, options) => {
+    return ts.createObjectLiteral(
+        Replicator.replicateIfArrayProperty(node, 'properties', options),
+        // TODO: multiline parameter?
+    )
+};
 
 /**
  * @param {ts.PropertyAccessExpression} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.PropertyAccessExpression] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.PropertyAccessExpression] = (node, options) => {
+    return ts.createPropertyAccess(
+        Replicator.replicateProperty(node, 'expression', options),
+        Replicator.replicateProperty(node, 'name', options)
+    );
+};
 
 /**
  * @param {ts.ElementAccessExpression} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ElementAccessExpression] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ElementAccessExpression] = (node, options) => {
+    return ts.createElementAccess(
+        Replicator.replicateProperty(node, 'expression', options),
+        Replicator.replicateProperty(node, 'index', options)
+    );
+};
 
 /**
  * @param {ts.CallExpression} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.CallExpression] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.CallExpression] = (node, options) => {
+    return ts.createCall(
+        Replicator.replicateProperty(node, 'expression', options),
+        Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
+        Replicator.replicateIfArrayProperty(node, 'argumentsArray', options)
+    );
+};
 
 /**
  * @param {ts.NewExpression} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.NewExpression] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.NewExpression] = (node, options) => {
+    return ts.createNew(
+        Replicator.replicateProperty(node, 'expression', options),
+        Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
+        Replicator.replicateIfArrayProperty(node, 'argumentsArray', options)
+    );
+};
 
 /**
  * @param {ts.TaggedTemplateExpression} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.TaggedTemplateExpression] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.TaggedTemplateExpression] = (node, options) => {
+    // TODO: overloaded
+};
 
 /**
  * @param {ts.TypeAssertionExpression} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.TypeAssertionExpression] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.TypeAssertionExpression] = (node, options) => {
+    return ts.createTypeAssertion(
+        Replicator.replicateProperty(node, 'type', options),
+        Replicator.replicateProperty(node, 'expression', options)
+    );
+};
 
 /**
  * @param {ts.ParenthesizedExpression} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.ParenthesizedExpression] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.ParenthesizedExpression] = (node, options) => {
+    // TODO: ???
+};
 
 /**
  * @param {ts.FunctionExpression} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.FunctionExpression] = (node, options) => {};
+Replicator.replicateFunctions[ts.SyntaxKind.FunctionExpression] = (node, options) => {
+    return ts.createFunctionExpression(
+        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+        Replicator.replicateIfProperty(node, 'asteriskToken', options),
+        Replicator.replicateIfProperty(node, 'name', options),
+        Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
+        Replicator.replicateIfArrayProperty(node, 'parameters', options),
+        Replicator.replicateIfProperty(node, 'type', options),
+        Replicator.replicateProperty(node, 'block', options)
+    );
+};
 
 /**
  * @param {ts.ArrowFunction} node
