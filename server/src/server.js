@@ -1,6 +1,6 @@
 const Utility = require('./utility/utility');
 const Analyzer = require('./analyzer/analyzer');
-const Ast = require('./utility/ast');
+const Ast = require('./ast/ast');
 const TypeCarrier = require('./utility/type_carrier');
 const TypeDeducer = require('./type-deducer/type_deducer');
 const NumberMethods = require('./primitive-type-info/number-methods');

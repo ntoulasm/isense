@@ -1,4 +1,4 @@
-const Ast = require('../utility/ast');
+const Ast = require('../ast/ast');
 const TypeCarrier = require('../utility/type_carrier');
 const TypeCaster = require('../type-caster/type_caster');
 const Utility = require('../utility/utility');

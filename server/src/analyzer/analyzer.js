@@ -1,4 +1,4 @@
-const Ast = require('../utility/ast');
+const Ast = require('../ast/ast');
 const Symbol = require('../utility/symbol');
 const SymbolTable = require('../utility/symbol_table');
 const Stack = require('../utility/stack');

@@ -1,5 +1,5 @@
-const TypeCarrier = require('./type_carrier');
-const Utility = require('./utility');
+const TypeCarrier = require('../utility/type_carrier');
+const Utility = require('../utility/utility');
 
 const ts = require('typescript');
 
@@ -356,15 +356,15 @@ Ast.findCallees = (call) => {
  * @param {ts.Node} call
  */
 Ast.addCallSite = (callee, call) => {
-    if(!callee.hasOwnProperty("callSites")) {
-        callee.callSites = [];
+    if(!callee._original.hasOwnProperty("callSites")) {
+        callee._original.callSites = [];
     }
-    {
-        const calleePosition = callee.getSourceFile().getLineAndCharacterOfPosition(callee.getStart());
-        const callPosition = call.getSourceFile().getLineAndCharacterOfPosition(call.getStart());
-        console.log(`${callee.getSourceFile().fileName}: call at line ${callPosition.line + 1} is a call site of function declared at line ${calleePosition.line + 1}`);
-    }
-    callee.callSites.push(call);
+    // {
+    //     const calleePosition = callee._original.getSourceFile().getLineAndCharacterOfPosition(callee.getStart());
+    //     const callPosition = call.getSourceFile().getLineAndCharacterOfPosition(call.getStart());
+    //     console.log(`${callee.getSourceFile().fileName}: call at line ${callPosition.line + 1} is a call site of function declared at line ${calleePosition.line + 1}`);
+    // }
+    callee._original.callSites.push(call);
 };
 
 /**
@@ -543,6 +543,10 @@ Ast.findConstructor = node => {
     }
 };
 
+/**
+ * @param {ts.Node} node
+ * @param {ts.SyntaxKind} kind
+ */
 Ast.findAncestor = (node, kind) => {
 
     kind = Utility.toArray(kind);
@@ -556,6 +560,32 @@ Ast.findAncestor = (node, kind) => {
 
     return undefined;
 
-}
+};
+
+/**
+ * @param {ts.Node} node
+ */
+Ast.copy = (node, parent) => {
+
+    const copy = {};
+
+    for(const [key, value] of Object.entries(node)) {
+        if(key === 'parent') {
+            copy.parent = parent;
+        } else if(Utility.isObject(value)) {
+            Ast.copy(value, copy);
+        } else if(Utility.isArray(value)) {
+            copy[key] = [];
+            for(const n of value) {
+                copy[key].push(Ast.copy(n, copy));
+            }
+        } else {
+            copy[key] = value;
+        }
+    }
+
+    return copy;
+
+};
 
 module.exports = Ast;
