@@ -4,66 +4,88 @@ const Replicator = {};
 
 Replicator.replicateFunctions = {};
 Replicator.defaultOptions = {
-    setParent: true,
-    setOriginal: true
+    setParent: false,
+    setOriginal: false
 };
+
+//-----------------------------------------------------------------------------
 
 /**
  * @param {ts.Node} node
  */
 Replicator.replicate = (node, options = Replicator.defaultOptions) => {
-    return Replicator.replicateInternal(node, {...Replicator.defaultOptions, ...options}, undefined);
+
+    const options = {...Replicator.defaultOptions, ...options};
+    const clone = Replicator.replicateInternal(node, options);
+
+    options.setParent && Replicator.setParentNodes(clone);
+
+    return clone;
+
 };
+
+//-----------------------------------------------------------------------------
 
 /**
  * @param {ts.Node} node
  */
-Replicator.replicateInternal = (node, options, parent) => {
+Replicator.replicateInternal = (node, options) => {
     if(!Replicator.replicateFunctions.hasOwnProperty(node.kind)) {
         throw `Missing replicate function for nodes of kind '${Object.keys(ts.SyntaxKind)[node.kind]}'`;
     }
     const clone = Replicator.replicateFunctions[node.kind](node, options);
-    clone.parent = options.setParent ? parent : undefined;
     options.setOriginal && (clone.original = node);
     options.hasOwnProperty('afterClone') && options.afterClone(node, clone);
     return clone;
 };
 
 /**
- * @param {ts.Node} parent
+ * @param {ts.Node} object
  * @param {String} property
  * @param {*} options
  */
-Replicator.replicateArrayProperty = (parent, property, options) => {
-    return parent[property].map(n => this.replicateInternal(n, options, parent));
+Replicator.replicateArrayProperty = (object, property, options) => {
+    return object[property].map(n => Replicator.replicateInternal(n, options));
+};
+
+/**
+ * @param {ts.Node} object
+ * @param {String} property
+ * @param {*} options
+ */
+Replicator.replicateIfArrayProperty = (object, property, options) => {
+    return object.property && object[property].map(n => Replicator.replicateInternal(n, options));
+};
+
+/**
+ * @param {ts.Node} object
+ * @param {String} property
+ * @param {*} options
+ */
+Replicator.replicateProperty = (object, property, options) => {
+    return object[property] && Replicator.replicateInternal(object[property], options);
+};
+
+/**
+ * @param {ts.Node} object
+ * @param {String} property
+ * @param {*} options
+ */
+Replicator.replicateIfProperty = (object, property, options) => {
+    return object[property] && Replicator.replicateInternal(object[property], options);
 };
 
 /**
  * @param {ts.Node} parent
- * @param {String} property
- * @param {*} options
  */
-Replicator.replicateIfArrayProperty = (parent, property, options) => {
-    return parent[property].map(n => this.replicateInternal(n, options, parent));
+Replicator.setParentNodes = parent => {
+    ts.forEachChild(parent, node => {
+        node.parent = parent;
+        Replicator.setParentNodes(node);
+    });
 };
 
-/**
- * @param {ts.Node} parent
- * @param {String} property
- * @param {*} options
- */
-Replicator.replicateProperty = (parent, property, options) => {
-    return parent[property] && Replicator.replicateInternal(parent[property], options, parent);
-};
-
-/**
- * @param {Array<ts.Node>} nodes
- * @param {*} options
- * @param {*} parent
- */
-Replicator.replicateIfProperty = (parent, property, options) => {
-    return parent[property] && Replicator.replicateInternal(parent[property], options, parent);
-};
+//-----------------------------------------------------------------------------
 
 // Unknown = 0,
 // EndOfFileToken = 1,
