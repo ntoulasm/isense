@@ -1,5 +1,7 @@
 const ts = require('typescript');
 
+//-----------------------------------------------------------------------------
+
 const Replicator = {};
 
 Replicator.replicateFunctions = {};
@@ -12,6 +14,7 @@ Replicator.defaultOptions = {
 
 /**
  * @param {ts.Node} node
+ * @param {*} options
  */
 Replicator.replicate = (node, options = Replicator.defaultOptions) => {
 
@@ -28,6 +31,7 @@ Replicator.replicate = (node, options = Replicator.defaultOptions) => {
 
 /**
  * @param {ts.Node} node
+ * @param {*} options
  */
 Replicator.replicateInternal = (node, options) => {
     if(!Replicator.replicateFunctions.hasOwnProperty(node.kind)) {
@@ -35,7 +39,7 @@ Replicator.replicateInternal = (node, options) => {
     }
     const clone = Replicator.replicateFunctions[node.kind](node, options);
     options.setOriginal && (clone._original = node);
-    options.hasOwnProperty('afterClone') && options.afterClone(node, clone);
+    options.onReplicate && options.onReplicate(node, clone);
     return clone;
 };
 
@@ -138,45 +142,35 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxTextAllWhiteSpaces] = (node, opti
  * @param {ts.RegularExpressionLiteral} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.RegularExpressionLiteral] = (node, options) => {
-    return ts.createRegularExpressionLiteral(
-        node.text
-    );
+    return ts.createRegularExpressionLiteral(node.text);
 };
 
 /**
  * @param {ts.NoSubstitutionTemplateLiteral} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.NoSubstitutionTemplateLiteral] = (node, options) => {
-    return ts.createNoSubstitutionTemplateLiteral(
-        node.text
-    );
+    return ts.createNoSubstitutionTemplateLiteral(node.text);
 };
 
 /**
  * @param {ts.TemplateHead} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TemplateHead] = (node, options) => {
-    return ts.createTemplateHead(
-        node.text
-    );
+    return ts.createTemplateHead(node.text);
 };
 
 /**
  * @param {ts.TemplateMiddle} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TemplateMiddle] = (node, options) => {
-    return ts.createTemplateMiddle(
-        node.text
-    );
+    return ts.createTemplateMiddle(node.text);
 };
 
 /**
  * @param {ts.TemplateTail} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TemplateTail] = (node, options) => {
-    return ts.createTemplateTail(
-        node.text
-    );
+    return ts.createTemplateTail(node.text);
 };
 
 /**
@@ -234,18 +228,14 @@ Replicator.replicateFunctions[ts.SyntaxKind.GreaterThanGreaterThanGreaterThanEqu
 Replicator.replicateFunctions[ts.SyntaxKind.AmpersandEqualsToken] =
 Replicator.replicateFunctions[ts.SyntaxKind.BarEqualsToken] =
 Replicator.replicateFunctions[ts.SyntaxKind.CaretEqualsToken] = (node, options) => {
-    return ts.createToken(
-        node.kind
-    );
+    return ts.createToken(node.kind);
 };
 
 /**
  * @param {ts.SyntaxKind.Identifier} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.Identifier] = (node, options) => {
-    return ts.createIdentifier(
-        node.text
-    );
+    return ts.createIdentifier(node.text);
 };
 
 // BreakKeyword = 74,
@@ -1270,7 +1260,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.FunctionDeclaration] = (node, option
         Replicator.replicateIfProperty(node, 'asteriskToken', options),
         Replicator.replicateIfProperty(node, 'name', options),
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
-        Replicator.replicateIfArrayProperty(node, 'parameters', options),
+        Replicator.replicateArrayProperty(node, 'parameters', options),
         Replicator.replicateIfProperty(node, 'type', options),
         Replicator.replicateIfProperty(node, 'body', options)
     );
