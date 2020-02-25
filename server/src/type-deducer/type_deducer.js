@@ -361,34 +361,18 @@ deduceTypesFunctionTable[ts.SyntaxKind.ParenthesizedExpression] = node => {
 };
 
 /**
- * @param {ts.Node} node 
+ * @param {ts.NewExpression} node 
  */
 deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
-    if(node.expression.kind === ts.SyntaxKind.Identifier) {
-        const symbol = Ast.lookUp(node, node.expression.getText());
-        if(symbol === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
-        const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
-        if(typeCarrier === undefined) { return [{id: TypeCarrier.Type.Undefined}]; }
-        const types = [];
-        for(const type of typeCarrier.getTypes()) {
-            let constructor;
-            if(type.id === TypeCarrier.Type.Function) {
-                constructor = type.node;
-                const thisTypes = Ast.findClosestTypeCarrier(type.node.body.statements[type.node.body.statements.length - 1], type.node.symbols.lookUp('this')).getTypes();
-                if(type.node.hasOwnProperty("constructorName")) {
-                    for(const thisType of thisTypes) {
-                        thisType.constructorName = type.node.constructorName;
-                    }
-                }
-                types.push(...thisTypes);
-            } else if(type.id === TypeCarrier.Type.Class) {
-                constructor = Ast.findConstructor(type.node);
-            }
+    const types = [];
+    const thisTypes = Ast.findClosestTypeCarrier(node.callee.body.statements[node.callee.body.statements.length - 1], node.callee.symbols.lookUp('this')).getTypes();
+    if(node.callee._original.hasOwnProperty("constructorName")) {
+        for(const thisType of thisTypes) {
+            thisType.constructorName = node.callee._original.constructorName;
         }
-        return types;
-    } else {
-        console.assert(false, "NewExpression's expression is not an identifier");
     }
+    types.push(...thisTypes);
+    return types;
 };
 
 /**

@@ -1,4 +1,5 @@
 const Ast = require('../ast/ast');
+const Replicator = require('../ast/replicator');
 const Symbol = require('../utility/symbol');
 const SymbolTable = require('../utility/symbol_table');
 const Stack = require('../utility/stack');
@@ -12,7 +13,6 @@ const Analyzer = {};
 
 let totalObjects = -1;
 const callStack = Stack.create();
-
 
 /**
  * @param {ts.SourceFile} ast 
@@ -673,7 +673,37 @@ function defineThis(node, thisObject = createObject()) {
     assign(node, thisSymbol, [thisObject]);
 }
 
+/**
+ * @param {ts.Node} original 
+ * @param {ts.Node} clone 
+ */
+function replicateISenseData(original, clone) {
+    original.symbols && (clone.symbols = SymbolTable.copy(original.symbols));
+    clone.typeCarriers = [];
+}
+
+/**
+ * @param {ts.Node} original 
+ * @param {ts.Node} clone 
+ */
+function replicatePositionData(original, clone) {
+    clone.pos = original.pos;
+    clone.end = original.end;
+}
+
+const callReplicationOptions = {
+    setParent: true,
+    setOriginal: true,
+    onReplicate(original, clone) {
+        replicatePositionData(original, clone);
+        replicateISenseData(original, clone);
+    }
+};
+
 function call(node, callee) {
+    callee = Replicator.replicate(callee, callReplicationOptions);
+    callee.parent = callee._original.parent;
+    node.callee = callee;
     callStack.push(node);
     node.returnTypes = [];
     Ast.addCallSite(callee, node);

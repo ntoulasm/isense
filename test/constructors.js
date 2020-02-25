@@ -29,7 +29,7 @@ class x {
   }
 }
 
-let a = new x();
+// let a = new x();
 
 
 
