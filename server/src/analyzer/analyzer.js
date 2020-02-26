@@ -692,9 +692,9 @@ function replicatePositionData(original, clone) {
 }
 
 const callReplicationOptions = {
-    setParent: true,
     setOriginal: true,
     onReplicate(original, clone) {
+        Replicator.setParentNodes(clone);
         replicatePositionData(original, clone);
         replicateISenseData(original, clone);
     }

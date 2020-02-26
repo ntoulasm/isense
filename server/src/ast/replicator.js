@@ -6,7 +6,6 @@ const Replicator = {};
 
 Replicator.replicateFunctions = {};
 Replicator.defaultOptions = {
-    setParent: false,
     setOriginal: false
 };
 
@@ -20,8 +19,6 @@ Replicator.replicate = (node, options = Replicator.defaultOptions) => {
 
     options = {...Replicator.defaultOptions, ...options};
     const clone = Replicator.replicateInternal(node, options);
-
-    options.setParent && Replicator.setParentNodes(clone);
 
     return clone;
 
@@ -85,7 +82,6 @@ Replicator.replicateIfProperty = (object, property, options) => {
 Replicator.setParentNodes = parent => {
     ts.forEachChild(parent, node => {
         node.parent = parent;
-        Replicator.setParentNodes(node);
     });
 };
 
@@ -232,101 +228,91 @@ Replicator.replicateFunctions[ts.SyntaxKind.CaretEqualsToken] = (node, options) 
 };
 
 /**
- * @param {ts.SyntaxKind.Identifier} node
+ * @param {ts.Identifier} node
  */
 Replicator.replicateFunctions[ts.SyntaxKind.Identifier] = (node, options) => {
     return ts.createIdentifier(node.text);
 };
 
-// BreakKeyword = 74,
-// CaseKeyword = 75,
-// CatchKeyword = 76,
-// ClassKeyword = 77,
-// ConstKeyword = 78,
-// ContinueKeyword = 79,
-// DebuggerKeyword = 80,
-// DefaultKeyword = 81,
-// DeleteKeyword = 82,
-// DoKeyword = 83,
-// ElseKeyword = 84,
-// EnumKeyword = 85,
-// ExportKeyword = 86,
-// ExtendsKeyword = 87,
-// FalseKeyword = 88,
-// FinallyKeyword = 89,
-// ForKeyword = 90,
-// FunctionKeyword = 91,
-// IfKeyword = 92,
-// ImportKeyword = 93,
-// InKeyword = 94,
-// InstanceOfKeyword = 95,
-// NewKeyword = 96,
-
 /**
- * @param {ts.NullKeyword} node
+ * @param {ts.Keyword} node
  */
-Replicator.replicateFunctions[ts.SyntaxKind.NullKeyword] = (node, options) => {
-    return ts.createNull();
+Replicator.replicateFunctions[ts.SyntaxKind.BreakKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.CaseKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.CatchKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.ClassKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.ConstKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.ContinueKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.DebuggerKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.DefaultKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.DeleteKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.DoKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.ElseKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.EnumKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.ExportKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.ExtendsKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.FinallyKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.ForKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.FunctionKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.IfKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.ImportKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.InKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.InstanceOfKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.NewKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.NullKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.ReturnKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.SuperKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.SwitchKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.ThisKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.ThrowKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.TrueKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.TryKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.TypeOfKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.VarKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.VoidKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.WhileKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.WithKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.ImplementsKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.InterfaceKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.LetKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.PackageKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.PrivateKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.ProtectedKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.PublicKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.StaticKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.YieldKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.AbstractKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.AsKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.AnyKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.AsyncKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.AwaitKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.BooleanKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.ConstructorKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.DeclareKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.GetKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.InferKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.IsKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.KeyOfKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.ModuleKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.NamespaceKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.NeverKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.ReadonlyKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.RequireKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.NumberKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.ObjectKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.SetKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.StringKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.SymbolKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.TypeKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.UndefinedKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.UniqueKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.UnknownKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.FromKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.GlobalKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.BigIntKeyword] = 
+Replicator.replicateFunctions[ts.SyntaxKind.OfKeyword] = (node, options) => {
+    return ts.createKeywordTypeNode(node.kind);
 };
-
-// ReturnKeyword = 98,
-// SuperKeyword = 99,
-// SwitchKeyword = 100,
-
-/**
- * @param {ts.ThisKeyword} node
- */
-Replicator.replicateFunctions[ts.SyntaxKind.ThisKeyword] = (node, options) => {
-    return ts.createThis();
-};
-
-// ThrowKeyword = 102,
-// TrueKeyword = 103,
-// TryKeyword = 104,
-// TypeOfKeyword = 105,
-// VarKeyword = 106,
-// VoidKeyword = 107,
-// WhileKeyword = 108,
-// WithKeyword = 109,
-// ImplementsKeyword = 110,
-// InterfaceKeyword = 111,
-// LetKeyword = 112,
-// PackageKeyword = 113,
-// PrivateKeyword = 114,
-// ProtectedKeyword = 115,
-// PublicKeyword = 116,
-// StaticKeyword = 117,
-// YieldKeyword = 118,
-// AbstractKeyword = 119,
-// AsKeyword = 120,
-// AnyKeyword = 121,
-// AsyncKeyword = 122,
-// AwaitKeyword = 123,
-// BooleanKeyword = 124,
-// ConstructorKeyword = 125,
-// DeclareKeyword = 126,
-// GetKeyword = 127,
-// InferKeyword = 128,
-// IsKeyword = 129,
-// KeyOfKeyword = 130,
-// ModuleKeyword = 131,
-// NamespaceKeyword = 132,
-// NeverKeyword = 133,
-// ReadonlyKeyword = 134,
-// RequireKeyword = 135,
-// NumberKeyword = 136,
-// ObjectKeyword = 137,
-// SetKeyword = 138,
-// StringKeyword = 139,
-// SymbolKeyword = 140,
-// TypeKeyword = 141,
-// UndefinedKeyword = 142,
-// UniqueKeyword = 143,
-// UnknownKeyword = 144,
-// FromKeyword = 145,
-// GlobalKeyword = 146,
-// BigIntKeyword = 147,
-// OfKeyword = 148,
 
 /**
  * @param {ts.QualifiedName} node
