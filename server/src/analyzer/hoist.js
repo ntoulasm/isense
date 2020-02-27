@@ -58,42 +58,11 @@ Hoist.hoistBlockScopedDeclarations = block => {
  * @param {ts.Block} body
  */
 hoistFunctionScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (node, body) => {
-
     if(Ast.isVarDeclaration(node.parent)) {
-        if(node.name.kind === ts.SyntaxKind.Identifier) {
-            const name = node.name.text;
-            const start = node.name.getStart();
-            const end = node.name.end;
-            const symbol = Symbol.create(name, start, end, false, body.getStart());
-            Ast.addTypeCarrier(body, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-            body.symbols.insert(symbol);
-        } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
-            // visitDestructuringDeclerations(node.name, (name, start, end) => {
-            //     const symbol = Symbol.create(name, start, end, false, body.getStart());
-            //     Ast.addTypeCarrier(body, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-            //     // Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-            //     body.symbols.insert(symbol);
-            // });
-        }
+        declareFunctionScopedVariable(node, body);
     } else if(Ast.findAncestor(node, [ts.SyntaxKind.Block, ts.SyntaxKind.SourceFile]) === body) {
-
-        const isConst = Ast.isConstDeclaration(node.parent);
-        if(node.name.kind === ts.SyntaxKind.Identifier) {
-            const name = node.name.text;
-            const start = node.name.getStart();
-            const end = node.name.end;
-            const symbol = Symbol.create(name, start, end, isConst);
-            body.symbols.insert(symbol);
-        } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
-            // visitDestructuringDeclerations(node.name, (name, start, end) => {
-            //     const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
-            //     // Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-            //     body.symbols.insert(symbol);
-            // });
-        }
-
+        declareBlockScopedVariable(node, body);
     }
-
 };
 
 /**
@@ -101,15 +70,7 @@ hoistFunctionScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (n
  * @param {ts.Block} body
  */
 hoistFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] = (node, body) => {
-
-    const name = node.name.text;
-    const start = node.getStart();
-    const end = node.end;
-    const symbol = Symbol.create(name, start, end, false, body.getStart());
-
-    body.symbols.insert(symbol);
-    Ast.addTypeCarrier(body, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
-
+    declareFunction(node, body);
 };
 
 /**
@@ -117,17 +78,10 @@ hoistFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] = (n
  * @param {ts.Block} body
  */
 hoistFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = (node, body) => {
-
-    if(Ast.findAncestor(node, [ts.SyntaxKind.Block, ts.SyntaxKind.SourceFile]) !== body) { return; }
-    
-    const name = node.name.text;
-    const start = node.getStart();
-    const end = node.end;
-    const symbol = Symbol.create(name, start, end);
-    
-    body.symbols.insert(symbol);
-    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
-
+    if(Ast.findAncestor(node, [ts.SyntaxKind.Block, ts.SyntaxKind.SourceFile]) !== body) { 
+        return; 
+    }
+    declareClass(node, body);
 };
 
 hoistFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
@@ -141,26 +95,8 @@ hoistFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] = noOp;
  * @param {ts.Block} block
  */
 hoistBlockScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (node, block) => {
-
-    if(!Ast.isVarDeclaration(node.parent)) {
-        const isConst = Ast.isConstDeclaration(node.parent);
-        if(node.name.kind === ts.SyntaxKind.Identifier) {
-            const name = node.name.text;
-            const start = node.name.getStart();
-            const end = node.name.end;
-            const symbol = Symbol.create(name, start, end, isConst);
-            block.symbols.insert(symbol);
-        } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
-            // visitDestructuringDeclerations(node.name, (name, start, end) => {
-            //     const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
-            //     // Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-            //     block.symbols.insert(symbol);
-            // });
-        } else {
-            console.assert(false);
-        }
-    }
-
+    if(Ast.isVarDeclaration(node.parent)) { return ; }
+    declareBlockScopedVariable(node, block);
 };
 
 /**
@@ -168,12 +104,7 @@ hoistBlockScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (node
  * @param {ts.Block} block
  */
 hoistBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = (node, block) => {
-    const name = node.name.text;
-    const start = node.getStart();
-    const end = node.end;
-    const symbol = Symbol.create(name, start, end);
-    block.symbols.insert(symbol);
-    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
+    declareClass(node, block);
 };
 
 hoistBlockScopedDeclarationsFunctions[ts.SyntaxKind.Block] = 
@@ -184,6 +115,98 @@ hoistBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] =
 hoistBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForStatement] =
 hoistBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForOfStatement] =
 hoistBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForInStatement] = noOp
+
+//-----------------------------------------------------------------------------
+
+/**
+ * @param {ts.FunctionDeclaration} node
+ * @param {ts.Block} block
+ */
+function declareFunction(node, block) {
+
+    const name = node.name.text;
+    const start = node.getStart();
+    const end = node.end;
+    const symbol = Symbol.create(name, start, end, false, block.getStart());
+
+    block.symbols.insert(symbol);
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
+
+}
+
+/**
+ * @param {ts.VariableDeclaration} node
+ * @param {ts.Block} block
+ */
+function declareFunctionScopedVariable(node, block) {
+
+    if(node.name.kind === ts.SyntaxKind.Identifier) {
+
+        const name = node.name.text;
+        const start = node.name.getStart();
+        const end = node.name.end;
+        const symbol = Symbol.create(name, start, end, false, block.getStart());
+
+        block.symbols.insert(symbol);
+        Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+
+    } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
+        // visitDestructuringDeclerations(node.name, (name, start, end) => {
+        //     const symbol = Symbol.create(name, start, end, false, body.getStart());
+        //     Ast.addTypeCarrier(body, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+        //     // Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+        //     body.symbols.insert(symbol);
+        // });
+    } else {
+        console.assert(false);
+    }
+
+}
+
+/**
+ * @param {ts.ClassDeclaration} node
+ * @param {ts.Block} block
+ */
+function declareClass(node, block) {
+
+    const name = node.name.text;
+    const start = node.getStart();
+    const end = node.end;
+    const symbol = Symbol.create(name, start, end);
+
+    block.symbols.insert(symbol);
+    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
+
+}
+
+/**
+ * @param {ts.VariableDeclaration} node
+ * @param {ts.Block} block
+ */
+function declareBlockScopedVariable(node, block) {
+
+    const isConst = Ast.isConstDeclaration(node.parent);
+
+    if(node.name.kind === ts.SyntaxKind.Identifier) {
+
+        const name = node.name.text;
+        const start = node.name.getStart();
+        const end = node.name.end;
+        const symbol = Symbol.create(name, start, end, isConst);
+
+        block.symbols.insert(symbol);
+
+    } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
+        // visitDestructuringDeclerations(node.name, (name, start, end) => {
+        //     const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
+        //     // Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+        //     block.symbols.insert(symbol);
+        // });
+    } else {
+        console.assert(false);
+    }
+
+}
 
 //-----------------------------------------------------------------------------
 
