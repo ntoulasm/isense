@@ -6,6 +6,7 @@ const Stack = require('../utility/stack');
 const TypeCarrier = require('../utility/type_carrier');
 const AnalyzeDiagnostic = require('./analyze_diagnostic');
 const TypeDeducer = require('../type-deducer/type_deducer');
+const FunctionAnalyzer = require('./function-analyzer');
 
 const ts = require('typescript');
 
@@ -116,12 +117,6 @@ Analyzer.analyze = ast => {
                     const symbol = Symbol.create(name, start, end, false, func.getStart());
                     Ast.addTypeCarrier(func, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
                     func.symbols.insert(symbol);
-
-                    node.symbols = SymbolTable.create();
-                    defineThis(node);
-                    functionStack.push(node);
-                    ts.forEachChild(node, visitDeclarations);
-                    functionStack.pop();
                     break;
                 
                 }
@@ -408,13 +403,11 @@ Analyzer.analyze = ast => {
 				break;
 
             }
+            case ts.SyntaxKind.FunctionDeclaration:
 			case ts.SyntaxKind.FunctionExpression: 
 			case ts.SyntaxKind.ArrowFunction: {
                 node.symbols = SymbolTable.create();
-                defineThis(node);
-                functionStack.push(node);
-                ts.forEachChild(node, visitDeclarations);
-                functionStack.pop();
+                FunctionAnalyzer.analyze(node);
                 break;
             }
             case ts.SyntaxKind.ClassExpression: {
@@ -682,34 +675,29 @@ function replicateISenseData(original, clone) {
     clone.typeCarriers = [];
 }
 
-/**
- * @param {ts.Node} original 
- * @param {ts.Node} clone 
- */
-function replicatePositionData(original, clone) {
-    clone.pos = original.pos;
-    clone.end = original.end;
-}
-
 const callReplicationOptions = {
     setOriginal: true,
     onReplicate(original, clone) {
         Replicator.setParentNodes(clone);
-        replicatePositionData(original, clone);
+        Replicator.replicatePositionData(original, clone);
         replicateISenseData(original, clone);
     }
 };
 
 function call(node, callee) {
+    const calleeDependenciesNode = ts.createEmptyStatement();
+    calleeDependenciesNode.symbols = SymbolTable.create();
+    calleeDependenciesNode.typeCarriers = [];
+    calleeDependenciesNode.parent = callee.parent;
     callee = Replicator.replicate(callee, callReplicationOptions);
-    callee.parent = callee._original.parent;
+    callee.parent = calleeDependenciesNode;
     node.callee = callee;
     callStack.push(node);
     node.returnTypes = [];
     Ast.addCallSite(callee, node);
     addParameterTypeCarriers(callee, node.arguments);
     delete callee.affectedOutOfScopeSymbols;
-    defineThis(callee);
+    defineThis(calleeDependenciesNode);
     Analyzer.analyze(callee.body);
     if(callee.hasOwnProperty("affectedOutOfScopeSymbols")) {
         callee.affectedOutOfScopeSymbols.forEach(typeCarrier => {

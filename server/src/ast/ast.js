@@ -232,7 +232,8 @@ Ast.addTypeCarrierToClosestStatement = (node, typeCarrier) => {
         ts.SyntaxKind.ReturnStatement,
         ts.SyntaxKind.SwitchStatement,
         ts.SyntaxKind.FunctionDeclaration,
-        ts.SyntaxKind.ClassDeclaration
+        ts.SyntaxKind.ClassDeclaration,
+        ts.SyntaxKind.EmptyStatement
     ];
 
     while (statements.indexOf(node.kind) === -1) {
