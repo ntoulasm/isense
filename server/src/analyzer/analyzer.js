@@ -7,6 +7,7 @@ const TypeCarrier = require('../utility/type_carrier');
 const AnalyzeDiagnostic = require('./analyze_diagnostic');
 const TypeDeducer = require('../type-deducer/type_deducer');
 const FunctionAnalyzer = require('./function-analyzer');
+const Hoist = require('./hoist');
 
 const ts = require('typescript');
 
@@ -62,149 +63,6 @@ Analyzer.analyze = ast => {
             }
         }
         ts.forEachChild(node, visitDestructuringDeclarations);
-    }
-
-    /**
-     * @param {ts.Node} func
-     */
-    function hoistFunctionScopedDeclarations(func) {
-
-        function hoistFunctionScopedDeclarations(node) {
-            switch(node.kind) {
-                case ts.SyntaxKind.VariableDeclaration: {
-                    if(Ast.isVarDeclaration(node.parent)) {
-                        if(node.name.kind === ts.SyntaxKind.Identifier) {
-                            const name = node.name.text;
-                            const start = node.name.getStart();
-                            const end = node.name.end;
-                            const symbol = Symbol.create(name, start, end, false, func.getStart());
-                            Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-                            func.symbols.insert(symbol);
-                        } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
-                            visitDestructuringDeclerations(node.name, (name, start, end) => {
-                                const symbol = Symbol.create(name, start, end, false, func.getStart());
-                                Ast.addTypeCarrier(func, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-                                // Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-                                func.symbols.insert(symbol);
-                            });
-                        }
-                    } else if(Ast.findAncestor(node, [ts.SyntaxKind.Block, ts.SyntaxKind.SourceFile]) === func) {
-
-                        const isConst = Ast.isConstDeclaration(node.parent);
-                        if(node.name.kind === ts.SyntaxKind.Identifier) {
-                            const name = node.name.text;
-                            const start = node.name.getStart();
-                            const end = node.name.end;
-                            const symbol = Symbol.create(name, start, end, isConst);
-                            func.symbols.insert(symbol);
-                        } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
-                            visitDestructuringDeclerations(node.name, (name, start, end) => {
-                                const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
-                                // Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-                                func.symbols.insert(symbol);
-                            });
-                        }
-
-                    }
-                    ts.forEachChild(node, hoistFunctionScopedDeclarations);
-                    break;
-                }
-                case ts.SyntaxKind.FunctionDeclaration: {
-
-                    const name = node.name.text;
-                    const start = node.getStart();
-                    const end = node.end;
-                    const symbol = Symbol.create(name, start, end, false, func.getStart());
-                    Ast.addTypeCarrier(func, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
-                    func.symbols.insert(symbol);
-                    break;
-                
-                }
-                case ts.SyntaxKind.ClassDeclaration: {
-                    if(Ast.findAncestor(node, [ts.SyntaxKind.Block, ts.SyntaxKind.SourceFile]) !== func) {
-                        break;
-                    }
-                    const name = node.name.text;
-                    const start = node.getStart();
-                    const end = node.end;
-                    const symbol = Symbol.create(name, start, end);
-                    func.symbols.insert(symbol);
-                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
-                    break;
-                }
-                case ts.SyntaxKind.FunctionExpression:
-                case ts.SyntaxKind.ArrowFunction:
-                case ts.SyntaxKind.ClassExpression: {
-                    break;
-                }
-                default: {
-                    ts.forEachChild(node, hoistFunctionScopedDeclarations);
-                    break;
-                }
-            }
-        }
-
-        ts.forEachChild(func, hoistFunctionScopedDeclarations);
-
-    }
-
-    /**
-     * @param {ts.Node} block
-     */
-    function hoistBlockScopedDeclarations(block) {
-        
-        function hoistBlockScopedDeclarations(node) {
-            switch(node.kind) {
-                case ts.SyntaxKind.VariableDeclaration: {
-                    if(!Ast.isVarDeclaration(node.parent)) {
-                        const isConst = Ast.isConstDeclaration(node.parent);
-                        if(node.name.kind === ts.SyntaxKind.Identifier) {
-                            const name = node.name.text;
-                            const start = node.name.getStart();
-                            const end = node.name.end;
-                            const symbol = Symbol.create(name, start, end, isConst);
-                            block.symbols.insert(symbol);
-                        } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
-                            visitDestructuringDeclerations(node.name, (name, start, end) => {
-                                const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
-                                // Ast.addTypeCarrier(node.parent.parent, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-                                block.symbols.insert(symbol);
-                            });
-                        } else {
-                            console.assert(false);
-                        }
-                    }
-                    ts.forEachChild(node, hoistBlockScopedDeclarations);
-                    break;
-                }
-                case ts.SyntaxKind.ClassDeclaration: {
-                    const name = node.name.text;
-                    const start = node.getStart();
-                    const end = node.end;
-                    const symbol = Symbol.create(name, start, end);
-                    block.symbols.insert(symbol);
-                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
-                    break;
-                }
-                case ts.SyntaxKind.Block:
-                case ts.SyntaxKind.FunctionDeclaration:
-                case ts.SyntaxKind.FunctionExpression:
-                case ts.SyntaxKind.ArrowFunction:
-                case ts.SyntaxKind.ClassExpression:
-                case ts.SyntaxKind.ForStatement: 
-                case ts.SyntaxKind.ForOfStatement: 
-                case ts.SyntaxKind.ForInStatement: {
-                    break;
-                }
-                default: {
-                    ts.forEachChild(node, hoistBlockScopedDeclarations);
-                    break;
-                }
-            }
-        }
-
-        ts.forEachChild(block, hoistBlockScopedDeclarations);
-    
     }
 
 	/**
@@ -429,8 +287,8 @@ Analyzer.analyze = ast => {
                     node.parent.kind === ts.SyntaxKind.SetAccessor ||
                     node.parent.kind === ts.SyntaxKind.GetAccessor) {
 
-                    hoistFunctionScopedDeclarations(node);
-                    hoistBlockScopedDeclarations(node);
+                    Hoist.hoistFunctionScopedDeclarations(node);
+                    Hoist.hoistBlockScopedDeclarations(node);
 
                     ts.forEachChild(node, visitDeclarations);
     
@@ -438,7 +296,7 @@ Analyzer.analyze = ast => {
 
 				} else {
 
-                    hoistBlockScopedDeclarations(node);
+                    Hoist.hoistBlockScopedDeclarations(node);
 
                     ts.forEachChild(node, visitDeclarations);
                     node.typeCarriers = Ast.findAllTypeCarriers(node);
@@ -451,7 +309,7 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.ForInStatement:
             case ts.SyntaxKind.ForOfStatement: {
                 node.symbols = SymbolTable.create();
-                hoistBlockScopedDeclarations(node);
+                Hoist.hoistBlockScopedDeclarations(node);
                 ts.forEachChild(node, visitDeclarations);
                 break;
             }
@@ -564,8 +422,8 @@ Analyzer.analyze = ast => {
     };
     initializeTypeCarriers(ast);
 
-	hoistFunctionScopedDeclarations(ast);
-	hoistBlockScopedDeclarations(ast);
+	Hoist.hoistFunctionScopedDeclarations(ast);
+	Hoist.hoistBlockScopedDeclarations(ast);
     ts.forEachChild(ast, visitDeclarations);
 
     // console.log("---------------");

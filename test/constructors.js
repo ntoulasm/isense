@@ -18,16 +18,16 @@ const cat = dog;
 const goodBoy1 = new dog('Beagle', 1);
 const goodBoy2 = new cat('Beagle', 2);
 
-// class x {
-//   a = 2;
-//   b;
-//   getA() {
-//     return a;
-//   }
-//   constructor() {
+class x {
+  a = 2;
+  b;
+  getA() {
+    return a;
+  }
+  constructor() {
     
-//   }
-// }
+  }
+}
 
 // let a = new x();
 
