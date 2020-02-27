@@ -174,6 +174,7 @@ function declareImportClause(node, block) {
 
 /**
  * import {x, ...} ...
+ * import {x, y as z} ...
  * 
  * @param {ts.ImportSpecifier} node 
  * @param {ts.Block} block 
