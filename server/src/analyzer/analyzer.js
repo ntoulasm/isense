@@ -20,12 +20,9 @@ const callStack = Stack.create();
  * @param {ts.SourceFile} ast 
  */
 Analyzer.analyze = ast => {
-    
-    totalObjects = 0;
 
     const objectStack = Stack.create();
     const classStack = Stack.create();
-    const functionStack = Stack.create();
 
     ast.analyzeDiagnostics = [];
     ast.symbols = SymbolTable.create();
@@ -71,48 +68,8 @@ Analyzer.analyze = ast => {
 	function visitDeclarations(node) {
 
 		switch(node.kind) {
-			case ts.SyntaxKind.ImportClause: {  // import x, ...
-
-                const importDeclaration = node.parent;
-                importDeclaration.symbols = SymbolTable.create();
-
-				if(node.hasOwnProperty("name") && node.name.kind === ts.SyntaxKind.Identifier) {
-                    const name = node.name.escapedText;
-					const start = node.name.getStart();
-					const end = node.name.end;
-                    const symbol = Symbol.create(name, start, end);
-                    importDeclaration.symbols.insert(symbol);
-                    Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-                }
-                
-                ts.forEachChild(node, visitDeclarations);
-				break;
-
-            }
-            case ts.SyntaxKind.NamespaceImport: {   // import * as ...
-
-                const importDeclaration = node.parent.parent;
-                const name = node.name.text;
-                const start = node.name.getStart();
-                const end = node.name.end;
-                const symbol = Symbol.create(name, start, end);
-                importDeclaration.symbols.insert(symbol);
-                Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+			case ts.SyntaxKind.ImportDeclaration: {
                 break;
-
-            } 
-            case ts.SyntaxKind.ImportSpecifier: {   // import {x, y} ...
-
-                const importDeclaration = node.parent.parent.parent;
-                const name = node.name.text;
-                const start = node.name.getStart();
-                const end = node.name.end;
-                const symbol = Symbol.create(name, start, end);
-                importDeclaration.symbols.insert(symbol);
-                Ast.addTypeCarrier(importDeclaration, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-
-                break;
-
             }
             case ts.SyntaxKind.VariableDeclaration: {
 
@@ -288,7 +245,6 @@ Analyzer.analyze = ast => {
                     node.parent.kind === ts.SyntaxKind.GetAccessor) {
 
                     Hoist.hoistFunctionScopedDeclarations(node);
-                    Hoist.hoistBlockScopedDeclarations(node);
 
                     ts.forEachChild(node, visitDeclarations);
     
@@ -423,7 +379,6 @@ Analyzer.analyze = ast => {
     initializeTypeCarriers(ast);
 
 	Hoist.hoistFunctionScopedDeclarations(ast);
-	Hoist.hoistBlockScopedDeclarations(ast);
     ts.forEachChild(ast, visitDeclarations);
 
     // console.log("---------------");

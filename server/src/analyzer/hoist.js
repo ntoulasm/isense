@@ -53,6 +53,42 @@ Hoist.hoistBlockScopedDeclarations = block => {
 
 //-----------------------------------------------------------------------------
 
+/** 
+ * import x ...
+ * import {x, y as ...} ...
+ * import x, {x, ...} ...
+ * import * as x...
+ * import ..., * as x
+ * 
+ * @param {ts.ImportClause} node
+ * @param {ts.Block} body
+ */
+
+hoistFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ImportClause] = (node, body) => {
+
+    if(node.hasOwnProperty('name') && node.name.kind === ts.SyntaxKind.Identifier) {
+        declareImportClause(node, body);
+    }
+    
+    if(node.hasOwnProperty('namedBindings')) {
+        switch(node.namedBindings.kind) {
+            case ts.SyntaxKind.NamedImports: {
+                node.namedBindings.elements.forEach(e => { declareImportSpecifier(e, body); });
+                break;
+            }
+            case ts.SyntaxKind.NamespaceImport: {
+                declareNamespaceImport(node.namedBindings, body);
+                break;
+            }
+            default: {
+                console.assert(false, '');
+                break;
+            }
+        }
+    }  
+
+}
+
 /**
  * @param {ts.VariableDeclaration} node
  * @param {ts.Block} body
@@ -117,6 +153,61 @@ hoistBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForOfStatement] =
 hoistBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForInStatement] = noOp
 
 //-----------------------------------------------------------------------------
+
+/**    
+ * import x, ...
+ * 
+ * @param {ts.ImportClause} node
+ * @param {ts.Block} block
+ */
+function declareImportClause(node, block) {
+
+    const name = node.name.escapedText;
+    const start = node.name.getStart();
+    const end = node.name.end;
+    const symbol = Symbol.create(name, start, end);
+
+    block.symbols.insert(symbol);
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));    // TODO: Fixme
+
+}
+
+/**
+ * import {x, ...} ...
+ * 
+ * @param {ts.ImportSpecifier} node 
+ * @param {ts.Block} block 
+ */
+function declareImportSpecifier(node, block) {
+
+    const name = node.name.text;
+    const start = node.name.getStart();
+    const end = node.name.end;
+    const symbol = Symbol.create(name, start, end);
+
+    block.symbols.insert(symbol);
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined})); // TODO: Fixme
+
+}
+
+/**
+ * import * as ...
+ * import ..., * as ...
+ * 
+ * @param {ts.NamespaceImport} node 
+ * @param {ts.Block} block 
+ */
+function declareNamespaceImport(node, block) {
+
+    const name = node.name.text;
+    const start = node.name.getStart();
+    const end = node.name.end;
+    const symbol = Symbol.create(name, start, end);
+
+    block.symbols.insert(symbol);
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));    // TODO: Fixme
+
+}
 
 /**
  * @param {ts.FunctionDeclaration} node
