@@ -8,12 +8,11 @@ AnalyzeDiagnostic.Type = vscodeLanguageServer.DiagnosticSeverity;
 
 AnalyzeDiagnostic.Tag = vscodeLanguageServer.DiagnosticTag;
 
-// /**
-//  * @param {object} startPosition
-//  * @param {object} endPosition
-//  * @param {string} message
-//  * @param {number} [type=AnalyzeDiagnostic.Type.Error]
-//  */
+/**
+ * @param {ts.Node} node
+ * @param {Object} config
+ * @param {Array<String>} [messageParameters = []]
+ */
 AnalyzeDiagnostic.create = (node, config, messageParameters = []) => {
 
     const ast = node.getSourceFile();
