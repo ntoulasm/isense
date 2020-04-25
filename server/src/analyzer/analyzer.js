@@ -622,16 +622,27 @@ function assign(node, symbol, rvalue, types) {
 
 }
 
+/**
+ * @param {*} object 
+ * @param {String} name 
+ */
 function getProperty(object, name) {
     return object.properties.lookUp(name);
 }
 
-function setProperty(node, object, name, types) {
+/**
+ * @param {ts.Node} node 
+ * @param {*} object 
+ * @param {String} name 
+ * @param {ts.Node} rvalue
+ * @param {*} types 
+ */
+function setProperty(node, object, name, rvalue, types) {
 
     const propertyName = `@${object.value}.${name}`;
     const property = getProperty(object, propertyName);
     const symbol = property ? property : Symbol.create(propertyName, node.pos, node.end);
-    const typeCarrier = assign(node, symbol, types);
+    const typeCarrier = assign(node, symbol, rvalue, types);
     
     Ast.addTypeCarrierToExpression(node, typeCarrier);
 
