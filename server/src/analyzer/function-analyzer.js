@@ -2,6 +2,8 @@ const Symbol = require('../utility/symbol');
 const SymbolTable = require('../utility/symbol_table');
 const TypeCarrier = require('../utility/type_carrier');
 const Ast = require('../ast/ast');
+const AnalyzeDiagnostic = require('./analyze_diagnostic');
+const DiagnosticMessages = require('./diagnostic-messages');
 
 const ts = require('typescript');
 
@@ -132,6 +134,10 @@ function markUnreachableStatements(stmts) {
     
     for(const stmt of stmts) {
         stmt.unreachable = true;
+        Ast.addAnalyzeDiagnostic(
+            stmt.getSourceFile(), 
+            AnalyzeDiagnostic.create(stmt, DiagnosticMessages.unreachableStatement)
+        );
     }
 
 }

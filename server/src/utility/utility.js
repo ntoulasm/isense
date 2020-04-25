@@ -114,4 +114,17 @@ Utility.isMemberInitialization = node => {
         node.left.expression.kind === ts.SyntaxKind.ThisKeyword;
 };
 
+/**
+ * @param {String} template
+ * @param {Array<String>} values
+ * 
+ * @returns {String}
+ */
+Utility.format = (template, values) => {
+    for(let i = 0; i < values.length; ++i) {
+        template = template.replace(new RegExp(`{[${i}]}`), values[i]);
+    }
+    return template;
+};
+
 module.exports = Utility;

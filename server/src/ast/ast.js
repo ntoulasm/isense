@@ -589,4 +589,119 @@ Ast.copy = (node, parent) => {
 
 };
 
+
+/**
+ * @param {ts.Node} node
+ */
+Ast.nodeKindToString = node => {
+    switch(node.kind) {
+        case ts.SyntaxKind.FirstAssignment: {
+            return "EqualsToken";
+        }
+        case ts.SyntaxKind.LastAssignment: {
+            return 'CaretEqualsToken';
+        }
+        case ts.SyntaxKind.FirstCompoundAssignment: {
+            return 'PlusEqualsToken';   
+        }
+        case ts.SyntaxKind.LastCompoundAssignment: {
+            return 'CaretEqualsToken';
+        }
+        case ts.SyntaxKind.FirstReservedWord: {
+            return 'BreakKeyword';
+        }
+        case ts.SyntaxKind.LastReservedWord: {
+            return 'WithKeyword';
+        }
+        case ts.SyntaxKind.FirstKeyword: {
+            return 'BreakKeyword';
+        }
+        case ts.SyntaxKind.LastKeyword: {
+            return 'OfKeyword';
+        }
+        case ts.SyntaxKind.FirstFutureReservedWord: {
+            return 'ImplementsKeyword';
+        }
+        case ts.SyntaxKind.LastFutureReservedWord: {
+            return 'YieldKeyword';
+        }
+        case ts.SyntaxKind.FirstTypeNode: {
+            return 'TypePredicate';
+        }
+        case ts.SyntaxKind.LastTypeNode: {
+            return 'ImportType';
+        }
+        case ts.SyntaxKind.FirstPunctuation: {
+            return 'OpenBraceToken';
+        }
+        case ts.SyntaxKind.LastPunctuation: {
+            return 'CaretEqualsToken';
+        }
+        case ts.SyntaxKind.FirstToken: {
+            return 'Unknown';
+        }
+        case ts.SyntaxKind.LastToken: {
+            return 'OfKeyword';
+        }
+        case ts.SyntaxKind.FirstTriviaToken: {
+            return 'SingleLineCommentTrivia';
+        }
+        case ts.SyntaxKind.LastTriviaToken: {
+            return 'ConflictMarkerTrivia';
+        }
+        case ts.SyntaxKind.FirstLiteralToken: {
+            return 'NumericLiteral';
+        }
+        case ts.SyntaxKind.LastLiteralToken: {
+            return 'NoSubstitutionTemplateLiteral';
+        }
+        case ts.SyntaxKind.FirstTemplateToken: {
+            return 'NoSubstitutionTemplateLiteral';
+        }
+        case ts.SyntaxKind.LastTemplateToken: {
+            return 'TemplateTail';
+        }
+        case ts.SyntaxKind.FirstBinaryOperator: {
+            return 'LessThanToken';
+        }
+        case ts.SyntaxKind.LastBinaryOperator: {
+            return 'CaretEqualsToken';
+        }
+        case ts.SyntaxKind.FirstStatement: {
+            return "VariableStatement";
+        }
+        case ts.SyntaxKind.LastStatement: {
+            return 'DebuggerStatement';
+        }
+        case ts.SyntaxKind.FirstNode: {
+            return 'QualifiedName';
+        }
+        case ts.SyntaxKind.FirstJSDocNode: {
+            return 'JSDocTypeExpression';
+        }
+        case ts.SyntaxKind.LastJSDocNode: {
+            return 'JSDocPropertyTag';
+        }
+        case ts.SyntaxKind.FirstJSDocTagNode: {
+            return 'JSDocTag';
+        }
+        case ts.SyntaxKind.LastJSDocTagNode: {
+            return 'JSDocPropertyTag';
+        }
+        default: {
+            return Object.values(ts.SyntaxKind)[node.kind];
+        }
+    }
+};
+
+/**
+ * @param {ts.Block} node
+ */
+Ast.findNextStatementOfBlock = node => {
+    if(node.parent.kind === ts.SyntaxKind.IfStatement) {
+        node = Ast.findTopLevelIfStatement(node.parent);
+    }
+    return Ast.findRightSibling(node);
+};
+
 module.exports = Ast;

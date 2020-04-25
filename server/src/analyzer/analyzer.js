@@ -8,6 +8,7 @@ const AnalyzeDiagnostic = require('./analyze_diagnostic');
 const TypeDeducer = require('../type-deducer/type_deducer');
 const FunctionAnalyzer = require('./function-analyzer');
 const Binder = require('./binder');
+const DiagnosticMessages = require('./diagnostic-messages');
 
 const ts = require('typescript');
 
@@ -99,10 +100,10 @@ Analyzer.analyze = ast => {
                             const typeCarrier = assign(node, symbol, types);
 
                         } else {
-                            const startPosition = ast.getLineAndCharacterOfPosition(node.getStart());
-                            const endPosition = ast.getLineAndCharacterOfPosition(node.end);
-                            const diagnostic = AnalyzeDiagnostic.create(startPosition, endPosition, `'${name}' is not declared.`);
-                            Ast.addAnalyzeDiagnostic(ast, diagnostic);
+                            Ast.addAnalyzeDiagnostic(
+                                node.getSourceFile(), 
+                                AnalyzeDiagnostic.create(node, DiagnosticMessages.undeclaredReference, [name])
+                            );
                         }
                     } else if (node.left.kind === ts.SyntaxKind.PropertyAccessExpression) {
 

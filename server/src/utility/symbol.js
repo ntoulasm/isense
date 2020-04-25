@@ -28,4 +28,20 @@ Symbol.create = function(name, start, end, isConst = false, visibleOffset = star
     };
 };
 
+Symbol.createDeclaration = function(name, declaration, isConst = false, visibleOffset = null) {
+
+    const start = declaration.getStart();
+    const end = declaration.end;
+
+    return {
+        name,
+        start,
+        end,
+        declaration,
+        isConst,
+        visibleOffset: visibleOffset !== null ? visibleOffset : start
+    };
+
+};
+
 module.exports = Symbol;
