@@ -4,6 +4,7 @@ const Ast = require('./ast/ast');
 const TypeCarrier = require('./utility/type_carrier');
 const TypeDeducer = require('./type-deducer/type_deducer');
 const NumberMethods = require('./primitive-type-info/number-methods');
+const DotGenerator = require('./ast/dot-generator');
 
 const vscodeLanguageServer = require('vscode-languageserver');
 const ts = require('typescript');
@@ -424,6 +425,17 @@ connection.onDidChangeTextDocument((params) => {
 });
 
 connection.onDidCloseTextDocument((params) => {});
+
+const last = function(array) {
+	return array[array.length - 1];
+};
+
+connection.onNotification('custom/generateDot', (params) => {
+	const dotUri = params.fileName.replace('.js', '.dot');
+	const dotFileName = last(dotUri.split('/'));
+	DotGenerator.generate(asts[params.fileName], dotFileName);
+	connection.sendNotification('custom/generateDotFinish', { dotUri });
+});
 
 // connection.onNotification('custom/focusChanged', (params) => {
 

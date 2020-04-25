@@ -42,7 +42,6 @@ function activate(context) {
 		serverOptions,
 		clientOptions
 	);
-
 	
 	// This will also launch the server
 	client.start();
@@ -70,6 +69,20 @@ function activate(context) {
 			}		
 			updateOffsetStatusBarItem(offsetStatusBarItem, )
 		}
+	});
+
+	// ------------------------------------------------------------------------
+
+	vscode.commands.registerTextEditorCommand('extension.generateDot', (textEditor) => {
+
+		const activeDocumentPath = textEditor.document.uri.toString();
+		
+		vscode.window.showInformationMessage(`Dot file for AST of '${activeDocumentPath}' is being generated`);
+		
+		client.sendNotification('custom/generateDot', {
+			fileName: activeDocumentPath
+		});
+
 	});
 
 	vscode.commands.registerTextEditorCommand('extension.goToOffset', (textEditor) => {
@@ -102,6 +115,13 @@ function activate(context) {
 		updateOffsetStatusBarItem();
 
 		// ------------------------------------------------------------------------
+
+		client.onNotification('custom/generateDotFinish', (params) => {
+			vscode.window.showTextDocument(vscode.Uri.parse(params.dotUri), {});
+		});
+
+		// ------------------------------------------------------------------------
+
 		// const openUris = uris => {
 		// 	uris.forEach(uri => {
 		// 		vscode.workspace.openTextDocument(uri);
