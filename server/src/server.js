@@ -19,7 +19,6 @@ const asts = {};
 connection.onInitialize((params) => {
 
 	const capabilities = params.capabilities;
-
 	hasConfigurationCapability = !!(
 		capabilities.workspace && !!capabilities.workspace.configuration
 	);
@@ -151,7 +150,7 @@ connection.onHover(info => {
 	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
 
 	if(node === undefined) { return { contents: [] }; }
-
+	
 	switch(node.kind) {
 		case ts.SyntaxKind.VariableDeclarationList: {
 			return {
@@ -214,64 +213,111 @@ connection.onDocumentSymbol((info) => {
 
 });
 
-const computeFunctionSignature = (node, call) => `${node.name !== undefined ? node.name.getText() : call.expression.getText()}(${node.parameters.map(p => p.name.getText()).join(',')})`;
+/**
+ * @param {ts.Node} callee
+ */
+const computeParametersSignature = (callee) => {
+	// TODO: Adjust for destructuring pattern
+	const computeParameterSignature = p => {
+		const parameterName = p.name.getText();
+		const symbol = Ast.lookUp(
+			Ast.findLastParameter(callee),
+			parameterName
+		);
+		const closestTypeCarrier = symbol && Ast.findClosestTypeCarrier(symbol.declaration, symbol);
+		let signature = parameterName;
+		if(closestTypeCarrier) {
+			let firstTime = true;
+			for(const type of closestTypeCarrier.getTypes()) {
+				if(firstTime) { 
+					signature += ':';
+					firstTime = false; 
+				} else { 
+					signature += ' ||' 
+				}
+				signature += ` ${TypeCarrier.typeToString(type)}`;
+			}
+		}
+
+		return signature;
+	}
+
+	return callee.parameters.map(computeParameterSignature);
+
+};
+
+/**
+ * @param {ts.Node} callee
+ * @param {ts.Node} call 
+ */
+const computeFunctionSignature = (callee, call) => {
+	let signature = '';
+	if(callee.name !== undefined) {
+		signature += callee.name.getText();
+	} else {
+		// TODO: check if this is fine
+		// refinement: it probably is 
+		//		eg: x()() -> x()()
+		signature += call.expression.getText();
+	}
+	const parametersSignature = computeParametersSignature(callee);
+	signature += `(${parametersSignature.join(', ')})`;
+	return {
+		documentation: '',
+		label: signature,
+		parameters: parametersSignature.map(p => vscodeLanguageServer.ParameterInformation.create(p, /* parameter documentation */))
+	};
+};
+
+/**
+ * @param {ts.Node} call 
+ * @param {Number} offset 
+ */
+const computeActiveParameter = (call, offset) => {
+
+	const callChildren = call.getChildren();
+	const leftParenthesisToken = callChildren[1];
+	const leftParenthesisOffset = leftParenthesisToken.end - 1;
+	const cursorOffset = offset - leftParenthesisOffset;
+	const parenthesizedExpression = ts.createSourceFile('', call.getSourceFile().getText().substring(leftParenthesisOffset, call.end));
+	let activeParameter = 0;
+
+	const countCommas = (node) => {
+		if(node.kind === ts.SyntaxKind.BinaryExpression && node.operatorToken.kind === ts.SyntaxKind.CommaToken) {
+			countCommas(node.left);
+			if(node.operatorToken.end - 1 <= cursorOffset) {
+				activeParameter++;
+			}
+		} 
+	};
+	countCommas(parenthesizedExpression.statements[0].expression.expression);
+
+	return activeParameter;
+
+};
 
 connection.onSignatureHelp((info) => {
 
-	const signatures = [];
 	const document = info.textDocument;
 	const fileName = document.uri;
 	const ast = asts[fileName];
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
-	const text = ast.getFullText();
+	// const text = ast.getFullText();
 
 	if(call === undefined) { return; }
-	const activeParameter = Utility.computeActiveParameter(text, offset, call.getStart());
-	if(activeParameter < 0) { return null; }
+	// const activeParameter = Utility.computeActiveParameter(text, offset, call.getStart());
+	// if(activeParameter < 0) { return null; }
+	const activeParameter = computeActiveParameter(call, offset);
 	const callees = TypeDeducer.deduceTypes(call.expression).filter(t => t.id === TypeCarrier.Type.Function).map(t => t.node);
-
-	for(const callee of callees) {
-		const signature = {};
-		signature.documentation = "Function Documentation?";
-		signature.label = computeFunctionSignature(callee, call);
-		signature.parameters = [];
-		for(const parameter of callee.parameters) {
-			signature.parameters.push(vscodeLanguageServer.ParameterInformation.create(parameter.name.getText(), "Parameter Documentation?"));
-		}
-		signatures.push(signature);
-	}
+	const signatures = callees.map(callee => computeFunctionSignature(callee, call))
 
 	return {
 		activeParameter,
 		activeSignature: 0,
 		signatures
 	};
-
-	// return {
-	// 	activeParameter,
-	// 	activeSignature: 0,
-	// 	signatures: [
-	// 		{
-	// 			documentation: "documentation for signature1",
-	// 			label: "function(a, b, c)",
-	// 			parameters: [
-	// 				vscodeLanguageServer.ParameterInformation.create("a", "documentation of parameter a"), 
-	// 				vscodeLanguageServer.ParameterInformation.create("b", "documentation of parameter b"),
-	// 				vscodeLanguageServer.ParameterInformation.create("c", "documentation of parameter c")
-	// 			]
-	// 		},
-	// 		{
-	// 			documentation: "documentation for signature2",
-	// 			label: "function2",
-	// 			parameters: [{
-	// 				label: "a", 
-	// 				documentation: "documentation of parameter a"
-	// 			}]
-	// 		}
-	// 	]
-	// };
 
 });
 
@@ -287,6 +333,7 @@ connection.onCompletion((info) => {
 
 	if(triggerCharacter === '.') {
 
+		Analyzer.analyze(ast);
 		const node = Ast.findInnermostNode(ast, offset - 1, ts.SyntaxKind.PropertyAccessExpression);
 		const expressionTypes = TypeDeducer.deduceTypes(node.name.escapedText == "" ? node.expression : node);
 
@@ -306,7 +353,7 @@ connection.onCompletion((info) => {
 					const kind = propertyTypeCarrier.hasUniqueType() ?
 						TypeCarrier.typeToVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].id) :
 						vscodeLanguageServer.CompletionItemKind.Variable;
-					const signature = computeSignature(node, propertyTypeCarrier);
+					const signature = SignatureFinder.computeSignature(node, propertyTypeCarrier);
 					completionItems.push({
 						label: propertyName,
 						kind,
@@ -332,7 +379,7 @@ connection.onCompletion((info) => {
 								const kind = propertyTypeCarrier.hasUniqueType() ?
 									TypeCarrier.typeToVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].id) :
 									vscodeLanguageServer.CompletionItemKind.Variable;
-								const signature = computeSignature(node, propertyTypeCarrier);
+								const signature = SignatureFinder.computeSignature(node, propertyTypeCarrier);
 								completionItems.push({
 									label: propertyName,
 									kind,
@@ -345,10 +392,11 @@ connection.onCompletion((info) => {
 				} else {
 					Ast.findVisibleSymbols(node).forEach(symbol => {
 						const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
+						if(closestTypeCarrier === undefined) { return ; }
 						const kind = closestTypeCarrier.hasUniqueType() ?
 							TypeCarrier.typeToVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].id) : 
 							vscodeLanguageServer.CompletionItemKind.Variable;
-						const signature = computeSignature(node, closestTypeCarrier);
+						const signature = SignatureFinder.computeSignature(node, closestTypeCarrier);
 						completionItems.push({
 							label: symbol.name, 
 							kind,
@@ -365,7 +413,7 @@ connection.onCompletion((info) => {
 });
 
 connection.onCompletionResolve(item => {
-	item.detail = item.data.signature;
+	item.detail = item.data && item.data.signature;
 	return item;
 });
 
@@ -375,7 +423,8 @@ connection.onDidOpenTextDocument((params) => {
 	const fileName = document.uri;
 	const text = document.text;
 	const ast = asts[fileName] = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
-	
+
+
 	clearDiagnostics(ast);
 	if(Ast.hasParseError(ast)) { 
 		provideParseDiagnostics(ast);
@@ -407,6 +456,7 @@ connection.onDidChangeTextDocument((params) => {
 		ast = asts[fileName] = ts.updateSourceFile(ast, newText, changeRange);
 		ast.symbols = previousAst.symbols;
 		ast.typeCarriers = previousAst.typeCarriers;
+		ast.analyzeDiagnostics = previousAst.analyzeDiagnostics;
 		text = newText;
 	}
 
