@@ -3,7 +3,14 @@ const vscode = require('vscode');
 const vscodeLanguageClient = require('vscode-languageclient');
 
 let client;
+/**
+ * @type {vscode.StatusBarItem}
+ */
+let offsetStatusBarItem;
 
+/**
+ * @param {vscode.ExtensionContext} context 
+ */
 function activate(context) {
 
 	let serverModule = context.asAbsolutePath(
@@ -39,6 +46,10 @@ function activate(context) {
 	
 	// This will also launch the server
 	client.start();
+
+	offsetStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	offsetStatusBarItem.command = 'extension.goToOffset';
+	context.subscriptions.push(offsetStatusBarItem);
 	
 	vscode.window.onDidChangeTextEditorSelection((params) => {
 		if(params.textEditor.document.languageId === "javascript") {
@@ -57,10 +68,40 @@ function activate(context) {
 					});
 				});
 			}		
+			updateOffsetStatusBarItem(offsetStatusBarItem, )
 		}
 	});
 
+	vscode.commands.registerTextEditorCommand('extension.goToOffset', (textEditor) => {
+
+		if(!textEditor) { return ; }
+		const text = textEditor.document.getText();
+		const end = text.length;
+		vscode.window.showInputBox({
+			valueSelection: [0, end],
+			placeHolder: 'Type offset to go',
+			validateInput: text => {
+				if(isNaN(text)) {
+					return 'Type a number you moron';
+				}
+				return (text > 0 && text < end) ? null : 'Offset out of range';
+			}
+		}).then((text) => {
+			const position = textEditor.document.positionAt(text);
+			textEditor.selections = [
+				new vscode.Selection(position.line, position.character, position.line, position.character)
+			];
+		});
+
+	});
+
+	// ------------------------------------------------------------------------
+
 	client.onReady().then(() => {
+
+		updateOffsetStatusBarItem();
+
+		// ------------------------------------------------------------------------
 		// const openUris = uris => {
 		// 	uris.forEach(uri => {
 		// 		vscode.workspace.openTextDocument(uri);
@@ -68,12 +109,25 @@ function activate(context) {
 		// }
 		// vscode.workspace.findFiles(`*.js`).then(uris => { openUris(uris) });
 		// vscode.workspace.findFiles('**/*.js', '**/node_modules/**').then(uris => { openUris(uris); });
+		
 	});
 
 }
 
 function deactivate() {
 	return client ? client.stop() : undefined;
+}
+
+/**
+ * @param {vscode.TextEditor} textEditor
+ */
+function computeOffset(textEditor = vscode.window.activeTextEditor) {
+	return textEditor.document.offsetAt(textEditor.selection.active);
+}
+
+function updateOffsetStatusBarItem() {
+	offsetStatusBarItem.text = `Offset: ${computeOffset()}`;
+	offsetStatusBarItem.show();
 }
 
 module.exports = {
