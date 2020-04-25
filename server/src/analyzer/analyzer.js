@@ -260,6 +260,12 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.IfStatement: {
                 ts.forEachChild(node, visitDeclarations);
+                if(node.thenStatement.kind !== ts.SyntaxKind.Block) {
+                    node.thenStatement.blockTypeCarriers = Ast.findAllTypeCarriers(node.thenStatement);
+                } 
+                if(node.elseStatement && node.elseStatement.kind !== ts.SyntaxKind.Block && node.elseStatement.kind !== ts.SyntaxKind.IfStatement) {
+                    node.elseStatement.blockTypeCarriers = Ast.findAllTypeCarriers(node.elseStatement);
+                }
                 mergeIfStatementTypeCarriers(node);
                 break;
             }
