@@ -83,7 +83,7 @@ Replicator.replicateArrayProperty = (object, property, options) => {
  * @param {ISense.ASTReplicate.Options} options
  */
 Replicator.replicateIfArrayProperty = (object, property, options) => {
-    return object.property && object[property].map(n => Replicator.replicateInternal(n, options));
+    return object[property] && object[property].map(n => Replicator.replicateInternal(n, options));
 };
 
 /**
@@ -815,7 +815,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ArrayLiteralExpression] = (node, opt
  */
 Replicator.replicateFunctions[ts.SyntaxKind.ObjectLiteralExpression] = (node, options) => {
     return ts.createObjectLiteral(
-        Replicator.replicateIfArrayProperty(node, 'properties', options),
+        Replicator.replicateArrayProperty(node, 'properties', options),
         // TODO: multiline parameter?
     );
 };
