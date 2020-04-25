@@ -41,31 +41,6 @@ Utility.toArray = value => {
     return Utility.isArray(value) ? value : [value];
 };
 
-/**
- * @param {string} code
- * @param {number} offset
- */
-Utility.computeActiveParameter = function(code, offset, callStart) {
-
-    let currentCall = 1;
-    let activeParameter = 0;
-    let character;
-
-    while(offset > callStart) {
-        character = code[offset--];
-        if(character === "(" && --currentCall === 0) {
-            return activeParameter;
-        } else if(character === ")") {
-            ++currentCall;
-        } else if(character === "," && currentCall === 1) { 
-            ++activeParameter; 
-        }
-    }
-
-    return -1;
-
-};
-
 Utility.typescriptDiagnosticCategoryToVSCodeDiagnosticSeverity = function(diagnosticCategory) {
     switch(diagnosticCategory) {
         case ts.DiagnosticCategory.Error: {

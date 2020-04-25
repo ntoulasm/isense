@@ -152,15 +152,6 @@ connection.onHover(info => {
 	if(node === undefined) { return { contents: [] }; }
 	
 	switch(node.kind) {
-		// TODO: do i care about this?
-		// case ts.SyntaxKind.VariableDeclarationList: {
-		// 	return {
-		// 		contents: {
-		// 			language: "typescript",
-		// 			value: Ast.isLetDeclaration(node) ? "let keyword" : Ast.isConstDeclaration(node) ? "const keyword" : "var keyword"
-		// 		}
-		// 	};
-		// }
 		case ts.SyntaxKind.Constructor: {
 			const parentName = node.parent.name ? node.parent.name.getText() : '';
 			return {
@@ -172,7 +163,6 @@ connection.onHover(info => {
 		}
 		case ts.SyntaxKind.Identifier: {
 			if(node.parent.kind === ts.SyntaxKind.PropertyAccessExpression && node.parent.name === node) {
-				// TODO: a.x
 				return { 
 					contents: {
 						language: 'typescript',
@@ -323,11 +313,8 @@ connection.onSignatureHelp((info) => {
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
-	// const text = ast.getFullText();
 
 	if(call === undefined) { return; }
-	// const activeParameter = Utility.computeActiveParameter(text, offset, call.getStart());
-	// if(activeParameter < 0) { return null; }
 	const activeParameter = computeActiveParameter(call, offset);
 	const callees = TypeDeducer.deduceTypes(call.expression).filter(t => t.id === TypeCarrier.Type.Function).map(t => t.node);
 	const signatures = callees.map(callee => computeFunctionSignature(callee, call))
