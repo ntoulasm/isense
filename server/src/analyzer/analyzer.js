@@ -209,7 +209,12 @@ Analyzer.analyze = ast => {
                     Binder.bindBlockScopedDeclarations(node);
 
                     ts.forEachChild(node, visitDeclarations);
-                    node.typeCarriers = Ast.findAllTypeCarriers(node);
+                    const blockTypeCarriers = Ast.findAllTypeCarriers(node);
+                    const nextStatement = Ast.findNextStatementOfBlock(node);
+                    if(nextStatement) {
+                        nextStatement.typeCarriers = blockTypeCarriers;
+                    }
+                    node.blockTypeCarriers = blockTypeCarriers;
 
                     break;
                 }
@@ -352,14 +357,12 @@ function copyPropertiesTypeCarriersToCallIfObject(returnStatement, returnTypes, 
 
 /**
  * 
- * @param {ts.Node} node
+ * @param {ts.IfStatement} node
  */
 function mergeIfStatementTypeCarriers(node) {
-
-    console.assert(node.kind === ts.SyntaxKind.IfStatement, "Trying to merge carriers in node that is not an if statement");
     
-    const thenCarriers = node.thenStatement.typeCarriers;
-    const elseCarriers = node.elseStatement ? node.elseStatement.typeCarriers : [];
+    const thenCarriers = node.thenStatement.blockTypeCarriers;
+    const elseCarriers = node.elseStatement ? node.elseStatement.blockTypeCarriers : [];
 
     const carriers = [];
     const notInBothCarriers = [...thenCarriers, ...elseCarriers];
@@ -385,15 +388,21 @@ function mergeIfStatementTypeCarriers(node) {
 
     for(const c of notInBothCarriers) {
         const symbol = c.getSymbol();
-        const outerCarrier = Ast.findClosestTypeCarrier(topLevelIfStatement, symbol);
+        let addOuterType = node === topLevelIfStatement;
+        const outerCarrier = addOuterType ? Ast.findClosestTypeCarrier(topLevelIfStatement, symbol) : undefined;
+        addOuterType = addOuterType && outerCarrier;
         const carrier = TypeCarrier.create(symbol, [
-            ...(outerCarrier !== undefined ? outerCarrier.getTypes() : []),
-            ...c.getTypes()
+            ...(addOuterType ? outerCarrier.getTypes() : []),
+            ...(c.getTypes())
         ]);
         carriers.push(carrier);
     }
 
-    node.typeCarriers = carriers;
+    node.blockTypeCarriers = carriers;
+    const nextStatement = Ast.findNextStatementOfBlock(node);
+    if(nextStatement) {
+        nextStatement.typeCarriers = carriers;
+    }
 
 }
 
