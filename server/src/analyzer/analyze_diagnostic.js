@@ -1,6 +1,8 @@
 const vscodeLanguageServer = require('vscode-languageserver');
 const Utility = require('../utility/utility');
 
+// ----------------------------------------------------------------------------
+
 
 const AnalyzeDiagnostic = {};
 

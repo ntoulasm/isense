@@ -2,6 +2,9 @@ const path = require('path');
 const vscode = require('vscode');
 const vscodeLanguageClient = require('vscode-languageclient');
 
+// ----------------------------------------------------------------------------
+
+
 let client;
 /**
  * @type {vscode.StatusBarItem}

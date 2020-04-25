@@ -1,9 +1,13 @@
 const SymbolTable = require('./symbol_table');
 const Utility = require('./utility');
-const Ast = require('../ast/ast');
+
+// ----------------------------------------------------------------------------
 
 const ts = require('typescript');
 const vscodeLanguageServer = require('vscode-languageserver');
+
+// ----------------------------------------------------------------------------
+
 
 const TypeCarrier = {};
 let totalObjects = -1;

@@ -1,6 +1,9 @@
 const TypeCarrier = require('../utility/type_carrier');
 const Utility = require('../utility/utility');
 
+// ----------------------------------------------------------------------------
+
+
 const TypeCaster = {};
 
 TypeCaster.toNumber = type => {

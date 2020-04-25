@@ -4,9 +4,12 @@ const TypeCarrier = require('../utility/type_carrier');
 const TypeDeducer = require('../type-deducer/type_deducer');
 const FunctionAnalyzer = require('./function-analyzer');
 
+// ----------------------------------------------------------------------------
+
 const ts = require('typescript');
 
 //-----------------------------------------------------------------------------
+
 
 const Binder = {};
 

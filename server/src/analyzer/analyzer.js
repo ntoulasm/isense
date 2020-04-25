@@ -10,7 +10,11 @@ const FunctionAnalyzer = require('./function-analyzer');
 const Binder = require('./binder');
 const DiagnosticMessages = require('./diagnostic-messages');
 
+// ----------------------------------------------------------------------------
+
 const ts = require('typescript');
+
+// ----------------------------------------------------------------------------
 
 
 const Analyzer = {};
@@ -57,7 +61,6 @@ Analyzer.analyze = ast => {
                 
 				if(node.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
                     const lvalue = Ast.stripOutParenthesizedExpressions(node.left);
-                    // const rvalue = Ast.stripOutParenthesizedExpressions(node.right);
 					if(lvalue.kind === ts.SyntaxKind.Identifier) {
                         const name = lvalue.escapedText;
                         const symbol = Ast.lookUp(node, name);
@@ -347,12 +350,6 @@ Analyzer.analyze = ast => {
 	Binder.bindFunctionScopedDeclarations(ast);
     ts.forEachChild(ast, visitDeclarations);
 
-    // console.log("---------------");
-    // Ast.findAllSymbols(ast).forEach(symbol => {
-    //     console.log(symbol);
-    // });
-    // console.log("---------------");
-
 }
 
 // ----------------------------------------------------------------------------
@@ -595,8 +592,6 @@ function newExpression(node) {
         if(type.id === TypeCarrier.Type.Function) {
             call(node, type.node);
             copyThisPropertiesToCallSite(type.node);
-            // const constructorLastStatement = type.node.body.statements.length ? type.node.body.statements[type.node.body.statements.length - 1] : undefined;
-            // copyPropertiesTypeCarriersToCallIfObject(constructorLastStatement, ThisHolder.top(), node);
         } else if (type.id === TypeCarrier.Type.Class) {
             newClassExpression(node, type.node);
             copyThisPropertiesToCallSite(type.node);

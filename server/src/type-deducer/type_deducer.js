@@ -3,7 +3,12 @@ const TypeCarrier = require('../utility/type_carrier');
 const TypeCaster = require('../type-caster/type_caster');
 const Utility = require('../utility/utility');
 
+// ----------------------------------------------------------------------------
+
 const ts = require('typescript');
+
+// ----------------------------------------------------------------------------
+
 
 const TypeDeducer = {};
 

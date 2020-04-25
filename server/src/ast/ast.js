@@ -1,7 +1,12 @@
 const TypeCarrier = require('../utility/type_carrier');
 const Utility = require('../utility/utility');
 
+// ----------------------------------------------------------------------------
+
 const ts = require('typescript');
+
+// ----------------------------------------------------------------------------
+
 
 const Ast = {};
 
@@ -301,8 +306,6 @@ Ast.addTypeCarrierToExpression = (node, typeCarrier) => {
         Ast.addTypeCarrier(node, TypeCarrier.copyTypeCarrier(typeCarrier));
     });
     Ast.addTypeCarrierToClosestStatement(node, TypeCarrier.copyTypeCarrier(typeCarrier));
-    // const expressionStatement = Ast.findExpressionStatementAncestor(node.parent);
-    // Ast.addTypeCarrier(expressionStatement, TypeCarrier.copyTypeCarrier(typeCarrier));
 };
 
 /**
@@ -324,7 +327,6 @@ Ast.findBinaryExpressionAncestors = node => {
  * @param {object} symbol
  */
 Ast.findClosestTypeCarrier = (node, symbol) => {
-    // console.assert(node.hasOwnProperty("typeCarriers"));
     if(!node.hasOwnProperty("typeCarriers")) {
         const previousNode = Ast.findPreviousNode(node);
         return previousNode ? Ast.findClosestTypeCarrier(previousNode, symbol) : undefined;
@@ -407,21 +409,8 @@ Ast.addCallSite = (callee, call) => {
     if(!callee._original.hasOwnProperty("callSites")) {
         callee._original.callSites = [];
     }
-    // {
-    //     const calleePosition = callee._original.getSourceFile().getLineAndCharacterOfPosition(callee.getStart());
-    //     const callPosition = call.getSourceFile().getLineAndCharacterOfPosition(call.getStart());
-    //     console.log(`${callee.getSourceFile().fileName}: call at line ${callPosition.line + 1} is a call site of function declared at line ${calleePosition.line + 1}`);
-    // }
     callee._original.callSites.push(call);
 };
-
-// /** TODO: Remove? replaced by ts.isFunctionLike
-//  * @param {ts.Node} node
-//  */
-// Ast.isFunction = node => {
-//     const kind = node.kind;
-//     return kind === ts.SyntaxKind.FunctionDeclaration || kind === ts.SyntaxKind.FunctionExpression || kind === ts.SyntaxKind.ArrowFunction;
-// };
 
 /**
  * @param {ts.Node} node

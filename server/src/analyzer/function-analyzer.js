@@ -5,7 +5,11 @@ const Ast = require('../ast/ast');
 const AnalyzeDiagnostic = require('./analyze_diagnostic');
 const DiagnosticMessages = require('./diagnostic-messages');
 
+// ----------------------------------------------------------------------------
+
 const ts = require('typescript');
+
+// ----------------------------------------------------------------------------
 
 
 const FunctionAnalyzer = {};

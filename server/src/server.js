@@ -7,8 +7,13 @@ const TypeDeducer = require('./type-deducer/type_deducer');
 const NumberMethods = require('./primitive-type-info/number-methods');
 const DotGenerator = require('./ast/dot-generator');
 
+// ----------------------------------------------------------------------------
+
 const vscodeLanguageServer = require('vscode-languageserver');
 const ts = require('typescript');
+
+// ----------------------------------------------------------------------------
+
 
 const connection = vscodeLanguageServer.createConnection(vscodeLanguageServer.ProposedFeatures.all);
 let hasConfigurationCapability = false;

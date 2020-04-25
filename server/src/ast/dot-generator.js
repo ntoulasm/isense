@@ -1,8 +1,13 @@
 const SignatureFinder = require('../utility/signature-finder');
 const Ast = require('../ast/ast');
 
+// ----------------------------------------------------------------------------
+
 const ts = require('typescript');
 const fs = require('fs');
+
+// ----------------------------------------------------------------------------
+
 
 const me = {};
 let dotId = 0;

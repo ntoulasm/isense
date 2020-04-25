@@ -1,6 +1,8 @@
 const vscodeLanguageServer = require('vscode-languageserver');
 const ts = require('typescript');
 
+// ----------------------------------------------------------------------------
+
 const Utility = {};
 
 Utility.isNumber = function(value) {
