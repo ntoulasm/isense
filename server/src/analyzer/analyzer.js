@@ -7,9 +7,10 @@ const TypeCarrier = require('../utility/type_carrier');
 const AnalyzeDiagnostic = require('./analyze_diagnostic');
 const TypeDeducer = require('../type-deducer/type_deducer');
 const FunctionAnalyzer = require('./function-analyzer');
-const Hoist = require('./hoist');
+const Binder = require('./binder');
 
 const ts = require('typescript');
+
 
 const Analyzer = {};
 
@@ -66,7 +67,6 @@ Analyzer.analyze = ast => {
 	 * @param {ts.SourceFile} node 
 	 */
 	function visitDeclarations(node) {
-
 		switch(node.kind) {
 			case ts.SyntaxKind.ImportDeclaration: {
                 break;
@@ -124,29 +124,8 @@ Analyzer.analyze = ast => {
 				break;
 
             }
-			case ts.SyntaxKind.Parameter: {	// function x(a, ...
-
-                node.symbols = SymbolTable.create();
-				if(node.name.kind === ts.SyntaxKind.Identifier) {
-					const name = node.name.text;
-					const start = node.name.getStart();
-                    const end = node.name.end;
-                    const symbol = Symbol.create(name, start, end);
-                    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-                    node.symbols.insert(symbol);
-				} else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
-					visitDestructuringDeclerations(node.name, (name, start, end) => {
-                        const symbol = Symbol.create(name, start, end);
-                        Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
-                        node.symbols.insert(symbol);
-                    });
-				} else {
-					console.assert(false);
-				}
-
-				ts.forEachChild(node, visitDeclarations);
-				break;
-			
+			case ts.SyntaxKind.Parameter: {
+                break;
 			}
 			case ts.SyntaxKind.ClassDeclaration: {
 
@@ -160,7 +139,7 @@ Analyzer.analyze = ast => {
             }
 			case ts.SyntaxKind.Constructor: {
 
-                node.symbols = SymbolTable.create();
+                FunctionAnalyzer.analyze(node);
 
 				const name = "constructor";
 				const start = node.getStart();
@@ -170,7 +149,7 @@ Analyzer.analyze = ast => {
                 const classDeclaration = classStack.top();
                 classDeclaration.symbols.insert(symbol);
                 
-                ts.forEachChild(node, visitDeclarations);
+                // ts.forEachChild(node, visitDeclarations);
 				break;
 
             }
@@ -204,6 +183,8 @@ Analyzer.analyze = ast => {
             }
 			case ts.SyntaxKind.MethodDeclaration: {
 
+                FunctionAnalyzer.analyze(node);
+
                 if(node.parent.kind === ts.SyntaxKind.ClassDeclaration || node.parent.kind === ts.SyntaxKind.ClassExpression) {
                     const name = node.name.text;
                     const start = node.getStart();
@@ -218,11 +199,14 @@ Analyzer.analyze = ast => {
 				break;
 
             }
-            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionDeclaration: {
+                ts.forEachChild(node, visitDeclarations);
+                break;
+            }
 			case ts.SyntaxKind.FunctionExpression: 
-			case ts.SyntaxKind.ArrowFunction: {
-                node.symbols = SymbolTable.create();
+            case ts.SyntaxKind.ArrowFunction: {
                 FunctionAnalyzer.analyze(node);
+                ts.forEachChild(node, visitDeclarations);
                 break;
             }
             case ts.SyntaxKind.ClassExpression: {
@@ -244,7 +228,7 @@ Analyzer.analyze = ast => {
                     node.parent.kind === ts.SyntaxKind.SetAccessor ||
                     node.parent.kind === ts.SyntaxKind.GetAccessor) {
 
-                    Hoist.hoistFunctionScopedDeclarations(node);
+                    Binder.bindFunctionScopedDeclarations(node);
 
                     ts.forEachChild(node, visitDeclarations);
     
@@ -252,7 +236,7 @@ Analyzer.analyze = ast => {
 
 				} else {
 
-                    Hoist.hoistBlockScopedDeclarations(node);
+                    Binder.bindBlockScopedDeclarations(node);
 
                     ts.forEachChild(node, visitDeclarations);
                     node.typeCarriers = Ast.findAllTypeCarriers(node);
@@ -265,7 +249,7 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.ForInStatement:
             case ts.SyntaxKind.ForOfStatement: {
                 node.symbols = SymbolTable.create();
-                Hoist.hoistBlockScopedDeclarations(node);
+                Binder.bindBlockScopedDeclarations(node);
                 ts.forEachChild(node, visitDeclarations);
                 break;
             }
@@ -276,7 +260,7 @@ Analyzer.analyze = ast => {
                 let callee;
 
                 if(node.expression.kind == ts.SyntaxKind.Identifier) {  // x(...);
-                    const callees = Ast.findCallees(node);
+                    const callees = Ast.findCallees(node) || [];
                     callee = !callees.length ? undefined : callees[0];
                 } else if(node.expression.kind === ts.SyntaxKind.ParenthesizedExpression &&
                     node.expression.expression.kind === ts.SyntaxKind.FunctionExpression) { // iife
@@ -378,7 +362,7 @@ Analyzer.analyze = ast => {
     };
     initializeTypeCarriers(ast);
 
-	Hoist.hoistFunctionScopedDeclarations(ast);
+	Binder.bindFunctionScopedDeclarations(ast);
     ts.forEachChild(ast, visitDeclarations);
 
     // console.log("---------------");
