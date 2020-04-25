@@ -27,6 +27,12 @@
 	],
 	"main": "./client/src/extension.js",
 	"contributes": {
+		"commands": [
+			{
+				"command": "extension.generateDot",
+				"title": "Generate DOT file for the AST of current file"
+			}
+		],
 		"configuration": {
 			"type": "object",
 			"title": "Example configuration",
@@ -59,6 +65,7 @@
 		"@types/mocha": "^5.2.0",
 		"@types/node": "^8.0.0",
 		"eslint": "^5.13.0",
-		"typescript": "^3.5.1"
-	}
+		"typescript": "^3.8.2"
+	},
+	"dependencies": {}
 }
