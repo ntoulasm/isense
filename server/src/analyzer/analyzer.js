@@ -276,6 +276,21 @@ Analyzer.analyze = ast => {
                 objectStack.pop();
                 break;
             }
+            case ts.SyntaxKind.ShorthandPropertyAssignment: {
+
+                const object = objectStack.top();
+                const name = node.name.getText();
+                const propertyTypes = TypeDeducer.deduceTypes(node.name);
+
+                if(name !== undefined) {
+                    const symbol = Symbol.create(`@${object.type.value}.${name}`, node.pos, node.end);
+                    object.type.properties.insert(symbol);
+                    assign(node, symbol, node.initializer, propertyTypes);
+                }
+
+                break;
+
+            }
             case ts.SyntaxKind.PropertyAssignment: {
 
                 ts.forEachChild(node, visitDeclarations);
