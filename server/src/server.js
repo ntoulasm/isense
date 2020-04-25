@@ -2,6 +2,7 @@ const Utility = require('./utility/utility');
 const Analyzer = require('./analyzer/analyzer');
 const Ast = require('./ast/ast');
 const TypeCarrier = require('./utility/type_carrier');
+const SignatureFinder = require('./utility/signature-finder');
 const TypeDeducer = require('./type-deducer/type_deducer');
 const NumberMethods = require('./primitive-type-info/number-methods');
 const DotGenerator = require('./ast/dot-generator');
@@ -168,7 +169,7 @@ connection.onHover(info => {
 			return {
 				contents: {
 					language: "typescript",
-					value: computeSignature(node, closestTypeCarrier)
+					value: SignatureFinder.computeSignature(node, closestTypeCarrier)
 				}
 			};
 		}
@@ -456,96 +457,5 @@ connection.onNotification('custom/generateDot', (params) => {
 // 	}
 // 	connection.sendNotification('custom/pickCallSite', {callSites});
 // });
-
-let objectNesting = 0;
-const computeSpaces = () => {
-    let spaces = "";
-    for(let i = 0; i < objectNesting; ++i) {
-        spaces += "    ";
-    }
-    return spaces;
-};
-
-const typeToString = type => {
-
-	switch(type.id) {
-		case TypeCarrier.Type.Object: {
-			return type.hasOwnProperty('constructorName') ? type.constructorName : 'Object';
-		}
-		default: {
-			return Object.keys(TypeCarrier.Type)[type.id];
-		}
-	}
-
-}
-
-function computeSignature(node, typeCarrier) {
-
-	const symbol = typeCarrier.getSymbol();
-	let firstTime = true;
-	let signature = symbol.isConst ? 'const ' : '';
-
-	function computeSignatureValue(type) {
-
-		switch(type.id) {
-			case TypeCarrier.Type.Number:
-			case TypeCarrier.Type.Boolean: {
-				return type.hasOwnProperty("value") ? `= ${String(type.value)}` : '';
-			}
-			case TypeCarrier.Type.String: {
-				return type.hasOwnProperty("value") ? `= \"${String(type.value)}\"` : '';
-			}
-			case TypeCarrier.Type.Array: {
-				return '';
-			}
-			case TypeCarrier.Type.Object: {
-
-				if(type.properties.getSymbols().length === 0) {
-					return '';
-				}
-
-				++objectNesting;
-				let comma = false;
-				let value = `= {\n`;
-
-				for(const [,property] of Object.entries(type.properties.getSymbols())) {
-					if(comma) { value += ',\n'; }
-					comma = true;
-					value += computeSpaces();
-					value += computeSignature(node, Ast.findClosestTypeCarrier(node, property));
-				}
-	
-				--objectNesting;
-				value += `\n${computeSpaces()}}`;
-				return value;
-
-			}
-			case TypeCarrier.Type.Function:
-			case TypeCarrier.Type.Class: {
-				return type.node ? '' : `= ${type.node.text}`;
-			}
-			case TypeCarrier.Type.Null:
-			case TypeCarrier.Type.Undefined: {
-				return '';
-			}
-			default: {
-				console.assert(false);
-			}
-		}
-	}
-
-	for(const type of typeCarrier.getTypes()) {
-		if(firstTime) { 
-			firstTime = false;
-		} else {
-			signature += ' || '
-		}
-		const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
-		signature += `${name}: ${typeToString(type)} `;
-		signature += computeSignatureValue(type);
-	}
-
-    return signature;
-}
 
 connection.listen();

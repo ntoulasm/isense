@@ -7,6 +7,8 @@ const Ast = {};
 
 /**
  * @param {ts.SourceFile} ast
+ * 
+ * @returns {Boolean}
  */
 Ast.hasParseError = ast => {
     for(const parseDiagnostic of ast.parseDiagnostics) {
@@ -19,6 +21,8 @@ Ast.hasParseError = ast => {
 
 /**
  * @param {ts.Node} variableDeclarationList
+ * 
+ * @returns {Boolean}
  */
 Ast.isConstDeclaration = function(variableDeclarationList) {
     return (variableDeclarationList.flags & ts.NodeFlags.Const) === ts.NodeFlags.Const;
@@ -26,6 +30,8 @@ Ast.isConstDeclaration = function(variableDeclarationList) {
 
 /**
  * @param {ts.Node} variableDeclarationList
+ * 
+ * @returns {Boolean}
  */
 Ast.isLetDeclaration = function(variableDeclarationList) {
     return (variableDeclarationList.flags & ts.NodeFlags.Let) === ts.NodeFlags.Let;
@@ -33,6 +39,8 @@ Ast.isLetDeclaration = function(variableDeclarationList) {
 
 /**
  * @param {ts.Node} variableDeclarationList
+ * 
+ * @returns {Boolean}
  */
 Ast.isVarDeclaration = function(variableDeclarationList) {
     return !Ast.isConstDeclaration(variableDeclarationList) && !Ast.isLetDeclaration(variableDeclarationList); 
@@ -40,6 +48,8 @@ Ast.isVarDeclaration = function(variableDeclarationList) {
 
 /**
  * @param {ts.Node} node
+ * 
+ * @returns {Array<ts.Node>}
  */
 Ast.computeChildren = node => {
     const children = [];
@@ -51,6 +61,8 @@ Ast.computeChildren = node => {
 
 /**
  * @param {ts.Node} node
+ * 
+ * @returns {Array<ts.Node>} 
  */
 Ast.computeSiblings = function(node) {
     const parent = node.parent;
@@ -60,6 +72,8 @@ Ast.computeSiblings = function(node) {
 
 /**
  * @param {ts.Node} node
+ * 
+ * @returns {ts.Node}
  */
 Ast.findLeftSibling = node => {
     const siblings = Ast.computeSiblings(node);
@@ -69,6 +83,8 @@ Ast.findLeftSibling = node => {
 
 /**
  * @param {ts.Node} node
+ * 
+ * @returns {ts.Node}
  */
 Ast.findLeftSiblingWithoutInnerScope = node => {
 
@@ -95,6 +111,8 @@ Ast.findLeftSiblingWithoutInnerScope = node => {
  * @param {ts.SourceFile} ast
  * @param {number} offset
  * @param {number} kind
+ * 
+ * @returns {ts.Node}
  */
 Ast.findNode = (ast, offset, kind) => {
     function findNode(node) {
@@ -110,6 +128,8 @@ Ast.findNode = (ast, offset, kind) => {
  * @param {ts.SourceFile} ast
  * @param {number} offset
  * @param {number} kind
+ * 
+ * @returns {ts.Node}
  */
 Ast.findInnermostNode = (ast, offset, kind) => {
     function findInnermostNode(node) {
@@ -127,6 +147,8 @@ Ast.findInnermostNode = (ast, offset, kind) => {
 /**
  * @param {ts.SourceFile} ast
  * @param {number} offset
+ * 
+ * @returns {ts.Node}
  */
 Ast.findInnermostNodeOfAnyKind = (ast, offset) => {
     function findInnermostNodeOfAnyKind(node) {
@@ -155,6 +177,8 @@ Ast.lookUp = (node, name) => {
 
 /**
  * @param {ts.Node} node
+ * 
+ * @returns {Array<isense.symbol>}
  */
 Ast.findVisibleSymbols = node => {
 
@@ -368,20 +392,20 @@ Ast.addCallSite = (callee, call) => {
     callee._original.callSites.push(call);
 };
 
-/**
- * @param {ts.Node} node
- */
-Ast.isFunction = node => {
-    const kind = node.kind;
-    return kind === ts.SyntaxKind.FunctionDeclaration || kind === ts.SyntaxKind.FunctionExpression || kind === ts.SyntaxKind.ArrowFunction;
-};
+// /** TODO: Remove? replaced by ts.isFunctionLike
+//  * @param {ts.Node} node
+//  */
+// Ast.isFunction = node => {
+//     const kind = node.kind;
+//     return kind === ts.SyntaxKind.FunctionDeclaration || kind === ts.SyntaxKind.FunctionExpression || kind === ts.SyntaxKind.ArrowFunction;
+// };
 
 /**
  * @param {ts.Node} node
  */
 Ast.findAncestorFunction = node => {
     while(node !== undefined) {
-        if(Ast.isFunction(node)) {
+        if(ts.isFunctionLike(node)) {
             return node;
         }
         node = node.parent;
@@ -589,6 +613,24 @@ Ast.copy = (node, parent) => {
 
 };
 
+/**
+ * @param {ts.Token} operator
+ */
+Ast.isArithmeticOperator = (operator) => {
+    switch(operator.kind) {
+        case ts.SyntaxKind.PlusToken:
+        case ts.SyntaxKind.MinusToken:
+        case ts.SyntaxKind.AsteriskToken:
+        case ts.SyntaxKind.SlashToken:
+        case ts.SyntaxKind.PercentToken: {
+            return true;
+        }
+        default: {
+            return false;
+        }
+    }
+};
+
 
 /**
  * @param {ts.Node} node
@@ -692,6 +734,18 @@ Ast.nodeKindToString = node => {
             return Object.values(ts.SyntaxKind)[node.kind];
         }
     }
+};
+
+/**
+ * @param {ts.Node} node
+ * 
+ * @returns {ts.Node}
+ */
+Ast.findTopLevelParenthesizedExpression = node => {
+    while(node.parent && node.parent.kind === ts.SyntaxKind.ParenthesizedExpression) {
+        node = node.parent;
+    }
+    return node;
 };
 
 /**
