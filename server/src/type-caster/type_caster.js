@@ -37,6 +37,9 @@ TypeCaster.toNumber = type => {
             newType.value = 0;
             break;
         }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
         default: {
             Utility.assert(false, `Can not cast '${TypeCarrier.typeText[type.id]}' to number`);
             break;
@@ -89,6 +92,9 @@ TypeCaster.toString = type => {
             newType.value = "undefined";
             break;
         }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
         default: {
             Utility.assert(false, `Can not cast '${TypeCarrier.typeText[type.id]}' to string`);
             break;
@@ -127,6 +133,9 @@ TypeCaster.toBoolean = type => {
         case TypeCarrier.Type.Null:
         case TypeCarrier.Type.Undefined: {
             newType.value = false;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
             break;
         }
         default: {

@@ -71,7 +71,8 @@ me.computeSignature = function computeSignature(node, typeCarrier, typeSeparator
 				return type.node ? '' : ` = ${type.node.text}`;
 			}
 			case TypeCarrier.Type.Null:
-			case TypeCarrier.Type.Undefined: {
+			case TypeCarrier.Type.Undefined: 
+			case TypeCarrier.Type.Any: {
 				return '';
 			}
 			default: {

@@ -134,7 +134,6 @@ function isParameterOfFunction(symbol, func) {
 function markUnreachableStatements(stmts) {
 
     if(!stmts.length) { return ; }
-    const ast = stmts[0].getSourceFile();
     
     for(const stmt of stmts) {
         stmt.unreachable = true;

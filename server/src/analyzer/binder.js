@@ -176,7 +176,7 @@ function declareImportClause(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));    // TODO: Fixme
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Any}));    // TODO: Fixme
 
 }
 

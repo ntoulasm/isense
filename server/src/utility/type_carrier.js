@@ -21,7 +21,8 @@ TypeCarrier.Type = {
     Array: 5,
     Object: 6,
     Undefined: 7,
-    Null: 8
+    Null: 8,
+    Any: 9
 };
 
 TypeCarrier.typeText = Object.keys(TypeCarrier.Type);
@@ -54,6 +55,9 @@ TypeCarrier.typeToString = type => {
         }
         case TypeCarrier.Type.Null: {
             return "null";
+        }
+        case TypeCarrier.Type.Any: {
+            return "any";
         }
         default: {
             console.assert(false, "Unknown type of type carrier");
@@ -182,7 +186,8 @@ TypeCarrier.copyType = type => {
             break;
         }
         case TypeCarrier.Type.Null:
-        case TypeCarrier.Type.Undefined: {
+        case TypeCarrier.Type.Undefined:
+        case TypeCarrier.Type.Any: {
             break;
         }
         default: {
@@ -193,6 +198,34 @@ TypeCarrier.copyType = type => {
     return copy;
 
 };
+
+/**
+ * @param {Number} value
+ */
+TypeCarrier.createNumber = value => {
+    return { 
+        id: TypeCarrier.Type.Number,
+        value
+    };
+};
+
+TypeCarrier.createNumberWithoutValue = () => {
+    return { id: TypeCarrier.Type.Number };
+}
+
+/**
+ * @param {String} value
+ */
+TypeCarrier.createString = value => {
+    return {
+        id: TypeCarrier.Type.String,
+        value
+    };
+}
+
+TypeCarrier.createStringWithoutValue = () => {
+    return { id: TypeCarrier.Type.String };
+}
 
 TypeCarrier.createEmptyObject = () => {
     return {
@@ -214,5 +247,11 @@ TypeCarrier.createUndefined = () => {
         id: TypeCarrier.Type.Undefined
     };
 };
+
+TypeCarrier.createAny = () => {
+    return {
+        id: TypeCarrier.Type.Any
+    }
+}
 
 module.exports = TypeCarrier;

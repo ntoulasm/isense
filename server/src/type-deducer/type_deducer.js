@@ -281,6 +281,9 @@ deduceTypesFunctionTable[ts.SyntaxKind.PostfixUnaryExpression] = node => {
                 type.value = 0;
                 break;
             }
+            case TypeCarrier.Type.Any: {
+                break;
+            }
             default: {
                 console.assert(false, "Unknown Type");
                 break;
@@ -330,6 +333,20 @@ deduceTypesFunctionTable[ts.SyntaxKind.TypeOfExpression] = node => {
             case TypeCarrier.Type.Null: {
                 type.value = "object";
                 break;
+            }
+            case TypeCarrier.Type.Any: {
+                type.value = "number";
+                types.push(...[
+                    TypeCarrier.createString('number'),
+                    TypeCarrier.createString('string'),
+                    TypeCarrier.createString('boolean'),
+                    TypeCarrier.createString('array'),
+                    TypeCarrier.createString('object'),
+                    TypeCarrier.createString('function'),
+                    TypeCarrier.createString('class'),
+                    TypeCarrier.createString('undefined'),
+                    TypeCarrier.createString('null'),
+                ]);
             }
             default: {
                 console.assert(false, "Unknown type");
@@ -497,6 +514,9 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.PlusToken] = operand
             type.value = 0;
             break;
         }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
         default: {
             console.assert(false, "Unknown type");
             break;
@@ -534,6 +554,9 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.MinusToken] = operan
         }
         case TypeCarrier.Type.Null: {
             type.value = 0;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
             break;
         }
         default: {
@@ -576,6 +599,9 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.PlusPlusToken] = ope
             type.value = 0;
             break;
         }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
         default: {
             console.assert(false, "Unknown type");
             break;
@@ -614,6 +640,9 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.MinusMinusToken] = o
         }
         case TypeCarrier.Type.Null: {
             type.value = 0;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
             break;
         }
         default: {
@@ -656,6 +685,9 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.ExclamationToken] = 
             type.value = true;
             break;
         }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
         default: {
             console.assert(false, "Unknown type");
             break;
@@ -691,6 +723,9 @@ deduceTypesPrefixUnaryExpressionFunctionTable[ts.SyntaxKind.TildeToken] = operan
         case TypeCarrier.Type.Null:
         case TypeCarrier.Type.Undefined: {
             type.value = -1;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
             break;
         }
         default: {
@@ -785,8 +820,10 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.EqualsEqualsToken] = node
             const type = {};
             type.id = TypeCarrier.Type.Boolean;
 
+            // TODO: check for null, undefined, any?
+
             if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
-                type.value = leftType.value == rightType.value;
+                type.value = (leftType.value == rightType.value);
             }
 
             types.push(type);
@@ -812,6 +849,8 @@ deduceTypesBinaryExpressionFunctionTable[ts.SyntaxKind.ExclamationEqualsToken] =
 
             const type = {};
             type.id = TypeCarrier.Type.Boolean;
+
+            // TODO: check for null, undefined, any?
 
             if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
                 type.value = leftType.value != rightType.value;
@@ -1002,6 +1041,12 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Number] = (left, right) 
             type.value = "NaN";
             break;
         }
+        case TypeCarrier.Type.Any: {
+            return [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -1074,6 +1119,10 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.String] = (left, right) 
             }
             break;
         }
+        case TypeCarrier.Type.Any: {
+            type.id = TypeCarrier.Type.String;
+            break;
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -1144,6 +1193,12 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Boolean] = (left, right)
             type.value = NaN;
             break;
         }
+        case TypeCarrier.Type.Any: {
+            return [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ]
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -1204,6 +1259,9 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Object] = (left, right) 
             type.value = "[object Object]undefined";
             break;
         }
+        case TypeCarrier.Type.Any: {
+            type.id = TypeCarrier.Type.String;
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -1248,6 +1306,9 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Class] = (left, right) =
             type.id = TypeCarrier.Type.String;
             type.value = left.node.getText() + right.node.getText();
             break;
+        }
+        case TypeCarrier.Type.Any: {
+            type.id = TypeCarrier.Type.String;
         }
         default: {
             console.assert(false, "Unknown Type");
@@ -1300,6 +1361,12 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Null] = (left, right) =>
             type.id = TypeCarrier.Type.Number;
             type.value = NaN;
         }
+        case TypeCarrier.Type.Any: {
+            return [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -1348,6 +1415,12 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Undefined] = (left, righ
             type.value = "undefined" + right.node.getText();
             break;
         }
+        case TypeCarrier.Type.Any: {
+            return [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -1356,6 +1429,13 @@ deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Undefined] = (left, righ
 
     return [type];
 
+};
+
+deduceTypesPlusExpressionFunctionTable[TypeCarrier.Type.Any] = (left, right) => {
+    return [
+        TypeCarrier.createNumberWithoutValue(),
+        TypeCarrier.createStringWithoutValue()
+    ];
 };
 
 // ----------------------------------------------------------------------------
