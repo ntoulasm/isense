@@ -51,7 +51,7 @@ Ast.isVarDeclaration = function(variableDeclarationList) {
  * 
  * @returns {Array<ts.Node>}
  */
-Ast.computeChildren = node => {
+Ast.findChildren = node => {
     const children = [];
     ts.forEachChild(node, child => {
         children.push(child);
@@ -64,10 +64,10 @@ Ast.computeChildren = node => {
  * 
  * @returns {Array<ts.Node>} 
  */
-Ast.computeSiblings = function(node) {
+Ast.findSiblings = function(node) {
     const parent = node.parent;
     if(parent === undefined) { return [node]; }
-    return Ast.computeChildren(parent);
+    return Ast.findChildren(parent);
 };
 
 /**
@@ -76,7 +76,7 @@ Ast.computeSiblings = function(node) {
  * @returns {ts.Node}
  */
 Ast.findLeftSibling = node => {
-    const siblings = Ast.computeSiblings(node);
+    const siblings = Ast.findSiblings(node);
     const nodeIndex = siblings.indexOf(node);
     return nodeIndex === 0 ? undefined : siblings[nodeIndex - 1];
 };
@@ -105,6 +105,29 @@ Ast.findLeftSiblingWithoutInnerScope = node => {
 
     return node;
 
+};
+
+/**
+ * @param {ts.Node} node
+ * 
+ * @returns {ts.Node}
+ */
+Ast.findRightSibling = node => {
+    const siblings = Ast.findSiblings(node);
+    const nodeIndex = siblings.indexOf(node);
+    return nodeIndex === siblings.length - 1 ? undefined : siblings[nodeIndex + 1];
+};
+
+/**
+ * @param {ts.Node} node
+ * 
+ * @returns {Array<ts.Node>}
+ */
+Ast.findRightSiblings = node => {
+    const siblings = Ast.findSiblings(node);
+    const nodeIndex = siblings.indexOf(node);
+    console.assert(nodeIndex !== -1);
+    return siblings.slice(nodeIndex + 1);
 };
 
 /**
@@ -631,6 +654,39 @@ Ast.isArithmeticOperator = (operator) => {
     }
 };
 
+/**
+ * @param {ts.Node} node
+ * @param {String} arrayName
+ */
+Ast.findLastNodeOfArray = (node, arrayName) => {
+    console.assert(node.hasOwnProperty(arrayName), 'Failed to find last node');
+    const array = node[arrayName];
+    const arrayLength = array.length;
+    return arrayLength ? array[arrayLength - 1] : undefined;
+};
+
+/**
+ * @param {ts.Node} node
+ */
+Ast.findLastStatement = node => {
+    return Ast.findLastNodeOfArray(node, 'statements');
+};
+
+/**
+ * @param {ts.Node} node
+ */
+Ast.findLastParameter = node => {
+    return Ast.findLastNodeOfArray(node, 'parameters');
+};
+
+/**
+ * @param {ts.Identifier} id
+ */
+Ast.isNameOfPropertyAccessExpression = id => {
+    console.assert(id.kind === ts.SyntaxKind.Identifier);
+    const parent = id.parent;
+    return parent.kind === ts.SyntaxKind.PropertyAccessExpression && parent.name === id;
+};
 
 /**
  * @param {ts.Node} node
@@ -734,6 +790,18 @@ Ast.nodeKindToString = node => {
             return Object.values(ts.SyntaxKind)[node.kind];
         }
     }
+};
+
+/**
+ * @param {ts.Node} node
+ * 
+ * @returns {ts.Node}
+ */
+Ast.stripOutParenthesizedExpressions = node => {
+    while(node.kind === ts.SyntaxKind.ParenthesizedExpression) {
+        node = node.expression;
+    } 
+    return node;
 };
 
 /**

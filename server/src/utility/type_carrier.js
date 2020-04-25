@@ -1,9 +1,12 @@
 const SymbolTable = require('./symbol_table');
 const Utility = require('./utility');
+const Ast = require('../ast/ast');
 
+const ts = require('typescript');
 const vscodeLanguageServer = require('vscode-languageserver');
 
 const TypeCarrier = {};
+let totalObjects = -1;
 
 TypeCarrier.Type = {
     Class: 0,
@@ -54,89 +57,6 @@ TypeCarrier.typeToString = type => {
     }
 };
 
-let objectNesting = 0;
-const computeSpaces = () => {
-    let spaces = "";
-    for(let i = 0; i < objectNesting; ++i) {
-        spaces += "    ";
-    }
-    return spaces;
-};
-
-function valueToString(type) {
-
-    switch(type.id) {
-        case TypeCarrier.Type.String: {
-            return '"' + type.value + '"';
-        }
-        case TypeCarrier.Type.Object: {
-
-            ++objectNesting;
-            let comma = false;
-            let value = `{\n`;
-            for(const property of type.properties) {
-                const name = property.name;
-                if(comma) { value += ',\n'; }
-                comma = true;
-                value += computeSpaces();
-                value += `${name.split('.')[1]}: `;
-                console.log(Ast.lookUp())
-                //${TypeCarrier.typeToString(types[0])}`;
-                // value += `${types[0].value ? ' = ' + valueToString(types[0]) : ''}`
-                // for(let i = 1; i < types.length; ++i) {
-                //     value += ` | ${TypeCarrier.typeToString(types[i])}`;
-                //     value += `${types[i].value ? ' = ' + valueToString(types[i]) : ''}`;
-                // }
-            }
-
-            --objectNesting;
-            value += `\n${computeSpaces()}}`;
-            return value;
-
-        }
-        default: {
-            return type.value;
-        }
-    }
-
-}
-
-function computeSignatureValue(type) {
-    if(!type.hasOwnProperty("value") || type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
-        return "";
-    }
-    return " = " + valueToString(type);
-}
-
-function computeSignature(typeCarrier) {
-
-    const symbol = typeCarrier.getSymbol();
-
-    function computeSignature(type) {
-        switch(type) {
-            case TypeCarrier.Type.Class: {
-                return symbol.name + ": class {}";
-            }
-            case TypeCarrier.Type.Function: {
-                return symbol.name + ": function() {}";
-            }
-            default: {
-                return (symbol.isConst ? "const " : "") + symbol.name + ": " + TypeCarrier.typeToString(type) + computeSignatureValue(type);
-            }
-        }
-    }
-
-    const types = typeCarrier.getTypes();
-    let signature = computeSignature(types[0]);
-
-    for(let i = 1; i < types.length; ++i) {
-        signature += " ||\n" + computeSignature(types[i]);
-    }
-
-    return signature;
-
-};
-
 /**
  * @param {isense.symbol} symbol
  * @param {} types
@@ -181,7 +101,7 @@ TypeCarrier.create = (symbol, types) => {
             const type = typeCarrier.private.types[0];
             if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
                 if(!type.node.hasOwnProperty("constructorName")) {
-                    type.node.constructorName = symbol.name;
+                    type.node.constructorName = (type.node.kind === ts.SyntaxKind.Constructor) ? type.node.parent.name.getText() : symbol.name;
                 }
             }
         }
@@ -268,6 +188,27 @@ TypeCarrier.copyType = type => {
 
     return copy;
 
+};
+
+TypeCarrier.createEmptyObject = () => {
+    return {
+        id: TypeCarrier.Type.Object,
+        value: ++totalObjects,
+        properties: SymbolTable.create(),
+        references: []
+    };
+};
+
+TypeCarrier.createObject = () => {
+    return {
+        id: TypeCarrier.Type.Object
+    };
+}
+
+TypeCarrier.createUndefined = () => {
+    return {
+        id: TypeCarrier.Type.Undefined
+    };
 };
 
 module.exports = TypeCarrier;

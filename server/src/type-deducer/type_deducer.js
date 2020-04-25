@@ -365,7 +365,11 @@ deduceTypesFunctionTable[ts.SyntaxKind.ParenthesizedExpression] = node => {
  */
 deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
     const types = [];
-    const thisTypes = Ast.findClosestTypeCarrier(node.callee.body.statements[node.callee.body.statements.length - 1], node.callee.parent.symbols.lookUp('this')).getTypes();
+    const thisTypes = Ast.findClosestTypeCarrier(
+        Ast.findLastStatement(node.callee.body) || node.callee.parent, 
+        node.callee.parent.symbols.lookUp('this')
+    ).getTypes();
+    thisTypes.forEach(e => e.references = []);
     if(node.callee._original.hasOwnProperty("constructorName")) {
         for(const thisType of thisTypes) {
             thisType.constructorName = node.callee._original.constructorName;
@@ -385,7 +389,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ThisKeyword] = node => {
         return Ast.findClosestTypeCarrier(node, symbol).getTypes();
     }
 
-    return undefined;
+    return [TypeCarrier.createEmptyObject()];
 
 };
 

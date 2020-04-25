@@ -15,8 +15,8 @@ const ts = require('typescript');
 
 const Analyzer = {};
 
-let totalObjects = -1;
 const callStack = Stack.create();
+const noOp = () => {};
 
 /**
  * @param {ts.SourceFile} ast 
@@ -29,41 +29,6 @@ Analyzer.analyze = ast => {
     ast.analyzeDiagnostics = [];
     ast.symbols = SymbolTable.create();
 
-    /**
-     * @param {ts.SourceFile} node 
-     * @param {symbolTable} symbolTable 
-     * @param {boolean} isConst 
-     */
-    function visitDestructuringDeclerations(node, createSymbol) {
-        function visitDestructuringDeclarations(node) {
-            switch(node.kind) {
-                case ts.SyntaxKind.BindingElement: {
-
-                    if(node.name.kind === ts.SyntaxKind.Identifier) {
-                        const name = node.name.text;
-                        const start = node.name.getStart();
-                        const end = node.name.end;
-                        createSymbol(name, start, end);
-                    }
-
-                    ts.forEachChild(node, visitDestructuringDeclarations);
-                    break;
-
-                }
-                case ts.SyntaxKind.FunctionExpression:
-                case ts.SyntaxKind.ArrowFunction:
-                case ts.SyntaxKind.ClassExpression: {
-                    break;
-                }
-                default: {
-                    ts.forEachChild(node, visitDestructuringDeclarations);
-                    break;
-                }
-            }
-        }
-        ts.forEachChild(node, visitDestructuringDeclarations);
-    }
-
 	/**
 	 * @param {ts.SourceFile} node 
 	 */
@@ -75,12 +40,12 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.VariableDeclaration: {
 
                 ts.forEachChild(node, visitDeclarations);
-
-                const name = node.name.text;
-                const symbol = Ast.lookUp(node, name);
                 
-                if(node.name.kind === ts.SyntaxKind.Identifier && node.initializer !== undefined) {
-                    assign(node, symbol, TypeDeducer.deduceTypes(node.initializer));
+                if(node.name.kind === ts.SyntaxKind.Identifier) {
+                    const name = node.name.text;
+                    const symbol = Ast.lookUp(node, name);
+                    const types = node.initializer !== undefined ? TypeDeducer.deduceTypes(node.initializer) : [TypeCarrier.createUndefined()];
+                    assign(node, symbol, node.initializer, types);
                 }
                 
                 break;
@@ -88,16 +53,18 @@ Analyzer.analyze = ast => {
             }
 			case ts.SyntaxKind.BinaryExpression: {	// x = ...
 
-				ts.forEachChild(node, visitDeclarations);
-				
+                ts.forEachChild(node, visitDeclarations);
+                
 				if(node.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
-					if(node.left.kind === ts.SyntaxKind.Identifier) {
-                        const name = node.left.escapedText;
+                    const lvalue = Ast.stripOutParenthesizedExpressions(node.left);
+                    // const rvalue = Ast.stripOutParenthesizedExpressions(node.right);
+					if(lvalue.kind === ts.SyntaxKind.Identifier) {
+                        const name = lvalue.escapedText;
                         const symbol = Ast.lookUp(node, name);
 						if(symbol) {
 
                             const types = TypeDeducer.deduceTypes(node.right);
-                            const typeCarrier = assign(node, symbol, types);
+                            assign(node, symbol, node.right, types);
 
                         } else {
                             Ast.addAnalyzeDiagnostic(
@@ -105,20 +72,22 @@ Analyzer.analyze = ast => {
                                 AnalyzeDiagnostic.create(node, DiagnosticMessages.undeclaredReference, [name])
                             );
                         }
-                    } else if (node.left.kind === ts.SyntaxKind.PropertyAccessExpression) {
+                    } else if (lvalue.kind === ts.SyntaxKind.PropertyAccessExpression) {
 
-                        const leftTypes = TypeDeducer.deduceTypes(node.left.expression);
-                        const propertyName = node.left.name.text;
+                        const leftTypes = TypeDeducer.deduceTypes(lvalue.expression);
+                        const propertyName = lvalue.name.text;
                         const rightTypes = TypeDeducer.deduceTypes(node.right);
 
                         // if(leftTypes === undefined) { break; } // TODO: maybe change?
 
                         for(const type of leftTypes) {
                             if(type.id === TypeCarrier.Type.Object) {
-                                setProperty(node, type, propertyName, rightTypes);
+                                setProperty(node, type, propertyName, node.right, rightTypes);
                             }
                         }
 
+                    } else {
+                        console.assert(false, 'left side of assignment is not lvalue');
                     }
 				}
 				
@@ -280,21 +249,8 @@ Analyzer.analyze = ast => {
 
             }
             case ts.SyntaxKind.NewExpression: {
-
                 ts.forEachChild(node, visitDeclarations);
-
-                if(node.expression.kind === ts.SyntaxKind.Identifier) {
-                    const types = TypeDeducer.deduceTypes(node.expression);
-                    for(const type of types) {
-                        if(type.id === TypeCarrier.Type.Function) {
-                            call(node, type.node);
-                            // const constructorLastStatement = type.node.body.statements.length ? type.node.body.statements[type.node.body.statements.length - 1] : undefined;
-                            // copyPropertiesTypeCarriersToCallIfObject(constructorLastStatement, ThisHolder.top(), node);
-                        } else if (type.id === TypeCarrier.Type.Class) {
-                            call(node, Ast.findConstructor(type.node));
-                        }
-                    }
-                }
+                newExpression(node);
                 break;
             }
             case ts.SyntaxKind.IfStatement: {
@@ -304,7 +260,7 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.ObjectLiteralExpression: {
                 objectStack.push(node);
-                node.type = createObject();
+                node.type = TypeCarrier.createEmptyObject();
                 ts.forEachChild(node, visitDeclarations);
                 objectStack.pop();
                 break;
@@ -325,7 +281,7 @@ Analyzer.analyze = ast => {
 
                     }
                     case ts.SyntaxKind.StringLiteral: {
-                        name = property.name.text;
+                        name = node.name.text;
                         break;
                     }
                 }
@@ -333,7 +289,7 @@ Analyzer.analyze = ast => {
                 if(name !== undefined) {
                     const symbol = Symbol.create(`@${object.type.value}.${name}`, node.pos, node.end);
                     object.type.properties.insert(symbol);
-                    assign(node, symbol, propertyTypes);
+                    assign(node, symbol, node.initializer, propertyTypes);
                 }
 
                 break;
@@ -341,10 +297,9 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.ReturnStatement: {
                 ts.forEachChild(node, visitDeclarations);
-                if(node.hasOwnProperty('expression') && !callStack.isEmpty()) {
+                if(node.hasOwnProperty('expression') && !node.unreachable && !callStack.isEmpty()) {
                     const returnTypes = TypeDeducer.deduceTypes(node.expression);
                     const call = callStack.top();
-                    copyPropertiesTypeCarriersToCallIfObject(node, returnTypes, call);
                     call.returnTypes.push(...returnTypes);
                 }
                 break;
@@ -444,6 +399,10 @@ function mergeIfStatementTypeCarriers(node) {
 
 // ----------------------------------------------------------------------------
 
+/**
+ * @param {ts.Node} func 
+ * @param {*} args 
+ */
 function addParameterTypeCarriers(func, args) {
     for(let i = 0; i < Math.min(func.parameters.length, args.length); ++i) {
         const parameter = func.parameters[i];
@@ -458,10 +417,14 @@ function addParameterTypeCarriers(func, args) {
 
 // ----------------------------------------------------------------------------
 
-function defineThis(node, thisObject = createObject()) {
+/**
+ * @param {ts.Node} node 
+ * @param {*} thisObject 
+ */
+function defineThis(node, thisObject = TypeCarrier.createEmptyObject()) {
     const thisSymbol = Symbol.create('this', 0, 0);
     node.symbols.insert(thisSymbol);
-    assign(node, thisSymbol, [thisObject]);
+    assign(node, thisSymbol, undefined, [thisObject]);
 }
 
 /**
@@ -471,6 +434,7 @@ function defineThis(node, thisObject = createObject()) {
 function replicateISenseData(original, clone) {
     original.symbols && (clone.symbols = SymbolTable.copy(original.symbols));
     clone.typeCarriers = [];
+    clone.unreachable = original.unreachable;
 }
 
 const callReplicationOptions = {
@@ -482,22 +446,63 @@ const callReplicationOptions = {
     }
 };
 
-function call(node, callee) {
+/**
+ * @returns {ts.Node}
+ */
+function createCalleeDependenciesNode() {
     const calleeDependenciesNode = ts.createEmptyStatement();
     calleeDependenciesNode.symbols = SymbolTable.create();
     calleeDependenciesNode.typeCarriers = [];
+    return calleeDependenciesNode;
+}
+
+/**
+ * @param {ts.Node} callee 
+ * 
+ * @returns {ts.Node}
+ */
+function createCallee(callee) {
+    const calleeDependenciesNode = createCalleeDependenciesNode();
     calleeDependenciesNode.parent = callee.parent;
     callee = Replicator.replicate(callee, callReplicationOptions);
     callee.parent = calleeDependenciesNode;
-    node.callee = callee;
+    return callee;
+}
+
+/**
+ * 
+ * @param {ts.Node} callee 
+ * @param {ts.Node} call 
+ */
+function addFreeVariablesTypeCarriers(callee, call) {
+    console.assert(callee._original.hasOwnProperty("freeVariables"), "addFreeVariablesTypeCarriers");
+    callee._original.freeVariables.forEach(fv => {
+        const closestTypeCarrier = Ast.findClosestTypeCarrier(call, fv);
+        console.assert(closestTypeCarrier !== undefined, 'addFreeVariablesTypeCarriers: Failed to find type carrier for free variable');
+        // TODO: think more about undefined.
+        assign(callee.parent, fv, undefined, closestTypeCarrier.getTypes());
+    });
+}
+
+/**
+ * @param {ts.Node} node 
+ * @param {ts.Node} callee 
+ * @param {Object} thisObject
+ */
+function call(node, callee, thisObject = TypeCarrier.createEmptyObject(), beforeCall = noOp) {
+    callee = node.callee = createCallee(callee);
+    addFreeVariablesTypeCarriers(callee, node);
     callStack.push(node);
     node.returnTypes = [];
     Ast.addCallSite(callee, node);
     addParameterTypeCarriers(callee, node.arguments);
     delete callee.affectedOutOfScopeSymbols;
-    defineThis(calleeDependenciesNode);
+    defineThis(callee.parent, thisObject);
+    beforeCall(callee);
     Analyzer.analyze(callee.body);
     if(callee.hasOwnProperty("affectedOutOfScopeSymbols")) {
+        // TODO: copy type carriers of properties of free variables that are objects.
+        // we need to search body after the call.
         callee.affectedOutOfScopeSymbols.forEach(typeCarrier => {
             Ast.addTypeCarrierToClosestStatement(node, typeCarrier);
         });
@@ -506,7 +511,76 @@ function call(node, callee) {
     callStack.pop();
 }
 
-function assign(node, symbol, types) {
+/**
+ * @param {ts.Node} classNode 
+ */
+function createEmptyConstructor(classNode) {
+    const emptyConstructor = ts.createConstructor(undefined, undefined, [], ts.createBlock());
+    emptyConstructor.parent = classNode;
+    emptyConstructor._original = emptyConstructor;
+    FunctionAnalyzer.analyze(emptyConstructor);
+    return emptyConstructor;
+}
+
+/**
+ * @param {ts.Node} node 
+ * @param {ts.Node} constructor 
+ */
+function newClassExpression(node, classNode) {
+
+    const constructor = Ast.findConstructor(classNode) || createEmptyConstructor();
+    const thisObject = TypeCarrier.createEmptyObject();
+    const beforeCall = (constructor) => {
+        for(const member of classNode.members) {
+            if(member.kind === ts.SyntaxKind.PropertyDeclaration) {
+                setProperty(constructor, thisObject, member.name.getText(), member.initializer, TypeDeducer.deduceTypes(member.initializer));
+            } else if(member.kind === ts.SyntaxKind.MethodDeclaration) {
+                setProperty(constructor, thisObject, member.name.getText(), undefined, TypeDeducer.deduceTypes(member));
+            }
+        }
+    };
+    
+    call(node, constructor, thisObject, beforeCall);
+
+}
+
+/**
+ * @param {ts.NewExpression} node 
+ */
+function newExpression(node) {
+    const types = TypeDeducer.deduceTypes(node.expression);
+    /**
+     * @param {ts.Node} constructor 
+     */
+    const copyThisPropertiesToCallSite = (constructor) => {
+        const constructorLastStatement = Ast.findLastStatement(node.callee.body);
+        if(constructorLastStatement === undefined) { return; }
+        const thisSymbol = Ast.lookUp(constructorLastStatement, 'this');
+        const thisTypeCarrier = Ast.findClosestTypeCarrier(constructorLastStatement, thisSymbol);
+        const thisTypes = thisTypeCarrier.getTypes();
+        constructor.returnTypes = [thisTypes];
+        copyPropertiesTypeCarriersToCallIfObject(constructorLastStatement, thisTypes, node);
+    };
+    for(const type of types) {
+        if(type.id === TypeCarrier.Type.Function) {
+            call(node, type.node);
+            copyThisPropertiesToCallSite(type.node);
+            // const constructorLastStatement = type.node.body.statements.length ? type.node.body.statements[type.node.body.statements.length - 1] : undefined;
+            // copyPropertiesTypeCarriersToCallIfObject(constructorLastStatement, ThisHolder.top(), node);
+        } else if (type.id === TypeCarrier.Type.Class) {
+            newClassExpression(node, type.node);
+            copyThisPropertiesToCallSite(type.node);
+        }
+    }
+}
+
+/**
+ * @param {ts.Node} node 
+ * @param {isense.symbol} symbol 
+ * @param {ts.Node} rvalue
+ * @param {*} types 
+ */
+function assign(node, symbol, rvalue, types) {
 
     const lvalueTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
 
@@ -521,7 +595,7 @@ function assign(node, symbol, types) {
     }
 
     for(const type of types) {
-        if(type.id === TypeCarrier.Type.Object) {
+        if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty('value')) {
             type.references.push(symbol);
         }
     }
@@ -530,23 +604,22 @@ function assign(node, symbol, types) {
     Ast.addTypeCarrierToExpression(node, typeCarrier);
 
     const ancestorFunction = Ast.findAncestorFunction(node);
+    // TODO: Optimization no need to check for free variables if it's a declaration node.
     if(ancestorFunction) {
-        if(!Ast.isDeclaredInFunction(node, symbol, ancestorFunction)) {
+        if(ancestorFunction._original.freeVariables.has(symbol)) {
             Ast.addTypeCarrierToNonPureFunction(ancestorFunction, typeCarrier);
+        }
+    }
+
+    if(rvalue) {
+        rvalue = Ast.stripOutParenthesizedExpressions(rvalue);
+        if(rvalue.kind === ts.SyntaxKind.CallExpression && rvalue.callee) {
+            copyPropertiesTypeCarriersToCallIfObject(Ast.findLastStatement(rvalue.callee.body) || rvalue.callee.body, types, rvalue);
         }
     }
 
     return typeCarrier;
 
-}
-
-function createObject() {
-    return {
-        id: TypeCarrier.Type.Object,
-        value: ++totalObjects,
-        properties: SymbolTable.create(),
-        references: []
-    };
 }
 
 function getProperty(object, name) {
