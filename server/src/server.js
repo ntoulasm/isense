@@ -152,15 +152,34 @@ connection.onHover(info => {
 	if(node === undefined) { return { contents: [] }; }
 	
 	switch(node.kind) {
-		case ts.SyntaxKind.VariableDeclarationList: {
+		// TODO: do i care about this?
+		// case ts.SyntaxKind.VariableDeclarationList: {
+		// 	return {
+		// 		contents: {
+		// 			language: "typescript",
+		// 			value: Ast.isLetDeclaration(node) ? "let keyword" : Ast.isConstDeclaration(node) ? "const keyword" : "var keyword"
+		// 		}
+		// 	};
+		// }
+		case ts.SyntaxKind.Constructor: {
+			const parentName = node.parent.name ? node.parent.name.getText() : '';
 			return {
 				contents: {
 					language: "typescript",
-					value: Ast.isLetDeclaration(node) ? "let keyword" : Ast.isConstDeclaration(node) ? "const keyword" : "var keyword"
+					value: `${parentName} constructor`
 				}
 			};
 		}
 		case ts.SyntaxKind.Identifier: {
+			if(node.parent.kind === ts.SyntaxKind.PropertyAccessExpression && node.parent.name === node) {
+				// TODO: a.x
+				return { 
+					contents: {
+						language: 'typescript',
+						value: `property ${node.text}`
+					}
+				};
+			}
 			const symbol = Ast.lookUp(node, node.text);
 			if(symbol === undefined) { return { contents: [] }; }
 			const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
