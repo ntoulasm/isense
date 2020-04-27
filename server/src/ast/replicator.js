@@ -990,7 +990,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.NewExpression] = (node, options) => 
     return ts.createNew(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
-        Replicator.replicateIfArrayProperty(node, 'argumentsArray', options)
+        Replicator.replicateIfArrayProperty(node, 'arguments', options)
     );
 };
 
