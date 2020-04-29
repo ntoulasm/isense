@@ -379,29 +379,6 @@ Ast.addAnalyzeDiagnostic = (ast, diagnostic) => {
 };
 
 /**
- * @param {ts.Node} call
- */
-Ast.findCallees = (call) => {
-
-    const callees = [];
-    const calleeName = call.expression.getText();
-    const symbol = Ast.lookUp(call, calleeName);
-
-    if(symbol === undefined) { return undefined; }
-    
-    const typeCarrier = Ast.findClosestTypeCarrier(call, symbol);
-
-    for(const type of typeCarrier.getTypes()) {
-        if(type.id === TypeCarrier.Type.Function) {
-            callees.push(type.node);
-        }
-    }
-
-    return callees;
-
-};
-
-/**
  * @param {ts.Node} callee
  * @param {ts.Node} call
  */
@@ -440,17 +417,6 @@ Ast.isDeclaredInFunction = (node, symbol, functionNode) => {
     console.assert(node.parent !== undefined, "isDeclaredInFunction");
     const leftSibling = Ast.findLeftSibling(node);
     return Ast.isDeclaredInFunction(leftSibling || node.parent, symbol, functionNode);
-};
-
-/**
- * @param {ts.Node} node
- * @param {isense.typeCarrier} typeCarrier
- */
-Ast.addTypeCarrierToNonPureFunction = (func, typeCarrier) => {
-    if(!func.hasOwnProperty("affectedOutOfScopeSymbols")) {
-        func.affectedOutOfScopeSymbols = [];
-    }
-    func.affectedOutOfScopeSymbols.push(typeCarrier);
 };
 
 /**
@@ -814,5 +780,41 @@ Ast.findNextStatementOfBlock = node => {
     }
     return Ast.findRightSibling(node);
 };
+
+/**
+ * @param {ts.Node} node
+ * @param {isense.symbol} symbol
+ */
+Ast.findLastTypeCarrier = (node, symbol) => {
+    const lastStatement = Ast.findLastStatement(node);
+    if(lastStatement) {
+        return Ast.findClosestTypeCarrier(lastStatement, symbol);
+    }
+};
+
+/**
+ * @param {ts.Block} node
+ */
+Ast.copyTypeCarriersFromBlockToNextStatement = node => {
+
+    if(ts.isFunctionLike(node.parent)) { return ; }
+
+    const blockTypeCarriers = Ast.findAllTypeCarriers(node);
+    const nextStatement = Ast.findNextStatementOfBlock(node);
+    
+    nextStatement && (nextStatement.typeCarriers = blockTypeCarriers);
+    node.blockTypeCarriers = blockTypeCarriers;
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+Ast.findNextStatement = node => {
+    while(!node.parent.hasOwnProperty('statements')) {
+        node = node.parent;
+    }
+    return Ast.findRightSibling(node);
+}
 
 module.exports = Ast;

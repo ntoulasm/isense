@@ -6,6 +6,11 @@ const Utility = require('../utility/utility');
 
 const TypeCaster = {};
 
+/**
+ * @param {isense.Type} type
+ * 
+ * @returns {isense.Type}
+ */
 TypeCaster.toNumber = type => {
 
     const newType = {};
@@ -50,6 +55,11 @@ TypeCaster.toNumber = type => {
 
 };
 
+/**
+ * @param {isense.Type} type
+ * 
+ * @returns {isense.Type}
+ */
 TypeCaster.toString = type => {
 
     const newType = {};
@@ -104,6 +114,11 @@ TypeCaster.toString = type => {
 
 };
 
+/**
+ * @param {isense.Type} type
+ * 
+ * @returns {isense.Type}
+ */
 TypeCaster.toBoolean = type => {
 
     const newType = {};

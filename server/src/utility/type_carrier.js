@@ -1,5 +1,6 @@
 const SymbolTable = require('./symbol_table');
 const Utility = require('./utility');
+const Symbol = require('./symbol');
 
 // ----------------------------------------------------------------------------
 
@@ -8,6 +9,29 @@ const vscodeLanguageServer = require('vscode-languageserver');
 
 // ----------------------------------------------------------------------------
 
+/**
+ * @typedef {Number} isense.TypeId
+ */
+
+/**
+ * @typedef isense.Type
+ * @property {isense.TypeId} id
+ * @property {*} value
+ * @property {ts.Node} [node]
+ * @property {Array<isense.symbol>} [properties]
+ * @property {Array<isense.symbol>} [references]
+ */
+
+/**
+ * @typedef isense.TypeCarrier
+ * @property {() => isense.symbol} getSymbol
+ * @property {() => String} getSymbolName
+ * @property {(types: Array<isense.Type>) => void} setTypes
+ * @property {()=>Array<isense.Type} getTypes
+ * @property {()=>Boolean} hasUniqueType
+ */
+
+// ----------------------------------------------------------------------------
 
 const TypeCarrier = {};
 let totalObjects = -1;
@@ -22,7 +46,8 @@ TypeCarrier.Type = {
     Object: 6,
     Undefined: 7,
     Null: 8,
-    Any: 9
+    Any: 9,
+    TypeVariable: 10
 };
 
 TypeCarrier.typeText = Object.keys(TypeCarrier.Type);
@@ -59,6 +84,9 @@ TypeCarrier.typeToString = type => {
         case TypeCarrier.Type.Any: {
             return "any";
         }
+        case TypeCarrier.Type.TypeVariable: {
+            return type.value.name;
+        }
         default: {
             console.assert(false, "Unknown type of type carrier");
         }
@@ -68,6 +96,8 @@ TypeCarrier.typeToString = type => {
 /**
  * @param {isense.symbol} symbol
  * @param {} types
+ * 
+ * @returns {isense.TypeCarrier}
  */
 TypeCarrier.create = (symbol, types) => {
 
@@ -107,7 +137,7 @@ TypeCarrier.create = (symbol, types) => {
 
         if(typeCarrier.hasUniqueType()) {
             const type = typeCarrier.private.types[0];
-            if(type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) {
+            if((type.id === TypeCarrier.Type.Function || type.id === TypeCarrier.Type.Class) && type.hasOwnProperty('node')) {
                 if(!type.node.hasOwnProperty("constructorName")) {
                     type.node.constructorName = (type.node.kind === ts.SyntaxKind.Constructor) ? type.node.parent.name.getText() : symbol.name;
                 }
@@ -251,7 +281,18 @@ TypeCarrier.createUndefined = () => {
 TypeCarrier.createAny = () => {
     return {
         id: TypeCarrier.Type.Any
-    }
+    };
 }
+
+let typeVariableCount = -1;
+/**
+ * @returns {isense.Type}
+ */
+TypeCarrier.createTypeVariable = () => {
+    return {
+        id: TypeCarrier.Type.TypeVariable,
+        value: Symbol.create(`@typeVariable${++typeVariableCount}`, 0, 0)
+    };
+};
 
 module.exports = TypeCarrier;

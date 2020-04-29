@@ -84,7 +84,7 @@ Analyzer.analyze = ast => {
                         // if(leftTypes === undefined) { break; } // TODO: maybe change?
 
                         for(const type of leftTypes) {
-                            if(type.id === TypeCarrier.Type.Object) {
+                            if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty('value')) {
                                 setProperty(node, type, propertyName, node.right, rightTypes);
                             }
                         }
@@ -172,16 +172,15 @@ Analyzer.analyze = ast => {
 				break;
 
             }
-            case ts.SyntaxKind.FunctionDeclaration: {
-                ts.forEachChild(node, visitDeclarations);
-                break;
-            }
-			case ts.SyntaxKind.FunctionExpression: 
-            case ts.SyntaxKind.ArrowFunction: {
-                FunctionAnalyzer.analyze(node);
-                ts.forEachChild(node, visitDeclarations);
-                break;
-            }
+            // case ts.SyntaxKind.FunctionDeclaration: {
+            //     ts.forEachChild(node, visitDeclarations);
+            //     break;
+            // }
+			// case ts.SyntaxKind.FunctionExpression: 
+            // case ts.SyntaxKind.ArrowFunction: {
+            //     ts.forEachChild(node, visitDeclarations);
+            //     break;
+            // }
             case ts.SyntaxKind.ClassExpression: {
                 node.symbols = SymbolTable.create();
                 classStack.push(node);
@@ -190,43 +189,13 @@ Analyzer.analyze = ast => {
                 break;
 			}
 			case ts.SyntaxKind.Block: {
-
-                node.symbols = SymbolTable.create();
-
-                if(node.parent.kind === ts.SyntaxKind.FunctionDeclaration || 
-                    node.parent.kind === ts.SyntaxKind.FunctionExpression ||
-                    node.parent.kind === ts.SyntaxKind.ArrowFunction ||
-                    node.parent.kind === ts.SyntaxKind.Constructor ||
-                    node.parent.kind === ts.SyntaxKind.MethodDeclaration || 
-                    node.parent.kind === ts.SyntaxKind.SetAccessor ||
-                    node.parent.kind === ts.SyntaxKind.GetAccessor) {
-
-                    Binder.bindFunctionScopedDeclarations(node);
-
-                    ts.forEachChild(node, visitDeclarations);
-    
-                    break;
-
-				} else {
-
-                    Binder.bindBlockScopedDeclarations(node);
-
-                    ts.forEachChild(node, visitDeclarations);
-                    const blockTypeCarriers = Ast.findAllTypeCarriers(node);
-                    const nextStatement = Ast.findNextStatementOfBlock(node);
-                    if(nextStatement) {
-                        nextStatement.typeCarriers = blockTypeCarriers;
-                    }
-                    node.blockTypeCarriers = blockTypeCarriers;
-
-                    break;
-                }
-
+                ts.forEachChild(node, visitDeclarations);
+                Ast.copyTypeCarriersFromBlockToNextStatement(node);
+                break;
             }
             case ts.SyntaxKind.ForStatement:
             case ts.SyntaxKind.ForInStatement:
             case ts.SyntaxKind.ForOfStatement: {
-                node.symbols = SymbolTable.create();
                 Binder.bindBlockScopedDeclarations(node);
                 ts.forEachChild(node, visitDeclarations);
                 break;
@@ -235,20 +204,11 @@ Analyzer.analyze = ast => {
 
                 ts.forEachChild(node, visitDeclarations);
 
-                let callee;
+                const types = TypeDeducer.deduceTypes(node.expression);
+                const callees = types.flatMap(t => t.id === TypeCarrier.Type.Function ? [t.node] : []);
+                const callee = !callees.length ? undefined : callees[0];
 
-                if(node.expression.kind == ts.SyntaxKind.Identifier) {  // x(...);
-                    const callees = Ast.findCallees(node) || [];
-                    callee = !callees.length ? undefined : callees[0];
-                } else if(node.expression.kind === ts.SyntaxKind.ParenthesizedExpression &&
-                    node.expression.expression.kind === ts.SyntaxKind.FunctionExpression) { // iife
-                    callee = node.expression.expression;
-                    console.assert(callee !== undefined);
-                } else {
-                    const line = node.getSourceFile().getLineAndCharacterOfPosition(node.getStart()).line + 1;
-                    console.log("Could not recognize type of callee at line " + line);
-                }
-
+                // TODO: somehow pick callee
                 if(callee !== undefined) {
                     call(node, callee);
                 }
@@ -327,7 +287,7 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.ReturnStatement: {
                 ts.forEachChild(node, visitDeclarations);
                 if(node.hasOwnProperty('expression') && !node.unreachable && !callStack.isEmpty()) {
-                    const returnTypes = TypeDeducer.deduceTypes(node.expression);
+                    const returnTypes = TypeDeducer.deduceTypes(node.expression) || [TypeCarrier.createAny()];
                     const call = callStack.top();
                     call.returnTypes.push(...returnTypes);
                 }
@@ -355,25 +315,28 @@ Analyzer.analyze = ast => {
 // ----------------------------------------------------------------------------
 
 /**
- * @param {ts.Node} returnStatement
- * @param {Array} returnTypes 
- * @param {ts.Node} call
+ * @param {ts.Node} source
+ * @param {Array} types 
+ * @param {ts.Node} destination
  */
 
-function copyPropertiesTypeCarriersToCallIfObject(returnStatement, returnTypes, call) {
-    for(const t of returnTypes) {
-        if(t.id === TypeCarrier.Type.Object) {
+function copyPropertiesTypeCarriersIfObject(source, types, destination) {
+    for(const t of types) {
+        if(t.id === TypeCarrier.Type.Object && t.hasOwnProperty('value')) {
             for(const [, p] of Object.entries(t.properties.getSymbols())) {
+                const propertyTypeCarrier = Ast.findClosestTypeCarrier(source, p);
                 Ast.addTypeCarrierToClosestStatement(
-                    call, 
-                    Ast.findClosestTypeCarrier(returnStatement, p)
+                    destination, 
+                    propertyTypeCarrier
                 );
+                copyPropertiesTypeCarriersIfObject(source, propertyTypeCarrier.getTypes(), destination);
             }
         }
     }
 }
 
 /**
+ * If statements do not need to copy properties of objects since it checks for same symbols 
  * 
  * @param {ts.IfStatement} node
  */
@@ -430,7 +393,8 @@ function mergeIfStatementTypeCarriers(node) {
  * @param {ts.Node} func 
  * @param {*} args 
  */
-function addParameterTypeCarriers(func, args) {
+function copyParameterTypeCarriersToCallee(func, args) {
+    // TODO: handle destructuring?
     for(let i = 0; i < Math.min(func.parameters.length, args.length); ++i) {
         const parameter = func.parameters[i];
         const argument = args[i];
@@ -439,6 +403,13 @@ function addParameterTypeCarriers(func, args) {
         const types = TypeDeducer.deduceTypes(argument);
         const typeCarrier = TypeCarrier.create(parameterSymbol, types);
         Ast.addTypeCarrier(parameter, typeCarrier);
+        copyPropertiesTypeCarriersIfObject(argument, types, parameter);
+    }
+    for(let i = args.length; i < func.parameters.length; ++i) {
+        const parameter = func.parameters[i];
+        const parameterSymbol = parameter.symbols.getSymbols()[parameter.name.escapedText];
+        console.assert(parameterSymbol, "parameter without symbol?");
+        Ast.addTypeCarrier(parameter, TypeCarrier.create(parameterSymbol, TypeCarrier.createUndefined()));
     }
 };
 
@@ -492,6 +463,7 @@ function createCallee(callee) {
     const calleeDependenciesNode = createCalleeDependenciesNode();
     calleeDependenciesNode.parent = callee.parent;
     callee = Replicator.replicate(callee, callReplicationOptions);
+    callee.freeVariables = new Set(callee._original.freeVariables);
     callee.parent = calleeDependenciesNode;
     return callee;
 }
@@ -501,40 +473,60 @@ function createCallee(callee) {
  * @param {ts.Node} callee 
  * @param {ts.Node} call 
  */
-function addFreeVariablesTypeCarriers(callee, call) {
-    console.assert(callee._original.hasOwnProperty("freeVariables"), "addFreeVariablesTypeCarriers");
-    callee._original.freeVariables.forEach(fv => {
+function copyFreeVariablesTypeCarriersToCallee(callee, call) {
+    console.assert(callee.hasOwnProperty("freeVariables"), "addFreeVariablesTypeCarriers");
+    callee.freeVariables.forEach(fv => {
         const closestTypeCarrier = Ast.findClosestTypeCarrier(call, fv);
         console.assert(closestTypeCarrier !== undefined, 'addFreeVariablesTypeCarriers: Failed to find type carrier for free variable');
+        const types = closestTypeCarrier.getTypes();
         // TODO: think more about undefined.
-        assign(callee.parent, fv, undefined, closestTypeCarrier.getTypes());
+        assign(callee.parent, fv, undefined, types);
+        copyPropertiesTypeCarriersIfObject(call, types, callee.parent);
+        for(const t of types) {
+            if(t.id === TypeCarrier.Type.Object && t.hasOwnProperty('value')) {
+                for(const [, propertySymbol] of Object.entries(t.properties.getSymbols())) {
+                    callee.freeVariables.add(propertySymbol);
+                }
+            }
+        }
     });
 }
 
 /**
- * @param {ts.Node} node 
+ * 
+ * @param {ts.Node} callee 
+ * @param {ts.Node} call 
+ */
+function copyFreeVariablesTypeCarriersToCaller(callee, call) {
+    const lastStatement = Ast.findLastStatement(callee.body) || callee.body;
+    const callNextStatement = Ast.findNextStatement(call);
+    for(const fv of callee.freeVariables) {
+        const closestTypeCarrier = Ast.findClosestTypeCarrier(lastStatement, fv);
+        console.assert(closestTypeCarrier !== undefined, 'addFreeVariablesTypeCarriers: Failed to find type carrier for free variable');
+        const types = closestTypeCarrier.getTypes();
+        Ast.addTypeCarrierToClosestStatement(callNextStatement, closestTypeCarrier);
+        copyPropertiesTypeCarriersIfObject(lastStatement, types, callNextStatement);
+    }
+}
+
+/**
+ * @param {ts.Node} call 
  * @param {ts.Node} callee 
  * @param {Object} thisObject
  */
-function call(node, callee, thisObject = TypeCarrier.createEmptyObject(), beforeCall = noOp) {
-    callee = node.callee = createCallee(callee);
-    addFreeVariablesTypeCarriers(callee, node);
-    callStack.push(node);
-    node.returnTypes = [];
-    Ast.addCallSite(callee, node);
-    addParameterTypeCarriers(callee, node.arguments);
-    delete callee.affectedOutOfScopeSymbols;
+function call(call, callee, thisObject = TypeCarrier.createEmptyObject(), beforeCall = noOp) {
+    callStack.push(call);
+    call.returnTypes = [];
+    // Add call site to original callee node
+    Ast.addCallSite(callee, call);
+    callee = call.callee = createCallee(callee);
     defineThis(callee.parent, thisObject);
+    copyParameterTypeCarriersToCallee(callee, call.arguments || []);
+    copyFreeVariablesTypeCarriersToCallee(callee, call);
     beforeCall(callee);
     Analyzer.analyze(callee.body);
-    if(callee.hasOwnProperty("affectedOutOfScopeSymbols")) {
-        // TODO: copy type carriers of properties of free variables that are objects.
-        // we need to search body after the call.
-        callee.affectedOutOfScopeSymbols.forEach(typeCarrier => {
-            Ast.addTypeCarrierToClosestStatement(node, typeCarrier);
-        });
-    }
-    if(!node.returnTypes.length) { node.returnTypes.push({id: TypeCarrier.Type.Undefined}); }
+    copyFreeVariablesTypeCarriersToCaller(callee, call);
+    if(!call.returnTypes.length) { call.returnTypes.push({id: TypeCarrier.Type.Undefined}); }
     callStack.pop();
 }
 
@@ -586,13 +578,13 @@ function newExpression(node) {
         const thisTypeCarrier = Ast.findClosestTypeCarrier(constructorLastStatement, thisSymbol);
         const thisTypes = thisTypeCarrier.getTypes();
         constructor.returnTypes = [thisTypes];
-        copyPropertiesTypeCarriersToCallIfObject(constructorLastStatement, thisTypes, node);
+        copyPropertiesTypeCarriersIfObject(constructorLastStatement, thisTypes, node);
     };
     for(const type of types) {
-        if(type.id === TypeCarrier.Type.Function) {
+        if(type.id === TypeCarrier.Type.Function && type.node) {
             call(node, type.node);
             copyThisPropertiesToCallSite(type.node);
-        } else if (type.id === TypeCarrier.Type.Class) {
+        } else if (type.id === TypeCarrier.Type.Class && type.node) {
             newClassExpression(node, type.node);
             copyThisPropertiesToCallSite(type.node);
         }
@@ -628,18 +620,10 @@ function assign(node, symbol, rvalue, types) {
     const typeCarrier = TypeCarrier.create(symbol, types);
     Ast.addTypeCarrierToExpression(node, typeCarrier);
 
-    const ancestorFunction = Ast.findAncestorFunction(node);
-    // TODO: Optimization no need to check for free variables if it's a declaration node.
-    if(ancestorFunction) {
-        if(ancestorFunction._original.freeVariables.has(symbol)) {
-            Ast.addTypeCarrierToNonPureFunction(ancestorFunction, typeCarrier);
-        }
-    }
-
     if(rvalue) {
         rvalue = Ast.stripOutParenthesizedExpressions(rvalue);
         if(rvalue.kind === ts.SyntaxKind.CallExpression && rvalue.callee) {
-            copyPropertiesTypeCarriersToCallIfObject(Ast.findLastStatement(rvalue.callee.body) || rvalue.callee.body, types, rvalue);
+            copyPropertiesTypeCarriersIfObject(Ast.findLastStatement(rvalue.callee.body) || rvalue.callee.body, types, rvalue);
         }
     }
 

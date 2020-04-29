@@ -206,23 +206,14 @@ deduceTypesFunctionTable[ts.SyntaxKind.UndefinedKeyword] = node => {
  * @param {ts.Node} node 
  */
 deduceTypesFunctionTable[ts.SyntaxKind.Identifier] = node => {
-    if(node.escapedText === "undefined") {
-        return [{
-            id: TypeCarrier.Type.Undefined
-        }];
-    }
-    const symbol = Ast.lookUp(node, node.escapedText);
+    if(node.escapedText === "undefined") { return [TypeCarrier.createUndefined()]; }
+    const symbol = Ast.lookUp(node, node.getText());
     if(symbol === undefined) { 
-        return [{
-            id: TypeCarrier.Type.Undefined
-        }]; 
+
+        return [TypeCarrier.createAny()]; 
     }
     const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
-    if(typeCarrier === undefined) {
-        return [{
-            id: TypeCarrier.Type.Undefined
-        }];
-    }
+    if(typeCarrier === undefined) { return [TypeCarrier.createUndefined()]; }
     return typeCarrier.getTypes();
 };
 
@@ -386,6 +377,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.ParenthesizedExpression] = node => {
  * @param {ts.NewExpression} node 
  */
 deduceTypesFunctionTable[ts.SyntaxKind.NewExpression] = node => {
+    if(!node.callee) { return [TypeCarrier.createAny()]; }
     const types = [];
     const thisTypes = Ast.findClosestTypeCarrier(
         Ast.findLastStatement(node.callee.body) || node.callee.parent, 
@@ -426,7 +418,7 @@ deduceTypesFunctionTable[ts.SyntaxKind.PropertyAccessExpression] = node => {
     let typesContainUndefined = false;
 
     for(const type of expressionTypes) {
-        if(type.id === TypeCarrier.Type.Object) {
+        if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty('value')) {
             const name = `@${type.value}.${propertyName}`;
             for(const [,property] of Object.entries(type.properties.getSymbols())) {
                 if(property.name === name) {

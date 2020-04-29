@@ -13,7 +13,6 @@ me.computeSpaces = () => {
 };
 
 me.typeToString = type => {
-
 	switch(type.id) {
 		case TypeCarrier.Type.Object: {
 			return type.hasOwnProperty('constructorName') ? type.constructorName : 'Object';
@@ -68,12 +67,15 @@ me.computeSignature = function computeSignature(node, typeCarrier, typeSeparator
 			}
 			case TypeCarrier.Type.Function:
 			case TypeCarrier.Type.Class: {
-				return type.node ? '' : ` = ${type.node.text}`;
+				return type.node ? ` = ${type.node.getText()}` : '';
 			}
 			case TypeCarrier.Type.Null:
 			case TypeCarrier.Type.Undefined: 
 			case TypeCarrier.Type.Any: {
 				return '';
+			}
+			case TypeCarrier.Type.TypeVariable: {
+				return ' ' + type.value.name;
 			}
 			default: {
 				console.assert(false);

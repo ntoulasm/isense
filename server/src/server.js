@@ -176,7 +176,14 @@ connection.onHover(info => {
 				};
 			}
 			const symbol = Ast.lookUp(node, node.text);
-			if(symbol === undefined) { return { contents: [] }; }
+			if(symbol === undefined) { 
+				return { 
+					contents: {
+						language: 'typescript',
+						value: node.text + ': any'
+					} 
+				}; 
+			}
 			const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
 			if(closestTypeCarrier === undefined) { return { contents: [] }; }
 			return {
@@ -293,7 +300,9 @@ const computeActiveParameter = (call, offset) => {
 	const leftParenthesisToken = callChildren[1];
 	const leftParenthesisOffset = leftParenthesisToken.end - 1;
 	const cursorOffset = offset - leftParenthesisOffset;
-	const parenthesizedExpression = ts.createSourceFile('', call.getSourceFile().getText().substring(leftParenthesisOffset, call.end));
+	const ast = call.getSourceFile();
+	const argumentsText = ast.getFullText().substring(leftParenthesisOffset, call.end);
+	const parenthesizedExpression = ts.createSourceFile('', argumentsText);
 	let activeParameter = 0;
 
 	const countCommas = (node) => {
@@ -320,8 +329,10 @@ connection.onSignatureHelp((info) => {
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
 
 	if(call === undefined) { return; }
+	let callees = TypeDeducer.deduceTypes(call.expression).filter(t => t.id === TypeCarrier.Type.Function && t.node);
+	if(!callees.length) { return ; }
+	callees = callees.map(t => t.node);
 	const activeParameter = computeActiveParameter(call, offset);
-	const callees = TypeDeducer.deduceTypes(call.expression).filter(t => t.id === TypeCarrier.Type.Function).map(t => t.node);
 	const signatures = callees.map(callee => computeFunctionSignature(callee, call))
 
 	return {
@@ -333,7 +344,7 @@ connection.onSignatureHelp((info) => {
 });
 
 connection.onCompletion((info) => {
-	
+
 	const document = info.textDocument;
 	const fileName = document.uri;
 	const ast = asts[fileName];
@@ -357,7 +368,7 @@ connection.onCompletion((info) => {
 					});
 				}
 			}
-			if(type.id === TypeCarrier.Type.Object) {
+			if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty('value')) {
 				for(const [,property] of Object.entries(type.properties.getSymbols())) {
 					const propertyName = property.name.split('.')[1];
 					const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
@@ -383,7 +394,7 @@ connection.onCompletion((info) => {
 					const expressionTypes = TypeDeducer.deduceTypes(node.parent.expression);
 
 					for(const type of expressionTypes) {
-						if(type.id === TypeCarrier.Type.Object) {
+						if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty('value')) {
 							for(const [,property] of Object.entries(type.properties.getSymbols())) {
 								const propertyName = property.name.split('.')[1];
 								const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);

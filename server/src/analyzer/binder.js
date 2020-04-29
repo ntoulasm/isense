@@ -1,5 +1,6 @@
 const Ast = require('../ast/ast');
 const Symbol = require('../utility/symbol');
+const SymbolTable = require('../utility/symbol_table');
 const TypeCarrier = require('../utility/type_carrier');
 const TypeDeducer = require('../type-deducer/type_deducer');
 const FunctionAnalyzer = require('./function-analyzer');
@@ -24,10 +25,16 @@ const noOp = () => {};
  */
 Binder.bindFunctionScopedDeclarations = body => {
 
+    if(!body) { return ; }
+
+    body.symbols = SymbolTable.create();
+
     const bindFunctionScopedDeclarationsInternal = node => {
+        let iterateChildren = true;
         if(bindFunctionScopedDeclarationsFunctions.hasOwnProperty(node.kind)) {
-            bindFunctionScopedDeclarationsFunctions[node.kind](node, body);
-        } else {
+            iterateChildren = !!bindFunctionScopedDeclarationsFunctions[node.kind](node, body);
+        }
+        if(iterateChildren) {
             ts.forEachChild(node, bindFunctionScopedDeclarationsInternal);
         }
     };
@@ -42,6 +49,8 @@ Binder.bindFunctionScopedDeclarations = body => {
  * @param {ts.Node} block
  */
 Binder.bindBlockScopedDeclarations = block => {
+
+    block.symbols = SymbolTable.create();
 
     const bindBlockScopedDeclarationsInternal = node => {
         if(bindBlockScopedDeclarationsFunctions.hasOwnProperty(node.kind)) {
@@ -103,19 +112,21 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (no
     } else if(Ast.findAncestor(node, [ts.SyntaxKind.Block, ts.SyntaxKind.SourceFile]) === body) {
         declareBlockScopedVariable(node, body);
     }
+    return true;
 };
 
 /**
- * @param {ts.VariableDeclaration} node
+ * @param {ts.FunctionDeclaration} node
  * @param {ts.Block} body
  */
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] = (node, body) => {
     declareFunction(node, body);
+    Binder.bindFunctionScopedDeclarations(node.body);
     FunctionAnalyzer.analyze(node);
 };
 
 /**
- * @param {ts.VariableDeclaration} node
+ * @param {ts.ClassDeclaration} node
  * @param {ts.Block} body
  */
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = (node, body) => {
@@ -125,8 +136,25 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = (node,
     declareClass(node, body);
 };
 
+/**
+ * @param {ts.Node} node
+ * @param {ts.Block} body 
+ */
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
-bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] =
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] = (node, body) => {
+    Binder.bindFunctionScopedDeclarations(node.body);
+    FunctionAnalyzer.analyze(node);
+}
+
+/**
+ * @param {ts.Block} node
+ * @param {ts.Block} body
+ */
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.Block] = (node, body) => {
+    Binder.bindBlockScopedDeclarations(node);
+    return true;
+};
+
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] = 
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ForStatement] =
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ForOfStatement] =
@@ -151,10 +179,18 @@ bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = (node, bl
     declareClass(node, block);
 };
 
-bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.Block] = 
-bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] =
-bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
+/**
+ * @param {ts.Block} node
+ * @param {ts.Block} block
+ */
+bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.Block] = (node, block) => {
+    Binder.bindBlockScopedDeclarations(node);
+};
+
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] =
+bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
+bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] =
+bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.Block] = 
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] =
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForStatement] =
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForOfStatement] =
