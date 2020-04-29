@@ -107,7 +107,6 @@ z = 5 - (class {});
 z = 5 - null;
 z = 5 - undefined;
 z = 5 - new p();
-
 /* Binary * */
 z = 3 * 3;
 z = 3 * z * "3";

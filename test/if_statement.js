@@ -12,11 +12,14 @@ if(true) {
   x = 10;
   y = 12;
 
-} else {
+} else if (true) {
 
   x = 50;
 
-}
-
+} else if(true) {
+  x = 2;
+} else if(false) {
+  y = "";
+} else y = {};
 y;
-x = x + 5;
+x;

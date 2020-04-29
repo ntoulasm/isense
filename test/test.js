@@ -49,23 +49,23 @@ class point {
 	constructor(x, y) {
 		this.setX(x);
 		this.setY(y);
-	}
+	};
 	
-	set x(x) {
-		this.x = x; 
-	}
+	// set x(x) {
+	// 	this.x = x; 
+	// }
 
-	get x() {
-		return this.x;
-	}
+	// get x() {
+	// 	return this.x;
+	// }
 
-	set y(y) {
-		this.y = y;
-	}
+	// set y(y) {
+	// 	this.y = y;
+	// }
 
-	get y() {
-		return this.y;
-	}
+	// get y() {
+	// 	return this.y;
+	// }
 
 	computeMagnitude() {
 		return Math.sqrt(this.x * this.x + this.y * this.y);
@@ -79,3 +79,4 @@ for(let i = 0; i < 5; ++i) {
 	console.log(i);
 }
 (x = 5) + x + (x = "") + x;
+
