@@ -5,7 +5,7 @@ const SymbolTable = require('../utility/symbol_table');
 const Stack = require('../utility/stack');
 const TypeCarrier = require('../utility/type_carrier');
 const AnalyzeDiagnostic = require('./analyze_diagnostic');
-const TypeDeducer = require('../type-deducer/type_deducer');
+const TypeCaster = require('../type-caster/type_caster');
 const FunctionAnalyzer = require('./function-analyzer');
 const Binder = require('./binder');
 const DiagnosticMessages = require('./diagnostic-messages');
@@ -48,12 +48,87 @@ Analyzer.analyze = ast => {
                 if(node.name.kind === ts.SyntaxKind.Identifier) {
                     const name = node.name.text;
                     const symbol = Ast.lookUp(node, name);
-                    const types = node.initializer !== undefined ? TypeDeducer.deduceTypes(node.initializer) : [TypeCarrier.createUndefined()];
+                    const types = node.initializer !== undefined ? node.initializer.types : [TypeCarrier.createUndefined()];
                     assign(node, symbol, node.initializer, types);
                 }
                 
                 break;
 
+            }
+            case ts.SyntaxKind.NumericLiteral: {
+                node.types = [TypeCarrier.createNumber(node.getText())];
+                break;
+            }
+            case ts.SyntaxKind.StringLiteral: {
+                node.types = [TypeCarrier.createString(node.text)];
+                break;
+            }
+            case ts.SyntaxKind.TrueKeyword: {
+                node.types = [TypeCarrier.createBoolean(true)];
+                break;
+            }
+            case ts.SyntaxKind.FalseKeyword: {
+                node.types = [TypeCarrier.createBoolean(false)];
+                break;
+            }
+            case ts.SyntaxKind.ArrayLiteralExpression: {
+                node.types = [TypeCarrier.createArray()];
+                break;
+            }
+            case ts.SyntaxKind.NullKeyword: {
+                node.types = [TypeCarrier.createNull()];
+                break;
+            }
+            case ts.SyntaxKind.UndefinedKeyword: {
+                node.types = [TypeCarrier.createUndefined()];
+                break;
+            }
+            case ts.SyntaxKind.Identifier: {
+                // TODO: refactoring
+                if(node.escapedText === "undefined") { 
+                    node.types = [TypeCarrier.createUndefined()]; 
+                    break;
+                }
+                const symbol = Ast.lookUp(node, node.getText());
+                if(symbol === undefined) { 
+                    node.types = [TypeCarrier.createAny()]; 
+                    break;
+                }
+                const typeCarrier = Ast.findClosestTypeCarrier(node, symbol);
+                if(typeCarrier === undefined) { 
+                    node.types = [TypeCarrier.createUndefined()]; 
+                    break;
+                }
+                node.types = typeCarrier.getTypes();
+                break;
+            }
+            case ts.SyntaxKind.PrefixUnaryExpression: {
+                ts.forEachChild(node, visitDeclarations);
+                analyzePrefixUnaryExpression(node);
+                break;
+            }
+            case ts.SyntaxKind.PostfixUnaryExpression: {
+                ts.forEachChild(node, visitDeclarations);
+                analyzePostfixUnaryExpression(node);
+                break;
+            }
+            case ts.SyntaxKind.VoidExpression: {
+                ts.forEachChild(node, visitDeclarations);
+                node.types = [TypeCarrier.createUndefined()];
+                break;
+            }
+            case ts.SyntaxKind.TypeOfExpression: {
+                ts.forEachChild(node, visitDeclarations);
+                analyzeTypeOfExpression(node);
+                break;
+            }
+            case ts.SyntaxKind.ThisKeyword: {
+                // TODO: refactoring
+                const symbol = Ast.lookUp(node, 'this');
+                node.types = symbol ? 
+                    Ast.findClosestTypeCarrier(node, symbol).getTypes() :
+                    [TypeCarrier.createEmptyObject()];
+                break;
             }
 			case ts.SyntaxKind.BinaryExpression: {	// x = ...
 
@@ -66,8 +141,10 @@ Analyzer.analyze = ast => {
                         const symbol = Ast.lookUp(node, name);
 						if(symbol) {
 
-                            const types = TypeDeducer.deduceTypes(node.right);
+                            const types = node.right.types;
                             assign(node, symbol, node.right, types);
+                            // TODO: move to assign?
+                            node.types = types;
 
                         } else {
                             Ast.addAnalyzeDiagnostic(
@@ -77,9 +154,9 @@ Analyzer.analyze = ast => {
                         }
                     } else if (lvalue.kind === ts.SyntaxKind.PropertyAccessExpression) {
 
-                        const leftTypes = TypeDeducer.deduceTypes(lvalue.expression);
+                        const leftTypes = lvalue.expression.types;
                         const propertyName = lvalue.name.text;
-                        const rightTypes = TypeDeducer.deduceTypes(node.right);
+                        const rightTypes = node.right.types;
 
                         // if(leftTypes === undefined) { break; } // TODO: maybe change?
 
@@ -92,23 +169,38 @@ Analyzer.analyze = ast => {
                     } else {
                         console.assert(false, 'left side of assignment is not lvalue');
                     }
-				}
+				} else {
+                    analyzeBinaryExpression(node);
+                }
 				
 				break;
 
             }
+            case ts.SyntaxKind.PropertyAccessExpression: {
+                visitDeclarations(node.expression);
+                analyzePropertyAccessExpression(node);
+                break;
+            }
+            case ts.SyntaxKind.ElementAccessExpression: {
+                ts.forEachChild(node, visitDeclarations);
+                analyzeElementAccessExpression(node);
+            }
+            case ts.SyntaxKind.ParenthesizedExpression: {
+                ts.forEachChild(node, visitDeclarations);
+                node.types = node.expression.types;
+                break;
+            }
 			case ts.SyntaxKind.Parameter: {
                 break;
 			}
-			case ts.SyntaxKind.ClassDeclaration: {
-
+			case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression: {
+                node.types = [TypeCarrier.createClass(node)];
                 node.symbols = SymbolTable.create();
-
                 classStack.push(node);
                 ts.forEachChild(node, visitDeclarations);
                 classStack.pop();
 				break;
-			
             }
 			case ts.SyntaxKind.Constructor: {
 
@@ -156,6 +248,8 @@ Analyzer.analyze = ast => {
             }
 			case ts.SyntaxKind.MethodDeclaration: {
 
+                node.types = [TypeCarrier.createFunction(node)];
+
                 FunctionAnalyzer.analyze(node);
 
                 if(node.parent.kind === ts.SyntaxKind.ClassDeclaration || node.parent.kind === ts.SyntaxKind.ClassExpression) {
@@ -172,22 +266,13 @@ Analyzer.analyze = ast => {
 				break;
 
             }
-            // case ts.SyntaxKind.FunctionDeclaration: {
-            //     ts.forEachChild(node, visitDeclarations);
-            //     break;
-            // }
-			// case ts.SyntaxKind.FunctionExpression: 
-            // case ts.SyntaxKind.ArrowFunction: {
-            //     ts.forEachChild(node, visitDeclarations);
-            //     break;
-            // }
-            case ts.SyntaxKind.ClassExpression: {
-                node.symbols = SymbolTable.create();
-                classStack.push(node);
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression: 
+            case ts.SyntaxKind.ArrowFunction: {
+                node.types = [TypeCarrier.createFunction(node)];
                 ts.forEachChild(node, visitDeclarations);
-                classStack.pop();
                 break;
-			}
+            }
 			case ts.SyntaxKind.Block: {
                 ts.forEachChild(node, visitDeclarations);
                 Ast.copyTypeCarriersFromBlockToNextStatement(node);
@@ -204,7 +289,7 @@ Analyzer.analyze = ast => {
 
                 ts.forEachChild(node, visitDeclarations);
 
-                const types = TypeDeducer.deduceTypes(node.expression);
+                const types = node.expression.types;
                 const callees = types.flatMap(t => t.id === TypeCarrier.Type.Function ? [t.node] : []);
                 const callee = !callees.length ? undefined : callees[0];
 
@@ -237,13 +322,17 @@ Analyzer.analyze = ast => {
                 node.type = TypeCarrier.createEmptyObject();
                 ts.forEachChild(node, visitDeclarations);
                 objectStack.pop();
+                node.types = [node.type];
+                delete node.type;
                 break;
             }
             case ts.SyntaxKind.ShorthandPropertyAssignment: {
+                
+                ts.forEachChild(node, visitDeclarations);
 
                 const object = objectStack.top();
                 const name = node.name.getText();
-                const propertyTypes = TypeDeducer.deduceTypes(node.name);
+                const propertyTypes = node.name.types;
 
                 if(name !== undefined) {
                     const symbol = Symbol.create(`@${object.type.value}.${name}`, node.pos, node.end);
@@ -258,7 +347,7 @@ Analyzer.analyze = ast => {
 
                 ts.forEachChild(node, visitDeclarations);
 
-                const propertyTypes = TypeDeducer.deduceTypes(node.initializer);
+                const propertyTypes = node.initializer.types;
                 const object = objectStack.top();
                 let name;
                 
@@ -286,10 +375,10 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.ReturnStatement: {
                 ts.forEachChild(node, visitDeclarations);
-                if(node.hasOwnProperty('expression') && !node.unreachable && !callStack.isEmpty()) {
-                    const returnTypes = TypeDeducer.deduceTypes(node.expression) || [TypeCarrier.createAny()];
+                if(node.expression && !node.unreachable && !callStack.isEmpty()) {
+                    const returnTypes = node.expression.types || [TypeCarrier.createAny()];
                     const call = callStack.top();
-                    call.returnTypes.push(...returnTypes);
+                    call.types.push(...returnTypes);
                 }
                 break;
             }
@@ -400,7 +489,7 @@ function copyParameterTypeCarriersToCallee(func, args) {
         const argument = args[i];
         const parameterSymbol = parameter.symbols.getSymbols()[parameter.name.escapedText];
         console.assert(parameterSymbol, "parameter without symbol?");
-        const types = TypeDeducer.deduceTypes(argument);
+        const types = argument.types;
         const typeCarrier = TypeCarrier.create(parameterSymbol, types);
         Ast.addTypeCarrier(parameter, typeCarrier);
         copyPropertiesTypeCarriersIfObject(argument, types, parameter);
@@ -515,9 +604,12 @@ function copyFreeVariablesTypeCarriersToCaller(callee, call) {
  * @param {Object} thisObject
  */
 function call(call, callee, thisObject = TypeCarrier.createEmptyObject(), beforeCall = noOp) {
+    call.types = [];
+    // if(!callee.body) {
+    //     call.types.push(TypeCarrier.createUndefined);
+    //     return; 
+    // }
     callStack.push(call);
-    call.returnTypes = [];
-    // Add call site to original callee node
     Ast.addCallSite(callee, call);
     callee = call.callee = createCallee(callee);
     defineThis(callee.parent, thisObject);
@@ -526,7 +618,7 @@ function call(call, callee, thisObject = TypeCarrier.createEmptyObject(), before
     beforeCall(callee);
     Analyzer.analyze(callee.body);
     copyFreeVariablesTypeCarriersToCaller(callee, call);
-    if(!call.returnTypes.length) { call.returnTypes.push({id: TypeCarrier.Type.Undefined}); }
+    if(!call.types.length) { call.types.push(TypeCarrier.createUndefined()); }
     callStack.pop();
 }
 
@@ -552,9 +644,9 @@ function newClassExpression(node, classNode) {
     const beforeCall = (constructor) => {
         for(const member of classNode.members) {
             if(member.kind === ts.SyntaxKind.PropertyDeclaration) {
-                setProperty(constructor, thisObject, member.name.getText(), member.initializer, TypeDeducer.deduceTypes(member.initializer));
+                setProperty(constructor, thisObject, member.name.getText(), member.initializer, member.initializer.types);
             } else if(member.kind === ts.SyntaxKind.MethodDeclaration) {
-                setProperty(constructor, thisObject, member.name.getText(), undefined, TypeDeducer.deduceTypes(member));
+                setProperty(constructor, thisObject, member.name.getText(), undefined, member.types);
             }
         }
     };
@@ -564,31 +656,42 @@ function newClassExpression(node, classNode) {
 }
 
 /**
+ * @param {ts.Node} constructor 
+ */
+const copyThisToNewExpression = (constructor, newExpression) => {
+    const constructorLastStatement = Ast.findLastStatement(newExpression.callee.body);
+    if(constructorLastStatement === undefined) { return; }
+    const thisSymbol = Ast.lookUp(constructorLastStatement, 'this');
+    const thisTypeCarrier = Ast.findClosestTypeCarrier(constructorLastStatement, thisSymbol);
+    const thisTypes = thisTypeCarrier.getTypes();
+    thisTypes.forEach(e => e.references = []);
+    if(constructor.hasOwnProperty("constructorName")) {
+        for(const thisType of thisTypes) {
+            thisType.constructorName = constructor.constructorName;
+        }
+    }
+    newExpression.types = thisTypes;
+    copyPropertiesTypeCarriersIfObject(constructorLastStatement, thisTypes, newExpression);
+};
+
+/**
  * @param {ts.NewExpression} node 
  */
 function newExpression(node) {
-    const types = TypeDeducer.deduceTypes(node.expression);
-    /**
-     * @param {ts.Node} constructor 
-     */
-    const copyThisPropertiesToCallSite = (constructor) => {
-        const constructorLastStatement = Ast.findLastStatement(node.callee.body);
-        if(constructorLastStatement === undefined) { return; }
-        const thisSymbol = Ast.lookUp(constructorLastStatement, 'this');
-        const thisTypeCarrier = Ast.findClosestTypeCarrier(constructorLastStatement, thisSymbol);
-        const thisTypes = thisTypeCarrier.getTypes();
-        constructor.returnTypes = [thisTypes];
-        copyPropertiesTypeCarriersIfObject(constructorLastStatement, thisTypes, node);
-    };
-    for(const type of types) {
-        if(type.id === TypeCarrier.Type.Function && type.node) {
-            call(node, type.node);
-            copyThisPropertiesToCallSite(type.node);
-        } else if (type.id === TypeCarrier.Type.Class && type.node) {
-            newClassExpression(node, type.node);
-            copyThisPropertiesToCallSite(type.node);
-        }
+    const types = node.expression.types;
+    const constructors = types.filter(t => (t.id === TypeCarrier.Type.Function || t.id === TypeCarrier.Type.Class));
+    const constructor = !constructors.length ? undefined : constructors[0];
+    if(constructor === undefined) {
+        node.types = [TypeCarrier.createAny()];
+        return ;
     }
+    // TODO: pick constructor?
+    if(constructor.id === TypeCarrier.Type.Function && constructor.node) {
+        call(node, constructor.node);
+    } else if (constructor.id === TypeCarrier.Type.Class && constructor.node) {
+        newClassExpression(node, constructor.node);
+    }
+    copyThisToNewExpression(constructor.node, node);
 }
 
 /**
@@ -672,6 +775,1140 @@ function setProperty(node, object, name, rvalue, types) {
         Ast.addTypeCarrierToExpression(node, typeCarrier);
     
     });
+
+}
+
+// ----------------------------------------------------------------------------
+
+const binaryExpressionFunctions = {};
+const addFunctions = {};
+
+addFunctions[TypeCarrier.Type.Number] = (left, right) => {
+
+    const type = {};
+
+    switch(right.id) {
+        case TypeCarrier.Type.Number: {
+            type.id = TypeCarrier.Type.Number;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = Number(left.value) + Number(right.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.String: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = String(left.value) + right.value;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Boolean: {
+            type.id = TypeCarrier.Type.Number;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = Number(left.value) + Number(right.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            type.id = TypeCarrier.Type.String;
+            type.value = "TODO: number + array";
+            break;
+        }
+        case TypeCarrier.Type.Object: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value")) {
+                type.value = String(left.value) + "[object Object]";
+            }
+            break;
+        }
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value")) {
+                type.value = String(left.value) + right.node.getText();
+            }
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.id = TypeCarrier.Type.Number;
+            if(left.hasOwnProperty("value")) {
+                type.value = left.value
+            }
+            break;
+        }
+        case TypeCarrier.Type.Undefined: {
+            type.id = TypeCarrier.Type.Number;
+            type.value = "NaN";
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            return [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+        }
+        default: {
+            console.assert(false, "Unknown Type");
+            break;
+        }
+    };
+
+    return [type];
+
+};
+
+addFunctions[TypeCarrier.Type.String] = (left, right) => {
+
+    const type = {};
+
+    switch(right.id) {
+        case TypeCarrier.Type.Number: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = left.value + String(right.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.String: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = left.value + right.value;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Boolean: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = left.value + String(right.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = "TODO: string + array"
+            }
+            break;
+        }
+        case TypeCarrier.Type.Object: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = left.value + "[object Object]";
+            }
+            break;
+        }
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = left.value + right.node.getText();
+            }
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value")) {
+                type.value = left.value + "null";
+            }
+            break;
+        }
+        case TypeCarrier.Type.Undefined: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value")) {
+                type.value = left.value + "undefined";
+            }
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            type.id = TypeCarrier.Type.String;
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown Type");
+            break;
+        }
+    };
+
+    return [type];
+
+};
+
+addFunctions[TypeCarrier.Type.Boolean] = (left, right) => {
+
+    const type = {};
+
+    switch(right.id) {
+        case TypeCarrier.Type.Number: {
+            type.id = TypeCarrier.Type.Number;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = Number(left.value) + Number(right.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.String: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = String(left.value) + right.value;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Boolean: {
+            type.id = TypeCarrier.Type.Number;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = Number(left.value) + Number(right.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = "TODO: boolean + array";
+            }
+            break;
+        }
+        case TypeCarrier.Type.Object: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = String(left.value) + "[object Object]";
+            }
+            break;
+        }
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class: {
+            type.id = TypeCarrier.Type.String;
+            if(left.hasOwnProperty("value")) {
+                type.value = String(left.value) + right.node.getText();
+            } 
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.id = TypeCarrier.Type.Number;
+            if(left.hasOwnProperty("value")) {
+                type.value = Number(left.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Undefined: {
+            type.id = TypeCarrier.Type.Number;
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            return [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ]
+        }
+        default: {
+            console.assert(false, "Unknown Type");
+            break;
+        }
+    };
+
+    return [type];
+
+};
+
+addFunctions[TypeCarrier.Type.Array] = (left, right) => {
+    const type = { id: TypeCarrier.Type.String };
+    if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+        type.value = "TODO: array + " + TypeCarrier.typeToString(right);
+    }
+    return [type];
+};
+
+addFunctions[TypeCarrier.Type.Object] = (left, right) => {
+
+    const type = {};
+
+    switch(right.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            type.id = TypeCarrier.Type.String;
+            if(right.hasOwnProperty("value")) {
+                type.value = "[object Object]" + String(right.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            type.id = TypeCarrier.Type.String;
+            if(right.hasOwnProperty("value")) {
+                type.value = "TODO: object + array";
+            }
+            break;
+        }
+        case TypeCarrier.Type.Object: {
+            type.id = TypeCarrier.Type.String;
+            type.value = "[object Object][object Object]";
+            break;
+        }
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class: {
+            type.id = TypeCarrier.Type.String;
+            type.value = "[object Object]" + right.node.getText();
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.id = TypeCarrier.Type.String;
+            type.value = "[object Object]null";
+            break;
+        }
+        case TypeCarrier.Type.Undefined: {
+            type.id = TypeCarrier.Type.String;
+            type.value = "[object Object]undefined";
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            type.id = TypeCarrier.Type.String;
+        }
+        default: {
+            console.assert(false, "Unknown Type");
+            break;
+        }
+    };
+
+    return [type];
+
+};
+
+addFunctions[TypeCarrier.Type.Function] = 
+addFunctions[TypeCarrier.Type.Class] = (left, right) => {
+
+    const type = {};
+
+    switch(right.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean:
+        case TypeCarrier.Type.Null:
+        case TypeCarrier.Type.Undefined: {
+            type.id = TypeCarrier.Type.String;
+            if(right.hasOwnProperty("value")) {
+                type.value = left.node.getText() + String(right.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            type.id = TypeCarrier.Type.String;
+            if(right.hasOwnProperty("value")) {
+                type.value = "TODO: function + array";
+            }
+            break;
+        }
+        case TypeCarrier.Type.Object: {
+            type.id = TypeCarrier.Type.String;
+            type.value = left.node.getText() + "[object Object]";
+            break;
+        }
+        case TypeCarrier.Type.Function: 
+        case TypeCarrier.Type.Class: {
+            type.id = TypeCarrier.Type.String;
+            type.value = left.node.getText() + right.node.getText();
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            type.id = TypeCarrier.Type.String;
+        }
+        default: {
+            console.assert(false, "Unknown Type");
+            break;
+        }
+    };
+
+    return [type];
+
+};
+
+addFunctions[TypeCarrier.Type.Null] = (left, right) => {
+
+    const type = {};
+
+    switch(right.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.Boolean: {
+            type.id = TypeCarrier.Type.Number;
+            if(right.hasOwnProperty("value")) {
+                type.value = Number(right.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.String: {
+            type.id = TypeCarrier.Type.String;
+            if(right.hasOwnProperty("value")) {
+                type.value = "null" + right.value;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            type.id = TypeCarrier.Type.String;
+            if(right.hasOwnProperty("value")) {
+                type.value = "TODO: null + array";
+            }
+            break;
+        }
+        case TypeCarrier.Type.Object: {
+            type.id = TypeCarrier.Type.String;
+            type.value = "null[object Object]";
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.id = TypeCarrier.Type.Number;
+            type.value = 0;
+            break;
+        }
+        case TypeCarrier.Type.Undefined: {
+            type.id = TypeCarrier.Type.Number;
+            type.value = NaN;
+        }
+        case TypeCarrier.Type.Any: {
+            return [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+        }
+        default: {
+            console.assert(false, "Unknown Type");
+            break;
+        }
+    };
+
+    return [type];
+
+};
+
+addFunctions[TypeCarrier.Type.Undefined] = (left, right) => {
+
+    const type = {};
+
+    switch(right.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.Boolean:
+        case TypeCarrier.Type.Null:
+        case TypeCarrier.Type.Undefined: {
+            type.id = TypeCarrier.Type.Number;
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.String: {
+            type.id = TypeCarrier.Type.String;
+            if(right.hasOwnProperty("value")) {
+                type.value = "undefined" + right.value;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            type.id = TypeCarrier.Type.String;
+            if(right.hasOwnProperty("value")) {
+                type.value = "TODO: undefined + array";
+            }
+            break;
+        }
+        case TypeCarrier.Type.Object: {
+            type.id = TypeCarrier.Type.String;
+            type.value = "undefined[object Object]";
+            break;
+        }
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class: {
+            type.id = TypeCarrier.Type.String;
+            type.value = "undefined" + right.node.getText();
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            return [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+        }
+        default: {
+            console.assert(false, "Unknown Type");
+            break;
+        }
+    };
+
+    return [type];
+
+};
+
+addFunctions[TypeCarrier.Type.Any] = (left, right) => {
+    return [
+        TypeCarrier.createNumberWithoutValue(),
+        TypeCarrier.createStringWithoutValue()
+    ];
+};
+
+/**
+ * @param {ts.Node} node
+ */
+binaryExpressionFunctions[ts.SyntaxKind.PlusToken] = node => {
+
+    const leftTypes = node.left.types;
+    const rightTypes = node.right.types;
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+            console.assert(addFunctions.hasOwnProperty(leftType.id));
+            node.types.push(...addFunctions[leftType.id](leftType, rightType));
+        }
+    }
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+binaryExpressionFunctions[ts.SyntaxKind.MinusToken] = 
+binaryExpressionFunctions[ts.SyntaxKind.AsteriskToken] = 
+binaryExpressionFunctions[ts.SyntaxKind.SlashToken] = 
+binaryExpressionFunctions[ts.SyntaxKind.PercentToken] = 
+binaryExpressionFunctions[ts.SyntaxKind.AsteriskAsteriskToken] = 
+binaryExpressionFunctions[ts.SyntaxKind.LessThanToken] = 
+binaryExpressionFunctions[ts.SyntaxKind.LessThanEqualsToken] = 
+binaryExpressionFunctions[ts.SyntaxKind.GreaterThanToken] = 
+binaryExpressionFunctions[ts.SyntaxKind.GreaterThanEqualsToken] =
+binaryExpressionFunctions[ts.SyntaxKind.AmpersandToken] =
+binaryExpressionFunctions[ts.SyntaxKind.BarToken] =
+binaryExpressionFunctions[ts.SyntaxKind.CaretToken] =
+binaryExpressionFunctions[ts.SyntaxKind.LessThanLessThanToken] =
+binaryExpressionFunctions[ts.SyntaxKind.GreaterThanGreaterThanToken] =
+binaryExpressionFunctions[ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken] = node => {
+
+    const leftTypes = node.left.types;
+    const rightTypes = node.right.types;
+    const op = Ast.operatorTokenToString(node.operatorToken);
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+            
+            const left = TypeCaster.toNumber(leftType);
+            const right = TypeCaster.toNumber(rightType);
+            const type = {};
+            type.id = TypeCarrier.Type.Number;
+        
+            if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
+                type.value = eval(left.value + op + right.value);
+            }
+    
+            node.types.push(type);
+            
+        }
+    }
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+binaryExpressionFunctions[ts.SyntaxKind.EqualsEqualsToken] = node => {
+    
+    const leftTypes = node.left.types;
+    const rightTypes = node.right.types;
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+
+            const type = {};
+            type.id = TypeCarrier.Type.Boolean;
+
+            // TODO: check for null, undefined, any?
+
+            if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
+                type.value = (leftType.value == rightType.value);
+            }
+
+            node.types.push(type);
+
+        }
+    }
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+binaryExpressionFunctions[ts.SyntaxKind.ExclamationEqualsToken] = node => {
+    
+    const leftTypes = node.left.types;
+    const rightTypes = node.right.types;
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+
+            const type = {};
+            type.id = TypeCarrier.Type.Boolean;
+
+            // TODO: check for null, undefined, any?
+
+            if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
+                type.value = leftType.value != rightType.value;
+            }
+
+            node.types.push(type);
+
+        }
+    }
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+binaryExpressionFunctions[ts.SyntaxKind.EqualsEqualsEqualsToken] = node => {
+    
+    const leftTypes = node.left.types;
+    const rightTypes = node.right.types;
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+
+            const type = {};
+            type.id = TypeCarrier.Type.Boolean;
+
+            if(leftType.id === rightType.id) {
+                if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
+                    type.value = leftType.value == rightType.value;
+                }
+            } else {
+                type.value = false;
+            }
+
+            node.types.push(type);
+
+        }
+    }
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+binaryExpressionFunctions[ts.SyntaxKind.ExclamationEqualsEqualsToken] = node => {
+    
+    const leftTypes = node.left.types;
+    const rightTypes = node.right.types
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+
+            const type = {};
+            type.id = TypeCarrier.Type.Boolean;
+
+            if(leftType.id === rightType.id) {
+                if(leftType.hasOwnProperty("value") && rightType.hasOwnProperty("value")) {
+                    type.value = leftType.value != rightType.value;
+                }
+            } else {
+                type.value = true;
+            }
+
+            node.types.push(type);
+
+        }
+    }
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+binaryExpressionFunctions[ts.SyntaxKind.AmpersandAmpersandToken] = node => {
+
+    const leftTypes = node.left.types;
+    const rightTypes = node.right.types
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+            
+            if(leftType.hasOwnProperty("value")) {
+                node.types.push(Boolean(leftType.value) ? rightType : leftType);
+            } else {
+                node.types.push(leftType);
+                node.types.push(rightType);
+            }
+
+        }
+    }
+
+};
+
+/**
+ * @param {ts.Node} node
+ */
+binaryExpressionFunctions[ts.SyntaxKind.BarBarToken] = node => {
+
+    const leftTypes = node.left.types;
+    const rightTypes = node.right.types
+
+    for(const leftType of leftTypes) {
+        for(const rightType of rightTypes) {
+        
+            if(leftType.hasOwnProperty("value")) {
+                node.types.push(Boolean(leftType.value) ? leftType : rightType);
+            } else {
+                node.types.push(leftType);
+                node.types.push(rightType);
+            }
+
+        }
+    }
+
+};
+
+function analyzeBinaryExpression(node) {
+    node.types = [];
+    console.assert(
+        binaryExpressionFunctions.hasOwnProperty(node.operatorToken.kind),
+        "Binary expression '" + node.operatorToken.kind +  "' not implemented yet" 
+    );
+    binaryExpressionFunctions[node.operatorToken.kind](node);
+}
+
+// ----------------------------------------------------------------------------
+
+const prefixUnaryExpressionFunctions = {};
+
+prefixUnaryExpressionFunctions[ts.SyntaxKind.PlusToken] = operandType => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+    
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = Number(operandType.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic for array +[] = 0, +[x] = Number(x) 
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Undefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.value = 0;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return type;
+
+};
+
+prefixUnaryExpressionFunctions[ts.SyntaxKind.MinusToken] = operandType => {
+    
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+    
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = -Number(operandType.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic for array -[] = 0, -[x] = -Number(x) 
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Undefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.value = 0;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return type;
+
+};
+
+prefixUnaryExpressionFunctions[ts.SyntaxKind.PlusPlusToken] = operandType => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+    
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = Number(operandType.value) + 1;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic for array
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Undefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.value = 0;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return type;
+
+};
+
+prefixUnaryExpressionFunctions[ts.SyntaxKind.MinusMinusToken] = operandType => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+    
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = Number(operandType.value) - 1;
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic for array
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Undefined: {
+            type.value = NaN;
+            break;
+        }
+        case TypeCarrier.Type.Null: {
+            type.value = 0;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return type;
+
+};
+
+prefixUnaryExpressionFunctions[ts.SyntaxKind.ExclamationToken] = operandType => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Boolean;
+
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = !Boolean(operandType.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic
+            type.value = false;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class: {
+            type.value = false;
+            break;
+        }
+        case TypeCarrier.Type.Null:
+        case TypeCarrier.Type.Undefined: {
+            type.value = true;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return type;
+
+};
+
+prefixUnaryExpressionFunctions[ts.SyntaxKind.TildeToken] = operandType => {
+
+    const type = {};
+    type.id = TypeCarrier.Type.Number;
+
+    switch(operandType.id) {
+        case TypeCarrier.Type.Number:
+        case TypeCarrier.Type.String:
+        case TypeCarrier.Type.Boolean: {
+            if(operandType.hasOwnProperty("value")) {
+                type.value = ~Number(operandType.value);
+            }
+            break;
+        }
+        case TypeCarrier.Type.Array: {
+            // TODO: add logic
+            type.value = -1;
+            break;
+        }
+        case TypeCarrier.Type.Object:
+        case TypeCarrier.Type.Function:
+        case TypeCarrier.Type.Class:
+        case TypeCarrier.Type.Null:
+        case TypeCarrier.Type.Undefined: {
+            type.value = -1;
+            break;
+        }
+        case TypeCarrier.Type.Any: {
+            break;
+        }
+        default: {
+            console.assert(false, "Unknown type");
+            break;
+        }
+    }
+
+    return type;
+
+};
+
+/**
+ * @param {ts.PrefixUnaryExpression} node 
+ */
+function analyzePrefixUnaryExpression(node) {
+
+    const operandTypes = node.operand.types;
+    node.types = [];
+
+    for(const operandType of operandTypes) {
+        console.assert(
+            prefixUnaryExpressionFunctions.hasOwnProperty(node.operator), 
+            "Prefix unary operator " + node.operator + " not implemented yet"
+        );
+        node.types.push(prefixUnaryExpressionFunctions[node.operator](operandType));
+    }
+
+}
+
+// ----------------------------------------------------------------------------
+
+/**
+ * @param {ts.PostfixUnaryExpression} node 
+ */
+function analyzePostfixUnaryExpression(node) {
+
+    const operandTypes = node.operand.types;
+    node.types = [];
+
+    for(const operandType of operandTypes) {
+        
+        const type = {};
+        type.id = TypeCarrier.Type.Number;
+
+        switch(operandType.id) {
+            case TypeCarrier.Type.Number:
+            case TypeCarrier.Type.String:
+            case TypeCarrier.Type.Boolean: {
+                if(operandType.hasOwnProperty("value")) {
+                    type.value = Number(operandType.value);
+                }
+                break;
+            }
+            case TypeCarrier.Type.Array: {
+                // TODO: add logic
+                type.value = NaN;
+                break;
+            }
+            case TypeCarrier.Type.Object:
+            case TypeCarrier.Type.Function:
+            case TypeCarrier.Type.Class:
+            case TypeCarrier.Type.Undefined: {
+                type.value = NaN;
+                break;
+            }
+            case TypeCarrier.Type.Null: {
+                type.value = 0;
+                break;
+            }
+            case TypeCarrier.Type.Any: {
+                break;
+            }
+            default: {
+                console.assert(false, "Unknown Type");
+                break;
+            }
+        }
+
+        node.types.push(type);
+
+    }
+
+}
+
+// ----------------------------------------------------------------------------
+
+/**
+ * 
+ * @param {ts.TypeOfExpression} node 
+ */
+function analyzeTypeOfExpression(node) {
+
+    node.types = [];
+    const operandTypes = node.expression.types;
+
+    for(const operandType of operandTypes) {
+
+        const type = {};
+        type.id = TypeCarrier.Type.String;
+
+        switch(operandType.id) {
+            case TypeCarrier.Type.Number:
+            case TypeCarrier.Type.String:
+            case TypeCarrier.Type.Boolean:
+            case TypeCarrier.Type.Object:
+            case TypeCarrier.Type.Function:
+            case TypeCarrier.Type.Undefined: {
+                type.value = TypeCarrier.typeToString(operandType);
+                break;
+            }
+            case TypeCarrier.Type.Array:
+            case TypeCarrier.Type.Class:
+            case TypeCarrier.Type.Null: {
+                type.value = "object";
+                break;
+            }
+            case TypeCarrier.Type.Any: {
+                type.value = "number";
+                types.push(...[
+                    TypeCarrier.createString('number'),
+                    TypeCarrier.createString('string'),
+                    TypeCarrier.createString('boolean'),
+                    TypeCarrier.createString('array'),
+                    TypeCarrier.createString('object'),
+                    TypeCarrier.createString('function'),
+                    TypeCarrier.createString('class'),
+                    TypeCarrier.createString('undefined'),
+                    TypeCarrier.createString('null'),
+                ]);
+            }
+            default: {
+                console.assert(false, "Unknown type");
+                break;
+            }
+        }
+
+        node.types.push(type);
+
+    }
+
+}
+
+// ----------------------------------------------------------------------------
+
+/**
+ * @param {ts.PropertyAccessExpression} node 
+ */
+function analyzePropertyAccessExpression(node) {
+
+    const expressionTypes = node.expression.types;
+    const propertyName = node.name.getText();
+    node.types = [];
+    let typesContainUndefined = false;
+
+    for(const type of expressionTypes) {
+        if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty('value')) {
+            const name = `@${type.value}.${propertyName}`;
+            for(const [,property] of Object.entries(type.properties.getSymbols())) {
+                if(property.name === name) {
+                    node.types.push(...Ast.findClosestTypeCarrier(node, property).getTypes());
+                } 
+            }
+        }
+    }
+
+}
+
+// ----------------------------------------------------------------------------
+
+/**
+ * @param {ts.ElementAccessExpression} node 
+ */
+function analyzeElementAccessExpression(node) {
+
+    const expressionTypes = node.expression.types;
+    const elementTypes = node.argumentExpression.types;
+    node.types = [];
+    let typesContainUndefined = false;
+    // TODO: FIXME
+    for(const elementType of elementTypes) {
+
+        const elementTypeString = TypeCaster.toString(elementType).value;
+        
+        if(elementTypeString !== undefined) {
+            for(const expressionType of expressionTypes) {
+                if(expressionType.id === TypeCarrier.Type.Object && expressionType.hasOwnProperty("value")) {
+                    if(expressionType.value.hasOwnProperty(elementTypeString)) {
+                        node.types.push(...expressionType.value[elementTypeString]);
+                    } else if(!typesContainUndefined) {
+                        node.types.push({ id: TypeCarrier.Type.Undefined });
+                        typesContainUndefined = true;
+                    }
+                }
+            }
+        }
+    
+    }
 
 }
 

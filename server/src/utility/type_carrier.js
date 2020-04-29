@@ -231,6 +231,8 @@ TypeCarrier.copyType = type => {
 
 /**
  * @param {Number} value
+ * 
+ * @returns {isense.Type}
  */
 TypeCarrier.createNumber = value => {
     return { 
@@ -239,24 +241,47 @@ TypeCarrier.createNumber = value => {
     };
 };
 
+/**
+ * @returns {isense.Type}
+ */
 TypeCarrier.createNumberWithoutValue = () => {
     return { id: TypeCarrier.Type.Number };
-}
+};
 
 /**
  * @param {String} value
+ * 
+ * @returns {isense.Type}
  */
 TypeCarrier.createString = value => {
     return {
         id: TypeCarrier.Type.String,
         value
     };
-}
+};
 
+/**
+ * @returns {isense.Type}
+ */
 TypeCarrier.createStringWithoutValue = () => {
     return { id: TypeCarrier.Type.String };
-}
+};
 
+/**
+ * @param {Boolean} value
+ * 
+ * @returns {isense.Type}
+ */
+TypeCarrier.createBoolean = value => {
+    return {
+        id: TypeCarrier.Type.Boolean,
+        value
+    };
+};
+
+/**
+ * @returns {isense.Type}
+ */
 TypeCarrier.createEmptyObject = () => {
     return {
         id: TypeCarrier.Type.Object,
@@ -266,18 +291,71 @@ TypeCarrier.createEmptyObject = () => {
     };
 };
 
+/**
+ * @returns {isense.Type}
+ */
 TypeCarrier.createObject = () => {
     return {
         id: TypeCarrier.Type.Object
     };
+};
+
+/**
+ * @returns {isense.Type}
+ */
+TypeCarrier.createArray = () => {
+    return {
+        id: TypeCarrier.Type.Array
+    };
+};
+
+// TODO: node -> value
+/**
+ * @param {ts.Node} node
+ * 
+ * @returns {isense.Type}
+ */
+TypeCarrier.createFunction = node => {
+    return {
+        id: TypeCarrier.Type.Function,
+        node
+    };
 }
 
+// TODO: node -> value
+/**
+ * @param {ts.Node} node
+ * 
+ * @returns {isense.Type}
+ */
+TypeCarrier.createClass = node => {
+    return {
+        id: TypeCarrier.Type.Class,
+        node
+    };
+}
+
+/**
+ * @returns {isense.Type}
+ */
 TypeCarrier.createUndefined = () => {
     return {
         id: TypeCarrier.Type.Undefined
     };
 };
 
+/**
+ * @returns {isense.Type}
+ */
+TypeCarrier.createNull = () => {
+    return {
+        id: TypeCarrier.Type.Null
+    };
+};
+
+/**
+ * @returns {isense.Type}
+ */
 TypeCarrier.createAny = () => {
     return {
         id: TypeCarrier.Type.Any

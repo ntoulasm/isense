@@ -2,7 +2,6 @@ const Ast = require('../ast/ast');
 const Symbol = require('../utility/symbol');
 const SymbolTable = require('../utility/symbol_table');
 const TypeCarrier = require('../utility/type_carrier');
-const TypeDeducer = require('../type-deducer/type_deducer');
 const FunctionAnalyzer = require('./function-analyzer');
 
 // ----------------------------------------------------------------------------
@@ -266,7 +265,7 @@ function declareFunction(node, block) {
     const symbol = Symbol.create(name, start, end, false, block.getStart());
 
     block.symbols.insert(symbol);
-    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, TypeCarrier.createFunction(node)));
 
 }
 
@@ -310,7 +309,7 @@ function declareClass(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, TypeDeducer.deduceTypes(node)));
+    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, TypeCarrier.createClass(node)));
 
 }
 

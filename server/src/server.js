@@ -3,7 +3,6 @@ const Analyzer = require('./analyzer/analyzer');
 const Ast = require('./ast/ast');
 const TypeCarrier = require('./utility/type_carrier');
 const SignatureFinder = require('./utility/signature-finder');
-const TypeDeducer = require('./type-deducer/type_deducer');
 const NumberMethods = require('./primitive-type-info/number-methods');
 const DotGenerator = require('./ast/dot-generator');
 
@@ -329,7 +328,7 @@ connection.onSignatureHelp((info) => {
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
 
 	if(call === undefined) { return; }
-	let callees = TypeDeducer.deduceTypes(call.expression).filter(t => t.id === TypeCarrier.Type.Function && t.node);
+	let callees = call.types.filter(t => t.id === TypeCarrier.Type.Function && t.node);
 	if(!callees.length) { return ; }
 	callees = callees.map(t => t.node);
 	const activeParameter = computeActiveParameter(call, offset);
@@ -357,7 +356,7 @@ connection.onCompletion((info) => {
 
 		Analyzer.analyze(ast);
 		const node = Ast.findInnermostNode(ast, offset - 1, ts.SyntaxKind.PropertyAccessExpression);
-		const expressionTypes = TypeDeducer.deduceTypes(node.name.escapedText == "" ? node.expression : node);
+		const expressionTypes = node.name.escapedText == "" ? node.expression.types : node.types;
 
 		for(const type of expressionTypes) {
 			if(type.id === TypeCarrier.Type.Number) {
@@ -391,7 +390,7 @@ connection.onCompletion((info) => {
 			case ts.SyntaxKind.Identifier: {
 				if(node.parent.kind === ts.SyntaxKind.PropertyAccessExpression) {
 
-					const expressionTypes = TypeDeducer.deduceTypes(node.parent.expression);
+					const expressionTypes = node.parent.expression.types;
 
 					for(const type of expressionTypes) {
 						if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty('value')) {
@@ -488,6 +487,7 @@ connection.onDidChangeTextDocument((params) => {
 		return; 
 	}
 
+	// TODO: remove temporary try catch;
 	try {
 		Analyzer.analyze(ast);
 		provideAnalyzeDiagnostics(ast);
