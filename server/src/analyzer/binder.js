@@ -2,7 +2,7 @@ const Ast = require('../ast/ast');
 const Symbol = require('../utility/symbol');
 const SymbolTable = require('../utility/symbol_table');
 const TypeCarrier = require('../utility/type_carrier');
-const FunctionAnalyzer = require('./function-analyzer');
+// const FunctionAnalyzer = require('./function-analyzer');
 
 // ----------------------------------------------------------------------------
 
@@ -120,8 +120,12 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (no
  */
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] = (node, body) => {
     declareFunction(node, body);
+    node._original = node;
+    node.freeVariables = new Set();
+    node.typeVariables = new Set();
+    declareParameters(node);
     Binder.bindFunctionScopedDeclarations(node.body);
-    FunctionAnalyzer.analyze(node);
+    // FunctionAnalyzer.analyze(node);
 };
 
 /**
@@ -141,8 +145,12 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = (node,
  */
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] = (node, body) => {
+    node._original = node;
+    node.freeVariables = new Set();
+    node.typeVariables = new Set();
+    declareParameters(node);
     Binder.bindFunctionScopedDeclarations(node.body);
-    FunctionAnalyzer.analyze(node);
+    // FunctionAnalyzer.analyze(node);
 }
 
 /**
@@ -189,7 +197,7 @@ bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.Block] = (node, block) => {
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] =
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] =
-bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.Block] = 
+// bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.Block] = 
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] =
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForStatement] =
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForOfStatement] =
@@ -230,7 +238,7 @@ function declareImportSpecifier(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined})); // TODO: Fixme
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Any})); // TODO: Fixme
 
 }
 
@@ -249,7 +257,7 @@ function declareNamespaceImport(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));    // TODO: Fixme
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Any}));    // TODO: Fixme
 
 }
 
@@ -379,6 +387,39 @@ function bindBindingPatternDeclarations(node, declareSymbol) {
     };
 
     ts.forEachChild(node, bindBindingPatternDeclarationsInternal);
+
+}
+
+//-----------------------------------------------------------------------------
+
+/**
+ * @param {ts.Node} func
+ */
+function declareParameters(func) {
+
+    console.assert(func.parameters);
+
+    for(const node of func.parameters) {
+        node.symbols = SymbolTable.create();
+        if(node.name.kind === ts.SyntaxKind.Identifier) {
+            const name = node.name.text;
+            // const start = node.name.getStart();
+            // const end = node.name.end;
+            const symbol = Symbol.createDeclaration(name, node);
+            const type = TypeCarrier.createTypeVariable();
+            Ast.addTypeCarrier(node, TypeCarrier.create(symbol, [type]));
+            func.typeVariables.add({symbol, type});
+            node.symbols.insert(symbol);
+        } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
+            // visitDestructuringDeclerations(node.name, (name, start, end) => {
+            //     const symbol = Symbol.create(name, start, end);
+            //     Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+            //     node.symbols.insert(symbol);
+            // });
+        } else {
+            console.assert(false);
+        }
+    }
 
 }
 

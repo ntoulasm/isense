@@ -31,50 +31,30 @@ x;
 
 x;
 
-hoisted();
-x;
+//	This is not permited in JS
+// hoisted();
+// x;
 
-function hoisted() {
-	x;
-	x = 50;
+// function hoisted() {
+// 	x;
+// 	x = 50;
+// }
+
+let global = {};
+let glob = 5;
+
+function foo() {
+	if(true) {
+		if(2) {
+			return;
+		}
+		global.x = 5;
+	} else {
+		global.y = 2;
+	}
+	global.z = 5;
+	return 10;
 }
 
-// let global = {};
-// let glob = 5;
-
-// function zalada() {
-// 	if(true) {
-// 		if(2) {
-// 			return;
-// 		}
-// 		global.x = 5;
-// 	} else {
-// 		global.y = 2;
-// 	}
-// 	global.z = 5;
-// 	return 10;
-// }
-
-// zalada();
-// global;
-
-// if(true) {
-// 	x = 5;
-// 	glob = 2;
-// 	global.z = 5;
-// } else if(false) {
-// 	global.z = 2;
-// 	glob = 12
-// 	x = 10;
-// } else {
-// 	global.aaa = 5;
-// 	glob = 15;
-// 	x = 15;
-// };
-
-// global.a = 100;
-// glob;
-
-// {
-// 	glob = 10000000;
-// }
+foo();
+global;

@@ -85,7 +85,13 @@ me.computeSignature = function computeSignature(node, typeCarrier, typeSeparator
 
 	for(const type of typeCarrier.getTypes()) {
 		if(firstTime) { 
-			const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
+			let name;
+			if(symbol.name[0] == "@" && !Number.isNaN(symbol.name[1])) {
+				name = symbol.name.split('.')[1];
+			} else {
+				name = symbol.name;
+			}
+			// const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
 			signature += `${name}: `;
 			firstTime = false;
 		} else {

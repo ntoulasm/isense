@@ -356,6 +356,7 @@ connection.onCompletion((info) => {
 
 		Analyzer.analyze(ast);
 		const node = Ast.findInnermostNode(ast, offset - 1, ts.SyntaxKind.PropertyAccessExpression);
+		if(!node) { return ; }
 		const expressionTypes = node.name.escapedText == "" ? node.expression.types : node.types;
 
 		for(const type of expressionTypes) {

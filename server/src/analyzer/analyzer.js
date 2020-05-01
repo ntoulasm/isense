@@ -20,6 +20,7 @@ const ts = require('typescript');
 const Analyzer = {};
 
 const callStack = Stack.create();
+const functionStack = Stack.create();
 const noOp = () => {};
 
 /**
@@ -37,6 +38,11 @@ Analyzer.analyze = ast => {
 	 * @param {ts.SourceFile} node 
 	 */
 	function visitDeclarations(node) {
+
+        if(node.parent && node.parent.unreachable) {
+            node.unreachable = true;
+        }
+
 		switch(node.kind) {
 			case ts.SyntaxKind.ImportDeclaration: {
                 break;
@@ -90,6 +96,7 @@ Analyzer.analyze = ast => {
                     break;
                 }
                 const symbol = Ast.lookUp(node, node.getText());
+                updateFreeVariables(node, symbol);
                 if(symbol === undefined) { 
                     node.types = [TypeCarrier.createAny()]; 
                     break;
@@ -154,6 +161,8 @@ Analyzer.analyze = ast => {
                         }
                     } else if (lvalue.kind === ts.SyntaxKind.PropertyAccessExpression) {
 
+                        node.types = [];
+
                         const leftTypes = lvalue.expression.types;
                         const propertyName = lvalue.name.text;
                         const rightTypes = node.right.types;
@@ -163,6 +172,7 @@ Analyzer.analyze = ast => {
                         for(const type of leftTypes) {
                             if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty('value')) {
                                 setProperty(node, type, propertyName, node.right, rightTypes);
+                                node.types.push(...rightTypes);
                             }
                         }
 
@@ -269,8 +279,24 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.FunctionDeclaration:
             case ts.SyntaxKind.FunctionExpression: 
             case ts.SyntaxKind.ArrowFunction: {
+                functionStack.push(node);
                 node.types = [TypeCarrier.createFunction(node)];
                 ts.forEachChild(node, visitDeclarations);
+                functionStack.pop(node);
+                if(!node.body) { return; }
+                const innerTypeCarriers = Ast.findAllTypeCarriers(node.body)
+                node.typeCarriers = innerTypeCarriers.filter(t => t.getSymbol().name.startsWith('@typeVariable'));
+                const solutions = {};
+                for(const {symbol, type} of node.typeVariables) {
+                    const solution = Ast.findLastTypeCarrier(node.body, type.value);
+                    solutions[type.value.name] = solution ? solution.getTypes() : TypeCarrier.createAny();
+                    const typeCarrier = TypeCarrier.create(
+                        symbol, 
+                        solution ? solution.getTypes() : TypeCarrier.createAny()
+                    );
+                    Ast.addTypeCarrier(symbol.declaration, typeCarrier);
+                }
+                replaceTypeVariables(node, solutions);
                 break;
             }
 			case ts.SyntaxKind.Block: {
@@ -294,7 +320,11 @@ Analyzer.analyze = ast => {
                 const callee = !callees.length ? undefined : callees[0];
 
                 // TODO: somehow pick callee
-                if(callee !== undefined) {
+                if(callee === undefined) {
+                    node.types = [TypeCarrier.createAny()];
+                } else if(!callee.body) {
+                    node.types = [TypeCarrier.createUndefined()];
+                } else {
                     call(node, callee);
                 }
 
@@ -379,6 +409,9 @@ Analyzer.analyze = ast => {
                     const returnTypes = node.expression.types || [TypeCarrier.createAny()];
                     const call = callStack.top();
                     call.types.push(...returnTypes);
+                }
+                if(!node.unreachable) {
+                    markUnreachableStatements(Ast.findRightSiblings(node));
                 }
                 break;
             }
@@ -472,6 +505,8 @@ function mergeIfStatementTypeCarriers(node) {
     const nextStatement = Ast.findNextStatementOfBlock(node);
     if(nextStatement) {
         nextStatement.typeCarriers = carriers;
+    } else {
+        node.typeCarriers = carriers;
     }
 
 }
@@ -568,7 +603,6 @@ function copyFreeVariablesTypeCarriersToCallee(callee, call) {
         const closestTypeCarrier = Ast.findClosestTypeCarrier(call, fv);
         console.assert(closestTypeCarrier !== undefined, 'addFreeVariablesTypeCarriers: Failed to find type carrier for free variable');
         const types = closestTypeCarrier.getTypes();
-        // TODO: think more about undefined.
         assign(callee.parent, fv, undefined, types);
         copyPropertiesTypeCarriersIfObject(call, types, callee.parent);
         for(const t of types) {
@@ -783,7 +817,7 @@ function setProperty(node, object, name, rvalue, types) {
 const binaryExpressionFunctions = {};
 const addFunctions = {};
 
-addFunctions[TypeCarrier.Type.Number] = (left, right) => {
+addFunctions[TypeCarrier.Type.Number] = (left, right, node) => {
 
     const type = {};
 
@@ -847,6 +881,14 @@ addFunctions[TypeCarrier.Type.Number] = (left, right) => {
                 TypeCarrier.createStringWithoutValue()
             ];
         }
+        case TypeCarrier.Type.TypeVariable: {
+            const types = [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(right.value, types));
+            return types;
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -857,7 +899,7 @@ addFunctions[TypeCarrier.Type.Number] = (left, right) => {
 
 };
 
-addFunctions[TypeCarrier.Type.String] = (left, right) => {
+addFunctions[TypeCarrier.Type.String] = (left, right, node) => {
 
     const type = {};
 
@@ -923,6 +965,15 @@ addFunctions[TypeCarrier.Type.String] = (left, right) => {
             type.id = TypeCarrier.Type.String;
             break;
         }
+        case TypeCarrier.Type.TypeVariable: {
+            const types = [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(right.value, types));
+            type.id = TypeCarrier.Type.String;
+            break;
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -933,7 +984,7 @@ addFunctions[TypeCarrier.Type.String] = (left, right) => {
 
 };
 
-addFunctions[TypeCarrier.Type.Boolean] = (left, right) => {
+addFunctions[TypeCarrier.Type.Boolean] = (left, right, node) => {
 
     const type = {};
 
@@ -997,7 +1048,15 @@ addFunctions[TypeCarrier.Type.Boolean] = (left, right) => {
             return [
                 TypeCarrier.createNumberWithoutValue(),
                 TypeCarrier.createStringWithoutValue()
-            ]
+            ];
+        }
+        case TypeCarrier.Type.TypeVariable: {
+            const types = [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(right.value, types));
+            return types;
         }
         default: {
             console.assert(false, "Unknown Type");
@@ -1017,7 +1076,7 @@ addFunctions[TypeCarrier.Type.Array] = (left, right) => {
     return [type];
 };
 
-addFunctions[TypeCarrier.Type.Object] = (left, right) => {
+addFunctions[TypeCarrier.Type.Object] = (left, right, node) => {
 
     const type = {};
 
@@ -1062,6 +1121,14 @@ addFunctions[TypeCarrier.Type.Object] = (left, right) => {
         case TypeCarrier.Type.Any: {
             type.id = TypeCarrier.Type.String;
         }
+        case TypeCarrier.Type.TypeVariable: {
+            type.id = TypeCarrier.Type.String;
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(right.value, [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ]));
+            break;
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -1073,7 +1140,7 @@ addFunctions[TypeCarrier.Type.Object] = (left, right) => {
 };
 
 addFunctions[TypeCarrier.Type.Function] = 
-addFunctions[TypeCarrier.Type.Class] = (left, right) => {
+addFunctions[TypeCarrier.Type.Class] = (left, right, node) => {
 
     const type = {};
 
@@ -1110,6 +1177,14 @@ addFunctions[TypeCarrier.Type.Class] = (left, right) => {
         case TypeCarrier.Type.Any: {
             type.id = TypeCarrier.Type.String;
         }
+        case TypeCarrier.Type.TypeVariable: {
+            type.id = TypeCarrier.Type.String;
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(right.value, [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ]));
+            break;
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -1120,7 +1195,7 @@ addFunctions[TypeCarrier.Type.Class] = (left, right) => {
 
 };
 
-addFunctions[TypeCarrier.Type.Null] = (left, right) => {
+addFunctions[TypeCarrier.Type.Null] = (left, right, node) => {
 
     const type = {};
 
@@ -1167,6 +1242,14 @@ addFunctions[TypeCarrier.Type.Null] = (left, right) => {
                 TypeCarrier.createStringWithoutValue()
             ];
         }
+        case TypeCarrier.Type.TypeVariable: {
+            const types = [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(right.value, types));
+            return types;
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -1177,7 +1260,7 @@ addFunctions[TypeCarrier.Type.Null] = (left, right) => {
 
 };
 
-addFunctions[TypeCarrier.Type.Undefined] = (left, right) => {
+addFunctions[TypeCarrier.Type.Undefined] = (left, right, node) => {
 
     const type = {};
 
@@ -1221,6 +1304,16 @@ addFunctions[TypeCarrier.Type.Undefined] = (left, right) => {
                 TypeCarrier.createStringWithoutValue()
             ];
         }
+        case TypeCarrier.Type.TypeVariable: {
+            const types = [
+                TypeCarrier.createNumberWithoutValue(),
+                TypeCarrier.createStringWithoutValue()
+            ];
+            if(right.id === TypeCarrier.Type.TypeVariable) {
+                Ast.addTypeCarrierToExpression(node, TypeCarrier.create(right.value, types));
+            }
+            return types;
+        }
         default: {
             console.assert(false, "Unknown Type");
             break;
@@ -1231,11 +1324,27 @@ addFunctions[TypeCarrier.Type.Undefined] = (left, right) => {
 
 };
 
-addFunctions[TypeCarrier.Type.Any] = (left, right) => {
-    return [
+addFunctions[TypeCarrier.Type.Any] = (left, right, node) => {
+    const types = [
         TypeCarrier.createNumberWithoutValue(),
         TypeCarrier.createStringWithoutValue()
     ];
+    if(right.id === TypeCarrier.Type.TypeVariable) {
+        Ast.addTypeCarrierToExpression(node, TypeCarrier.create(right.value, types));
+    }
+    return types;
+};
+
+addFunctions[TypeCarrier.Type.TypeVariable] = (left, right, node) => {
+    const types = [
+        TypeCarrier.createNumberWithoutValue(),
+        TypeCarrier.createStringWithoutValue()
+    ];
+    Ast.addTypeCarrierToExpression(node, TypeCarrier.create(left.value, types));
+    if(right.id === TypeCarrier.Type.TypeVariable) {
+        Ast.addTypeCarrierToExpression(node, TypeCarrier.create(right.value, types));
+    }
+    return types;
 };
 
 /**
@@ -1249,7 +1358,7 @@ binaryExpressionFunctions[ts.SyntaxKind.PlusToken] = node => {
     for(const leftType of leftTypes) {
         for(const rightType of rightTypes) {
             console.assert(addFunctions.hasOwnProperty(leftType.id));
-            node.types.push(...addFunctions[leftType.id](leftType, rightType));
+            node.types.push(...addFunctions[leftType.id](leftType, rightType, node));
         }
     }
 
@@ -1281,11 +1390,23 @@ binaryExpressionFunctions[ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken] 
     for(const leftType of leftTypes) {
         for(const rightType of rightTypes) {
             
-            const left = TypeCaster.toNumber(leftType);
-            const right = TypeCaster.toNumber(rightType);
+            let betweenTypeVariables = false;
             const type = {};
             type.id = TypeCarrier.Type.Number;
-        
+
+            if(leftType.id === TypeCarrier.Type.TypeVariable) {
+                Ast.addTypeCarrierToExpression(node, TypeCarrier.create(leftType.value, [type]));
+                betweenTypeVariables = true;
+            }
+            if(rightType.id === TypeCarrier.Type.TypeVariable) {
+                Ast.addTypeCarrierToExpression(node, TypeCarrier.create(rightType.value, [type]));
+                betweenTypeVariables = true;
+            } 
+
+            if(betweenTypeVariables) { continue; }
+
+            const left = TypeCaster.toNumber(leftType);
+            const right = TypeCaster.toNumber(rightType);
             if(left.hasOwnProperty("value") && right.hasOwnProperty("value")) {
                 type.value = eval(left.value + op + right.value);
             }
@@ -1501,6 +1622,9 @@ prefixUnaryExpressionFunctions[ts.SyntaxKind.PlusToken] = operandType => {
         case TypeCarrier.Type.Any: {
             break;
         }
+        case TypeCarrier.Type.TypeVariable: {
+            break;
+        }
         default: {
             console.assert(false, "Unknown type");
             break;
@@ -1511,7 +1635,7 @@ prefixUnaryExpressionFunctions[ts.SyntaxKind.PlusToken] = operandType => {
 
 };
 
-prefixUnaryExpressionFunctions[ts.SyntaxKind.MinusToken] = operandType => {
+prefixUnaryExpressionFunctions[ts.SyntaxKind.MinusToken] = (operandType, node) => {
     
     const type = {};
     type.id = TypeCarrier.Type.Number;
@@ -1542,6 +1666,10 @@ prefixUnaryExpressionFunctions[ts.SyntaxKind.MinusToken] = operandType => {
             break;
         }
         case TypeCarrier.Type.Any: {
+            break;
+        }
+        case TypeCarrier.Type.TypeVariable: {
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(operandType.value, TypeCarrier.createNumberWithoutValue()));
             break;
         }
         default: {
@@ -1587,6 +1715,10 @@ prefixUnaryExpressionFunctions[ts.SyntaxKind.PlusPlusToken] = operandType => {
         case TypeCarrier.Type.Any: {
             break;
         }
+        case TypeCarrier.Type.TypeVariable: {
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(operandType.value, TypeCarrier.createNumberWithoutValue()));
+            break;
+        }
         default: {
             console.assert(false, "Unknown type");
             break;
@@ -1597,7 +1729,7 @@ prefixUnaryExpressionFunctions[ts.SyntaxKind.PlusPlusToken] = operandType => {
 
 };
 
-prefixUnaryExpressionFunctions[ts.SyntaxKind.MinusMinusToken] = operandType => {
+prefixUnaryExpressionFunctions[ts.SyntaxKind.MinusMinusToken] = (operandType, node) => {
 
     const type = {};
     type.id = TypeCarrier.Type.Number;
@@ -1628,6 +1760,10 @@ prefixUnaryExpressionFunctions[ts.SyntaxKind.MinusMinusToken] = operandType => {
             break;
         }
         case TypeCarrier.Type.Any: {
+            break;
+        }
+        case TypeCarrier.Type.TypeVariable: {
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(operandType.value, TypeCarrier.createNumberWithoutValue()));
             break;
         }
         default: {
@@ -1673,6 +1809,9 @@ prefixUnaryExpressionFunctions[ts.SyntaxKind.ExclamationToken] = operandType => 
         case TypeCarrier.Type.Any: {
             break;
         }
+        case TypeCarrier.Type.TypeVariable: {
+            break;
+        }
         default: {
             console.assert(false, "Unknown type");
             break;
@@ -1683,7 +1822,7 @@ prefixUnaryExpressionFunctions[ts.SyntaxKind.ExclamationToken] = operandType => 
 
 };
 
-prefixUnaryExpressionFunctions[ts.SyntaxKind.TildeToken] = operandType => {
+prefixUnaryExpressionFunctions[ts.SyntaxKind.TildeToken] = (operandType, node) => {
 
     const type = {};
     type.id = TypeCarrier.Type.Number;
@@ -1713,6 +1852,10 @@ prefixUnaryExpressionFunctions[ts.SyntaxKind.TildeToken] = operandType => {
         case TypeCarrier.Type.Any: {
             break;
         }
+        case TypeCarrier.Type.TypeVariable: {
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(operandType.value, TypeCarrier.createNumberWithoutValue()));
+            break;
+        }
         default: {
             console.assert(false, "Unknown type");
             break;
@@ -1736,7 +1879,7 @@ function analyzePrefixUnaryExpression(node) {
             prefixUnaryExpressionFunctions.hasOwnProperty(node.operator), 
             "Prefix unary operator " + node.operator + " not implemented yet"
         );
-        node.types.push(prefixUnaryExpressionFunctions[node.operator](operandType));
+        node.types.push(prefixUnaryExpressionFunctions[node.operator](operandType, node));
     }
 
 }
@@ -1783,6 +1926,9 @@ function analyzePostfixUnaryExpression(node) {
             }
             case TypeCarrier.Type.Any: {
                 break;
+            }
+            case TypeCarrier.Type.TypeVariable: {
+                Ast.addTypeCarrierToExpression(node, TypeCarrier.create(operandType.value, TypeCarrier.createNumberWithoutValue()));
             }
             default: {
                 console.assert(false, "Unknown Type");
@@ -1842,6 +1988,9 @@ function analyzeTypeOfExpression(node) {
                     TypeCarrier.createString('null'),
                 ]);
             }
+            case TypeCarrier.Type.TypeVariable: {
+                break;
+            }
             default: {
                 console.assert(false, "Unknown type");
                 break;
@@ -1874,6 +2023,12 @@ function analyzePropertyAccessExpression(node) {
                     node.types.push(...Ast.findClosestTypeCarrier(node, property).getTypes());
                 } 
             }
+        } else if(type.id === TypeCarrier.Type.TypeVariable) {
+            const types = [
+                { id: TypeCarrier.Type.Array },
+                { id: TypeCarrier.Type.Object }
+            ];
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(type.value, types));
         }
     }
 
@@ -1904,8 +2059,14 @@ function analyzeElementAccessExpression(node) {
                         node.types.push({ id: TypeCarrier.Type.Undefined });
                         typesContainUndefined = true;
                     }
+                } else if(expressionType.id === TypeCarrier.Type.TypeVariable) {
+                    const types = [
+                        { id: TypeCarrier.Type.Array },
+                        { id: TypeCarrier.Type.Object }
+                    ];
+                    Ast.addTypeCarrierToExpression(node, TypeCarrier.create(expressionType.value, types));
                 }
-            }
+            } 
         }
     
     }
@@ -1913,5 +2074,56 @@ function analyzeElementAccessExpression(node) {
 }
 
 // ----------------------------------------------------------------------------
+
+/**
+ * @param {ts.Node} node
+ * @param {isense.symbol} symbol
+ */
+function updateFreeVariables(node, symbol) {
+    if(functionStack.isEmpty()) { return ; }
+    const func = functionStack.top();
+    if(!Ast.isDeclaredInFunction(node, symbol, func)) {
+        func.freeVariables.add(symbol);
+    }
+}
+
+/**
+ * @param {Array<ts.Node>} stmts
+ */
+function markUnreachableStatements(stmts) {
+
+    if(!stmts.length) { return ; }
+    
+    for(const stmt of stmts) {
+        stmt.unreachable = true;
+        Ast.addAnalyzeDiagnostic(
+            stmt.getSourceFile(), 
+            AnalyzeDiagnostic.create(stmt, DiagnosticMessages.unreachableStatement)
+        );
+    }
+
+}
+
+// ----------------------------------------------------------------------------
+
+function replaceTypeVariables(node, solutions) {
+
+    const replaceTypeVariablesInternal = (node) => {
+        if(node.hasOwnProperty('typeCarriers')) {
+            for(const tc of node.typeCarriers) {
+                for(const t of tc.getTypes()) {
+                    if(t.id === TypeCarrier.Type.TypeVariable) {
+                        Ast.addTypeCarrierToExpression(node, TypeCarrier.create(tc.getSymbol(), solutions[t.value.name]));
+                    }
+                }
+            }
+        }
+    
+        ts.forEachChild(node, replaceTypeVariablesInternal);
+    }
+
+    ts.forEachChild(node, replaceTypeVariablesInternal);
+
+}
 
 module.exports = Analyzer;
