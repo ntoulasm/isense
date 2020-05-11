@@ -1,4 +1,4 @@
-const SymbolTable = require('./symbol_table');
+const SymbolTable = require('./symbol-table');
 const Utility = require('./utility');
 const Symbol = require('./symbol');
 

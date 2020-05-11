@@ -1,5 +1,5 @@
 const Ast = require('../ast/ast');
-const TypeCarrier = require('./type_carrier');
+const TypeCarrier = require('./type-carrier');
 
 const me = {};
 

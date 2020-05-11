@@ -1,7 +1,7 @@
 const Ast = require('../ast/ast');
 const Symbol = require('../utility/symbol');
-const SymbolTable = require('../utility/symbol_table');
-const TypeCarrier = require('../utility/type_carrier');
+const SymbolTable = require('../utility/symbol-table');
+const TypeCarrier = require('../utility/type-carrier');
 // const FunctionAnalyzer = require('./function-analyzer');
 
 // ----------------------------------------------------------------------------

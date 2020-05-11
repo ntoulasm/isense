@@ -1,8 +1,8 @@
 const Symbol = require('../utility/symbol');
-const SymbolTable = require('../utility/symbol_table');
-const TypeCarrier = require('../utility/type_carrier');
+const SymbolTable = require('../utility/symbol-table');
+const TypeCarrier = require('../utility/type-carrier');
 const Ast = require('../ast/ast');
-const AnalyzeDiagnostic = require('./analyze_diagnostic');
+const AnalyzeDiagnostic = require('./analyze-diagnostic');
 const DiagnosticMessages = require('./diagnostic-messages');
 
 // ----------------------------------------------------------------------------

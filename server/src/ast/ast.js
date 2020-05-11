@@ -1,4 +1,4 @@
-const TypeCarrier = require('../utility/type_carrier');
+const TypeCarrier = require('../utility/type-carrier');
 const Utility = require('../utility/utility');
 
 // ----------------------------------------------------------------------------
