@@ -6,7 +6,6 @@ const Stack = require('../utility/stack');
 const TypeCarrier = require('../utility/type-carrier');
 const AnalyzeDiagnostic = require('./analyze-diagnostic');
 const TypeCaster = require('../type-caster/type-caster');
-const FunctionAnalyzer = require('./function-analyzer');
 const Binder = require('./binder');
 const DiagnosticMessages = require('./diagnostic-messages');
 
@@ -214,8 +213,6 @@ Analyzer.analyze = ast => {
             }
 			case ts.SyntaxKind.Constructor: {
 
-                FunctionAnalyzer.analyze(node);
-
 				const name = "constructor";
 				const start = node.getStart();
                 const end = node.end;
@@ -259,8 +256,6 @@ Analyzer.analyze = ast => {
 			case ts.SyntaxKind.MethodDeclaration: {
 
                 node.types = [TypeCarrier.createFunction(node)];
-
-                FunctionAnalyzer.analyze(node);
 
                 if(node.parent.kind === ts.SyntaxKind.ClassDeclaration || node.parent.kind === ts.SyntaxKind.ClassExpression) {
                     const name = node.name.text;
@@ -663,7 +658,6 @@ function createEmptyConstructor(classNode) {
     const emptyConstructor = ts.createConstructor(undefined, undefined, [], ts.createBlock());
     emptyConstructor.parent = classNode;
     emptyConstructor._original = emptyConstructor;
-    FunctionAnalyzer.analyze(emptyConstructor);
     return emptyConstructor;
 }
 

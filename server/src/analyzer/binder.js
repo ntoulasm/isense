@@ -2,7 +2,6 @@ const Ast = require('../ast/ast');
 const Symbol = require('../utility/symbol');
 const SymbolTable = require('../utility/symbol-table');
 const TypeCarrier = require('../utility/type-carrier');
-// const FunctionAnalyzer = require('./function-analyzer');
 
 // ----------------------------------------------------------------------------
 
@@ -125,7 +124,6 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] = (no
     node.typeVariables = new Set();
     declareParameters(node);
     Binder.bindFunctionScopedDeclarations(node.body);
-    // FunctionAnalyzer.analyze(node);
 };
 
 /**
@@ -150,7 +148,6 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] = (node, bo
     node.typeVariables = new Set();
     declareParameters(node);
     Binder.bindFunctionScopedDeclarations(node.body);
-    // FunctionAnalyzer.analyze(node);
 }
 
 /**
