@@ -1,4 +1,4 @@
-const TypeCarrier = require('../utility/type-carrier');
+const TypeBinder = require('../utility/type-binder');
 const Utility = require('../utility/utility');
 
 // ----------------------------------------------------------------------------
@@ -254,25 +254,25 @@ Ast.findAllSymbols = node => {
 
 /**
  * @param {ts.Node} node
- * @param {object} typeCarrier
+ * @param {object} binder
  */
-Ast.addTypeCarrier = (node, typeCarrier) => {
-    console.assert(node.hasOwnProperty("typeCarriers"), "Trying to add typeCarrier to node without property typeCarriers");
-    typeCarrier.parent = node;
-    for(const c of node.typeCarriers) {
-        if(c.getSymbol() === typeCarrier.getSymbol()) {
-            c.setTypes(typeCarrier.getTypes());
+Ast.addTypeBinder = (node, binder) => {
+    console.assert(node.hasOwnProperty('binders'), "Trying to add binder to node without 'binders' property");
+    binder.parent = node;
+    for(const c of node.binders) {
+        if(c.getSymbol() === binder.getSymbol()) {
+            c.setTypes(binder.getTypes());
             return;
         }
     }
-    node.typeCarriers.push(typeCarrier);
+    node.binders.push(binder);
 };
 
 /**
  * @param {ts.Node} node
- * @param {isense.typeCarrier} typeCarrier
+ * @param {isense.typeBinder} binder
  */
-Ast.addTypeCarrierToClosestStatement = (node, typeCarrier) => { 
+Ast.addTypeBinderToClosestStatement = (node, binder) => { 
     
     const statements = [
         ts.SyntaxKind.VariableStatement,
@@ -293,19 +293,19 @@ Ast.addTypeCarrierToClosestStatement = (node, typeCarrier) => {
         node = node.parent;
     }
 
-    Ast.addTypeCarrier(node, typeCarrier);
+    Ast.addTypeBinder(node, binder);
 
 };
 
 /**
  * @param {ts.Node} node
- * @param {isense.typeCarrier} typeCarrier
+ * @param {isense.typeBinder} binder
  */
-Ast.addTypeCarrierToExpression = (node, typeCarrier) => {
+Ast.addTypeBinderToExpression = (node, binder) => {
     Ast.findBinaryExpressionAncestors(node).forEach(node => {
-        Ast.addTypeCarrier(node, TypeCarrier.copyTypeCarrier(typeCarrier));
+        Ast.addTypeBinder(node, TypeBinder.copy(binder));
     });
-    Ast.addTypeCarrierToClosestStatement(node, TypeCarrier.copyTypeCarrier(typeCarrier));
+    Ast.addTypeBinderToClosestStatement(node, TypeBinder.copy(binder));
 };
 
 /**
@@ -326,18 +326,18 @@ Ast.findBinaryExpressionAncestors = node => {
  * @param {ts.Node} node
  * @param {object} symbol
  */
-Ast.findClosestTypeCarrier = (node, symbol) => {
-    if(!node.hasOwnProperty("typeCarriers")) {
+Ast.findClosestTypeBinder = (node, symbol) => {
+    if(!node.hasOwnProperty("binders")) {
         const previousNode = Ast.findPreviousNode(node);
-        return previousNode ? Ast.findClosestTypeCarrier(previousNode, symbol) : undefined;
+        return previousNode ? Ast.findClosestTypeBinder(previousNode, symbol) : undefined;
     }
-    for(const typeCarrier of node.typeCarriers) {
-        if(typeCarrier.getSymbol() === symbol) {
-            return typeCarrier;
+    for(const binder of node.binders) {
+        if(binder.getSymbol() === symbol) {
+            return binder;
         }
     }
     const previousNode = Ast.findPreviousNode(node);
-    return previousNode ? Ast.findClosestTypeCarrier(previousNode, symbol) : undefined;
+    return previousNode ? Ast.findClosestTypeBinder(previousNode, symbol) : undefined;
 };
 
 /**
@@ -351,23 +351,23 @@ Ast.findPreviousNode = node => {
 /**
  * @param {ts.Node} node
  */
-Ast.findAllTypeCarriers = node => {
+Ast.findAllTypeBinders = node => {
 
-    const typeCarriers = [];
+    const binders = [];
 
-    function findAllTypeCarriers(node) {
-        console.assert(node.hasOwnProperty("typeCarriers"));
-        const symbols = typeCarriers.map(c => { return c.getSymbol(); });
-        for(const newCarrier of node.typeCarriers) {
-            const index = symbols.indexOf(newCarrier.getSymbol());
-            if(index !== -1) { typeCarriers.splice(index, 1); }
-            typeCarriers.push(newCarrier);
+    function findAllTypeBindersInternal(node) {
+        console.assert(node.hasOwnProperty("binders"));
+        const symbols = binders.map(c => { return c.getSymbol(); });
+        for(const binder of node.binders) {
+            const index = symbols.indexOf(binder.getSymbol());
+            if(index !== -1) { binders.splice(index, 1); }
+            binders.push(binder);
         }
-        ts.forEachChild(node, findAllTypeCarriers);
+        ts.forEachChild(node, findAllTypeBindersInternal);
     }
-    findAllTypeCarriers(node);
+    findAllTypeBindersInternal(node);
 
-    return typeCarriers;
+    return binders;
 
 };
 
@@ -781,29 +781,29 @@ Ast.findNextStatementOfBlock = node => {
     return Ast.findRightSibling(node);
 };
 
-/**
+/** TODO: unused, use or remove
  * @param {ts.Node} node
  * @param {isense.symbol} symbol
  */
-Ast.findLastTypeCarrier = (node, symbol) => {
+Ast.findLastTypeBinder = (node, symbol) => {
     const lastStatement = Ast.findLastStatement(node);
     if(lastStatement) {
-        return Ast.findClosestTypeCarrier(lastStatement, symbol);
+        return Ast.findClosestTypeBinder(lastStatement, symbol);
     }
 };
 
 /**
  * @param {ts.Block} node
  */
-Ast.copyTypeCarriersFromBlockToNextStatement = node => {
+Ast.copyTypeBindersFromBlockToNextStatement = node => {
 
     if(ts.isFunctionLike(node.parent)) { return ; }
 
-    const blockTypeCarriers = Ast.findAllTypeCarriers(node);
+    const blockBinders = Ast.findAllTypeBinders(node);
     const nextStatement = Ast.findNextStatementOfBlock(node);
     
-    nextStatement && (nextStatement.typeCarriers = blockTypeCarriers);
-    node.blockTypeCarriers = blockTypeCarriers;
+    nextStatement && (nextStatement.binders = blockBinders);
+    node.blockBinders = blockBinders;
 
 };
 

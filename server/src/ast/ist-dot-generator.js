@@ -75,18 +75,18 @@ me.generate = (root, outputFileName) => {
             ++dotId;
         }
         
-        if(node.hasOwnProperty('typeCarriers') && node.typeCarriers.length) {
-            append(`node${dotId}[shape = "record", label = "{ TYPECARRIERS | `);
-            append(node.typeCarriers.map(t => SignatureFinder.computeSignature(node, t, ' or ', false)).join(' | '));
+        if(node.hasOwnProperty('binders') && node.binders.length) {
+            append(`node${dotId}[shape = "record", label = "{ TYPEBINDERS | `);
+            append(node.binders.map(t => SignatureFinder.computeSignature(node, t, ' or ', false)).join(' | '));
             append(`}"]\n`);
             append(`node${node.dotId} -> node${dotId}\n`);
             ++dotId;
 
         }
 
-        if(node.hasOwnProperty('blockTypeCarriers') && node.blockTypeCarriers.length) {
-            append(`node${dotId}[shape = "record", label = "{ BLOCKTYPECARRIERS | `);
-            append(node.blockTypeCarriers.map(t => SignatureFinder.computeSignature(node, t, ' or ', false)).join(' | '));
+        if(node.hasOwnProperty('blockBinders') && node.blockBinders.length) {
+            append(`node${dotId}[shape = "record", label = "{ BLOCKTYPEBINDERS | `);
+            append(node.blockBinders.map(t => SignatureFinder.computeSignature(node, t, ' or ', false)).join(' | '));
             append(`}"]\n`);
             append(`node${node.dotId} -> node${dotId}\n`);
             ++dotId;

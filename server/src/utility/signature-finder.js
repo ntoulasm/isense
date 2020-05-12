@@ -1,6 +1,6 @@
 const Ast = require('../ast/ast');
 const TypeInfo = require('../utility/type-info');
-const TypeCarrier = require('./type-carrier');
+const TypeBinder = require('./type-binder');
 
 const me = {};
 
@@ -19,15 +19,15 @@ me.typeToString = type => {
 			return type.hasOwnProperty('constructorName') ? type.constructorName : 'Object';
 		}
 		default: {
-			return Object.keys(TypeCarrier.Type)[type.type];
+			return Object.keys(TypeBinder.Type)[type.type];
 		}
 	}
 
 }
 
-me.computeSignature = function computeSignature(node, typeCarrier, typeSeparator = ' || ', computeValues = true) {
+me.computeSignature = function computeSignature(node, binder, typeSeparator = ' || ', computeValues = true) {
 
-	const symbol = typeCarrier.getSymbol();
+	const symbol = binder.getSymbol();
 	let firstTime = true;
 	let signature = symbol.isConst ? 'const ' : '';
 
@@ -58,7 +58,7 @@ me.computeSignature = function computeSignature(node, typeCarrier, typeSeparator
 					if(comma) { value += ',\n'; }
 					comma = true;
 					value += me.computeSpaces();
-					value += computeSignature(node, Ast.findClosestTypeCarrier(node, property));
+					value += computeSignature(node, Ast.findClosestTypeBinder(node, property));
 				}
 	
 				--objectNesting;
@@ -81,15 +81,9 @@ me.computeSignature = function computeSignature(node, typeCarrier, typeSeparator
 		}
 	}
 
-	for(const type of typeCarrier.getTypes()) {
+	for(const type of binder.getTypes()) {
 		if(firstTime) { 
-			let name;
-			if(symbol.name[0] == "@" && !Number.isNaN(symbol.name[1])) {
-				name = symbol.name.split('.')[1];
-			} else {
-				name = symbol.name;
-			}
-			// const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
+			const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
 			signature += `${name}: `;
 			firstTime = false;
 		} else {

@@ -1,5 +1,5 @@
 const TypeInfo = require('../utility/type-info');
-const TypeCarrier = require('../utility/type-carrier');
+const TypeBinder = require('../utility/type-binder');
 const Utility = require('../utility/utility');
 
 // ----------------------------------------------------------------------------

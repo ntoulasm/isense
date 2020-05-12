@@ -2,7 +2,7 @@ const Utility = require('./utility/utility');
 const Analyzer = require('./analyzer/analyzer');
 const Ast = require('./ast/ast');
 const TypeInfo = require('./utility/type-info');
-const TypeCarrier = require('./utility/type-carrier');
+const TypeBinder = require('./utility/type-binder');
 const SignatureFinder = require('./utility/signature-finder');
 const NumberMethods = require('./primitive-type-info/number-methods');
 const AstDotGenerator = require('./ast/ast-dot-generator');
@@ -184,12 +184,12 @@ connection.onHover(info => {
 					} 
 				}; 
 			}
-			const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
-			if(closestTypeCarrier === undefined) { return { contents: [] }; }
+			const closestBinder = Ast.findClosestTypeBinder(node, symbol);
+			if(closestBinder === undefined) { return { contents: [] }; }
 			return {
 				contents: {
 					language: "typescript",
-					value: SignatureFinder.computeSignature(node, closestTypeCarrier)
+					value: SignatureFinder.computeSignature(node, closestBinder)
 				}
 			};
 		}
@@ -245,11 +245,11 @@ const computeParametersSignature = (callee) => {
 			Ast.findLastParameter(callee),
 			parameterName
 		);
-		const closestTypeCarrier = symbol && Ast.findClosestTypeCarrier(symbol.declaration, symbol);
+		const closestBinder = symbol && Ast.findClosestTypeBinder(symbol.declaration, symbol);
 		let signature = parameterName;
-		if(closestTypeCarrier) {
+		if(closestBinder) {
 			let firstTime = true;
-			for(const type of closestTypeCarrier.getTypes()) {
+			for(const type of closestBinder.getTypes()) {
 				if(firstTime) { 
 					signature += ':';
 					firstTime = false; 
@@ -372,11 +372,11 @@ connection.onCompletion((info) => {
 			if(type.type === TypeInfo.Type.Object && type.hasValue) {
 				for(const [,property] of Object.entries(type.properties.getSymbols())) {
 					const propertyName = property.name.split('.')[1];
-					const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
-					const kind = propertyTypeCarrier.hasUniqueType() ?
-						typeInfoToVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].type) :
+					const propertyBinder = Ast.findClosestTypeBinder(node, property);
+					const kind = propertyBinder.hasUniqueType() ?
+						typeInfoToVSCodeCompletionItemKind(propertyBinder.getTypes()[0].type) :
 						vscodeLanguageServer.CompletionItemKind.Variable;
-					const signature = SignatureFinder.computeSignature(node, propertyTypeCarrier);
+					const signature = SignatureFinder.computeSignature(node, propertyBinder);
 					completionItems.push({
 						label: propertyName,
 						kind,
@@ -398,11 +398,11 @@ connection.onCompletion((info) => {
 						if(type.type === TypeInfo.Type.Object && type.hasValue) {
 							for(const [,property] of Object.entries(type.properties.getSymbols())) {
 								const propertyName = property.name.split('.')[1];
-								const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
-								const kind = propertyTypeCarrier.hasUniqueType() ?
-									typeInfoToVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].type) :
+								const propertyBinder = Ast.findClosestTypeBinder(node, property);
+								const kind = propertyBinder.hasUniqueType() ?
+									typeInfoToVSCodeCompletionItemKind(propertyBinder.getTypes()[0].type) :
 									vscodeLanguageServer.CompletionItemKind.Variable;
-								const signature = SignatureFinder.computeSignature(node, propertyTypeCarrier);
+								const signature = SignatureFinder.computeSignature(node, propertyBinder);
 								completionItems.push({
 									label: propertyName,
 									kind,
@@ -414,12 +414,12 @@ connection.onCompletion((info) => {
 					
 				} else {
 					Ast.findVisibleSymbols(node).forEach(symbol => {
-						const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
-						if(closestTypeCarrier === undefined) { return ; }
-						const kind = closestTypeCarrier.hasUniqueType() ?
-							typeInfoToVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].type) : 
+						const closestBinder = Ast.findClosestTypeBinder(node, symbol);
+						if(closestBinder === undefined) { return ; }
+						const kind = closestBinder.hasUniqueType() ?
+							typeInfoToVSCodeCompletionItemKind(closestBinder.getTypes()[0].type) : 
 							vscodeLanguageServer.CompletionItemKind.Variable;
-						const signature = SignatureFinder.computeSignature(node, closestTypeCarrier);
+						const signature = SignatureFinder.computeSignature(node, closestBinder);
 						completionItems.push({
 							label: symbol.name, 
 							kind,
@@ -478,7 +478,7 @@ connection.onDidChangeTextDocument((params) => {
 		const previousAst = ast;
 		ast = asts[fileName] = ts.updateSourceFile(ast, newText, changeRange);
 		ast.symbols = previousAst.symbols;
-		ast.typeCarriers = previousAst.typeCarriers;
+		ast.binders = previousAst.binders;
 		ast.analyzeDiagnostics = previousAst.analyzeDiagnostics;
 		text = newText;
 	}
