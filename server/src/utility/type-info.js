@@ -1,7 +1,5 @@
 const SymbolTable = require('./symbol-table');
 
-const vscodeLanguageServer = require('vscode-languageserver');
-
 const TypeInfo = {};
 
 /**
@@ -112,37 +110,6 @@ TypeInfo.copy = info => {
 
     return copy;
 
-};
-
-// TODO: unused function
-// TODO: move to server?
-TypeInfo.toVSCodeSymbolKind = type => {
-    switch (type) {
-        case TypeInfo.Type.Class: {
-            return vscodeLanguageServer.SymbolKind.Class;
-        }
-        case TypeInfo.Type.Function: {
-            return vscodeLanguageServer.SymbolKind.Function;
-        }
-        default: {
-            return vscodeLanguageServer.SymbolKind.Variable;
-        }
-    }
-};
-
-// TODO: move to server?
-TypeInfo.toVSCodeCompletionItemKind = type => {
-    switch (type) {
-        case TypeInfo.Type.Class: {
-            return vscodeLanguageServer.CompletionItemKind.Class;
-        }
-        case TypeInfo.Type.Function: {
-            return vscodeLanguageServer.CompletionItemKind.Function;
-        }
-        default: {
-            return vscodeLanguageServer.CompletionItemKind.Variable;
-        }
-    }
 };
 
 /**

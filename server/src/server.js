@@ -374,7 +374,7 @@ connection.onCompletion((info) => {
 					const propertyName = property.name.split('.')[1];
 					const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
 					const kind = propertyTypeCarrier.hasUniqueType() ?
-						TypeInfo.toVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].type) :
+						typeInfoToVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].type) :
 						vscodeLanguageServer.CompletionItemKind.Variable;
 					const signature = SignatureFinder.computeSignature(node, propertyTypeCarrier);
 					completionItems.push({
@@ -400,7 +400,7 @@ connection.onCompletion((info) => {
 								const propertyName = property.name.split('.')[1];
 								const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
 								const kind = propertyTypeCarrier.hasUniqueType() ?
-									TypeInfo.toVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].type) :
+									typeInfoToVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].type) :
 									vscodeLanguageServer.CompletionItemKind.Variable;
 								const signature = SignatureFinder.computeSignature(node, propertyTypeCarrier);
 								completionItems.push({
@@ -417,7 +417,7 @@ connection.onCompletion((info) => {
 						const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
 						if(closestTypeCarrier === undefined) { return ; }
 						const kind = closestTypeCarrier.hasUniqueType() ?
-							TypeInfo.toVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].type) : 
+							typeInfoToVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].type) : 
 							vscodeLanguageServer.CompletionItemKind.Variable;
 						const signature = SignatureFinder.computeSignature(node, closestTypeCarrier);
 						completionItems.push({
@@ -531,5 +531,35 @@ connection.onNotification('custom/generateDot', (params) => {
 // 	}
 // 	connection.sendNotification('custom/pickCallSite', {callSites});
 // });
+
+// TODO: unused, use or remove
+function typeInfoToVSCodeSymbolKind(type) {
+    switch (type) {
+        case TypeInfo.Type.Class: {
+            return vscodeLanguageServer.SymbolKind.Class;
+        }
+        case TypeInfo.Type.Function: {
+            return vscodeLanguageServer.SymbolKind.Function;
+        }
+        default: {
+            return vscodeLanguageServer.SymbolKind.Variable;
+        }
+    }
+};
+
+function typeInfoToVSCodeCompletionItemKind(type) {
+    switch (type) {
+        case TypeInfo.Type.Class: {
+            return vscodeLanguageServer.CompletionItemKind.Class;
+        }
+        case TypeInfo.Type.Function: {
+            return vscodeLanguageServer.CompletionItemKind.Function;
+        }
+        default: {
+            return vscodeLanguageServer.CompletionItemKind.Variable;
+        }
+    }
+};
+
 
 connection.listen();
