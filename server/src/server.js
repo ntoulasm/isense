@@ -4,7 +4,7 @@ const Ast = require('./ast/ast');
 const TypeCarrier = require('./utility/type-carrier');
 const SignatureFinder = require('./utility/signature-finder');
 const NumberMethods = require('./primitive-type-info/number-methods');
-const DotGenerator = require('./ast/dot-generator');
+const AstDotGenerator = require('./ast/ast-dot-generator');
 
 // ----------------------------------------------------------------------------
 
@@ -507,7 +507,7 @@ const last = function(array) {
 connection.onNotification('custom/generateDot', (params) => {
 	const dotUri = params.fileName.replace('.js', '.dot');
 	const dotFileName = last(dotUri.split('/'));
-	DotGenerator.generate(asts[params.fileName], dotFileName);
+	AstDotGenerator.generate(asts[params.fileName], dotFileName);
 	connection.sendNotification('custom/generateDotFinish', { dotUri });
 });
 

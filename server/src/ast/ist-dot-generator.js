@@ -1,5 +1,5 @@
 const SignatureFinder = require('../utility/signature-finder');
-const Ast = require('../ast/ast');
+const Ast = require('./ast');
 
 // ----------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ me.generate = (root, outputFileName) => {
     const setDotIds = node => {
         node.dotId = dotId++;
         ts.forEachChild(node, setDotIds);
-    }
+    };
 
     const generateInternal = (node) => {
 
