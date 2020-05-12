@@ -1,6 +1,7 @@
 const Ast = require('../ast/ast');
 const Symbol = require('../utility/symbol');
 const SymbolTable = require('../utility/symbol-table');
+const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('../utility/type-carrier');
 
 // ----------------------------------------------------------------------------
@@ -121,7 +122,6 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] = (no
     declareFunction(node, body);
     node._original = node;
     node.freeVariables = new Set();
-    node.typeVariables = new Set();
     declareParameters(node);
     Binder.bindFunctionScopedDeclarations(node.body);
 };
@@ -145,7 +145,6 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] = (node, body) => {
     node._original = node;
     node.freeVariables = new Set();
-    node.typeVariables = new Set();
     declareParameters(node);
     Binder.bindFunctionScopedDeclarations(node.body);
 }
@@ -216,7 +215,7 @@ function declareImportClause(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Any}));    // TODO: Fixme
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeInfo.Type.Any}));    // TODO: Fixme
 
 }
 
@@ -235,7 +234,7 @@ function declareImportSpecifier(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Any})); // TODO: Fixme
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeInfo.Type.Any})); // TODO: Fixme
 
 }
 
@@ -254,7 +253,7 @@ function declareNamespaceImport(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Any}));    // TODO: Fixme
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeInfo.Type.Any}));    // TODO: Fixme
 
 }
 
@@ -270,7 +269,7 @@ function declareFunction(node, block) {
     const symbol = Symbol.create(name, start, end, false, block.getStart());
 
     block.symbols.insert(symbol);
-    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, TypeCarrier.createFunction(node)));
+    Ast.addTypeCarrier(block, TypeCarrier.create(symbol, TypeInfo.createFunction(node)));
 
 }
 
@@ -288,12 +287,12 @@ function declareFunctionScopedVariable(node, block) {
         const symbol = Symbol.create(name, start, end, false, block.getStart());
 
         block.symbols.insert(symbol);
-        Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+        Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeInfo.Type.Undefined}));
 
     } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
         bindBindingPatternDeclarations(node.name, (node, name, start, end) => {
             const symbol = Symbol.create(name, start, end, false, block.getStart());
-            Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+            Ast.addTypeCarrier(block, TypeCarrier.create(symbol, {id: TypeInfo.Type.Undefined}));
             block.symbols.insert(symbol);
         });
     } else {
@@ -314,7 +313,7 @@ function declareClass(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, TypeCarrier.createClass(node)));
+    Ast.addTypeCarrier(node, TypeCarrier.create(symbol, TypeInfo.createClass(node)));
 
 }
 
@@ -340,7 +339,7 @@ function declareBlockScopedVariable(node, block) {
         bindBindingPatternDeclarations(node.name, (node, name, start, end) => {
             const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
             block.symbols.insert(symbol);
-            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(symbol, [TypeCarrier.createUndefined()]))
+            Ast.addTypeCarrierToExpression(node, TypeCarrier.create(symbol, [TypeInfo.createUndefined()]))
         });
     } else {
         console.assert(false);
@@ -403,14 +402,13 @@ function declareParameters(func) {
             // const start = node.name.getStart();
             // const end = node.name.end;
             const symbol = Symbol.createDeclaration(name, node);
-            const type = TypeCarrier.createTypeVariable();
+            const type = TypeInfo.createAny();
             Ast.addTypeCarrier(node, TypeCarrier.create(symbol, [type]));
-            func.typeVariables.add({symbol, type});
             node.symbols.insert(symbol);
         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
             // visitDestructuringDeclerations(node.name, (name, start, end) => {
             //     const symbol = Symbol.create(name, start, end);
-            //     Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeCarrier.Type.Undefined}));
+            //     Ast.addTypeCarrier(node, TypeCarrier.create(symbol, {id: TypeInfo.Type.Undefined}));
             //     node.symbols.insert(symbol);
             // });
         } else {

@@ -1,3 +1,4 @@
+const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('../utility/type-carrier');
 const Utility = require('../utility/utility');
 
@@ -14,39 +15,39 @@ const TypeCaster = {};
 TypeCaster.toNumber = type => {
 
     const newType = {};
-    newType.id = TypeCarrier.Type.Number;
+    newType.type = TypeInfo.Type.Number;
 
-    switch(type.id) {
-        case TypeCarrier.Type.Number: {
-            if(type.hasOwnProperty("value")) {
+    switch(type.type) {
+        case TypeInfo.Type.Number: {
+            if(type.hasValue) {
                 newType.value = type.value;
             }
             break;
         }
-        case TypeCarrier.Type.String:
-        case TypeCarrier.Type.Boolean: {
-            if(type.hasOwnProperty("value")) {
+        case TypeInfo.Type.String:
+        case TypeInfo.Type.Boolean: {
+            if(type.hasValue) {
                 newType.value = Number(type.value);
             }
             break;
         }
-        case TypeCarrier.Type.Array:
-        case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.Function:
-        case TypeCarrier.Type.Class:
-        case TypeCarrier.Type.Undefined: {
+        case TypeInfo.Type.Array:
+        case TypeInfo.Type.Object:
+        case TypeInfo.Type.Function:
+        case TypeInfo.Type.Class:
+        case TypeInfo.Type.Undefined: {
             newType.value = NaN;
             break;
         }
-        case TypeCarrier.Type.Null: {
+        case TypeInfo.Type.Null: {
             newType.value = 0;
             break;
         }
-        case TypeCarrier.Type.Any: {
+        case TypeInfo.Type.Any: {
             break;
         }
         default: {
-            Utility.assert(false, `Can not cast '${TypeCarrier.typeText[type.id]}' to number`);
+            Utility.assert(false, `Can not cast '${TypeInfo.typeTextMap[type.type]}' to number`);
             break;
         }
     }
@@ -63,50 +64,50 @@ TypeCaster.toNumber = type => {
 TypeCaster.toString = type => {
 
     const newType = {};
-    newType.id = TypeCarrier.Type.String;
+    newType.type = TypeInfo.Type.String;
 
-    switch(type.id) {
-        case TypeCarrier.Type.Number:
-        case TypeCarrier.Type.Boolean: {
-            if(type.hasOwnProperty("value")) {
+    switch(type.type) {
+        case TypeInfo.Type.Number:
+        case TypeInfo.Type.Boolean: {
+            if(type.hasValue) {
                 newType.value = String(type.value);
             }
             break;
         }
-        case TypeCarrier.Type.String: {
-            if(type.hasOwnProperty("value")) {
+        case TypeInfo.Type.String: {
+            if(type.hasValue) {
                 newType.value = type.value;
             }
             break;
         }
-        case TypeCarrier.Type.Array: {
+        case TypeInfo.Type.Array: {
             // TODO: add logic
-            if(type.hasOwnProperty("value")) {
+            if(type.hasValue) {
                 newType.value = type.value;
             }
             break;
         }
-        case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.Function:
-        case TypeCarrier.Type.Class: {
+        case TypeInfo.Type.Object:
+        case TypeInfo.Type.Function:
+        case TypeInfo.Type.Class: {
             if(type.hasOwnProperty("node")) {
-                newType.value = type.node.getText();
+                newType.value = type.value.getText();
             }
             break;
         }
-        case TypeCarrier.Type.Null: {
+        case TypeInfo.Type.Null: {
             newType.value = "null";
             break;
         }
-        case TypeCarrier.Type.Undefined: {
+        case TypeInfo.Type.Undefined: {
             newType.value = "undefined";
             break;
         }
-        case TypeCarrier.Type.Any: {
+        case TypeInfo.Type.Any: {
             break;
         }
         default: {
-            Utility.assert(false, `Can not cast '${TypeCarrier.typeText[type.id]}' to string`);
+            Utility.assert(false, `Can not cast '${TypeInfo.typeTextMap[type.type]}' to string`);
             break;
         }
     }
@@ -122,39 +123,39 @@ TypeCaster.toString = type => {
 TypeCaster.toBoolean = type => {
 
     const newType = {};
-    newType.id = TypeCarrier.Type.Boolean;
+    newType.type = TypeInfo.Type.Boolean;
 
-    switch(type.id) {
-        case TypeCarrier.Type.Number:
-        case TypeCarrier.Type.String: {
-            if(type.hasOwnProperty("value")) {
+    switch(type.type) {
+        case TypeInfo.Type.Number:
+        case TypeInfo.Type.String: {
+            if(type.hasValue) {
                 newType.value = Boolean(type.value);
             }
             break;
         }
-        case TypeCarrier.Type.Boolean: {
-            if(type.hasOwnProperty("value")) {
+        case TypeInfo.Type.Boolean: {
+            if(type.hasValue) {
                 newType.value = type.value;
             }
             break;
         }
-        case TypeCarrier.Type.Array:
-        case TypeCarrier.Type.Object:
-        case TypeCarrier.Type.Function:
-        case TypeCarrier.Type.Class: {
+        case TypeInfo.Type.Array:
+        case TypeInfo.Type.Object:
+        case TypeInfo.Type.Function:
+        case TypeInfo.Type.Class: {
             newType.value = true;
             break;
         }
-        case TypeCarrier.Type.Null:
-        case TypeCarrier.Type.Undefined: {
+        case TypeInfo.Type.Null:
+        case TypeInfo.Type.Undefined: {
             newType.value = false;
             break;
         }
-        case TypeCarrier.Type.Any: {
+        case TypeInfo.Type.Any: {
             break;
         }
         default: {
-            Utility.assert(false, `Can not cast '${TypeCarrier.typeText[type.id]}' to boolean`);
+            Utility.assert(false, `Can not cast '${TypeInfo.typeTextMap[type.type]}' to boolean`);
             break;
         }
     }

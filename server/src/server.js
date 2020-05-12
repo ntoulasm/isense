@@ -1,6 +1,7 @@
 const Utility = require('./utility/utility');
 const Analyzer = require('./analyzer/analyzer');
 const Ast = require('./ast/ast');
+const TypeInfo = require('./utility/type-info');
 const TypeCarrier = require('./utility/type-carrier');
 const SignatureFinder = require('./utility/signature-finder');
 const NumberMethods = require('./primitive-type-info/number-methods');
@@ -255,7 +256,7 @@ const computeParametersSignature = (callee) => {
 				} else { 
 					signature += ' ||' 
 				}
-				signature += ` ${TypeCarrier.typeToString(type)}`;
+				signature += ` ${TypeInfo.typeToString(type)}`;
 			}
 		}
 
@@ -328,9 +329,9 @@ connection.onSignatureHelp((info) => {
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
 
 	if(call === undefined) { return; }
-	let callees = call.types.filter(t => t.id === TypeCarrier.Type.Function && t.node);
+	let callees = call.types.filter(t => t.type === TypeInfo.Type.Function && t.value);
 	if(!callees.length) { return ; }
-	callees = callees.map(t => t.node);
+	callees = callees.map(t => t.value);
 	const activeParameter = computeActiveParameter(call, offset);
 	const signatures = callees.map(callee => computeFunctionSignature(callee, call))
 
@@ -360,7 +361,7 @@ connection.onCompletion((info) => {
 		const expressionTypes = node.name.escapedText == "" ? node.expression.types : node.types;
 
 		for(const type of expressionTypes) {
-			if(type.id === TypeCarrier.Type.Number) {
+			if(type.type === TypeInfo.Type.Number) {
 				for(const m of NumberMethods) {
 					completionItems.push({
 						label: m.name,
@@ -368,12 +369,12 @@ connection.onCompletion((info) => {
 					});
 				}
 			}
-			if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty('value')) {
+			if(type.type === TypeInfo.Type.Object && type.hasValue) {
 				for(const [,property] of Object.entries(type.properties.getSymbols())) {
 					const propertyName = property.name.split('.')[1];
 					const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
 					const kind = propertyTypeCarrier.hasUniqueType() ?
-						TypeCarrier.typeToVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].id) :
+						TypeInfo.toVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].type) :
 						vscodeLanguageServer.CompletionItemKind.Variable;
 					const signature = SignatureFinder.computeSignature(node, propertyTypeCarrier);
 					completionItems.push({
@@ -394,12 +395,12 @@ connection.onCompletion((info) => {
 					const expressionTypes = node.parent.expression.types;
 
 					for(const type of expressionTypes) {
-						if(type.id === TypeCarrier.Type.Object && type.hasOwnProperty('value')) {
+						if(type.type === TypeInfo.Type.Object && type.hasValue) {
 							for(const [,property] of Object.entries(type.properties.getSymbols())) {
 								const propertyName = property.name.split('.')[1];
 								const propertyTypeCarrier = Ast.findClosestTypeCarrier(node, property);
 								const kind = propertyTypeCarrier.hasUniqueType() ?
-									TypeCarrier.typeToVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].id) :
+									TypeInfo.toVSCodeCompletionItemKind(propertyTypeCarrier.getTypes()[0].type) :
 									vscodeLanguageServer.CompletionItemKind.Variable;
 								const signature = SignatureFinder.computeSignature(node, propertyTypeCarrier);
 								completionItems.push({
@@ -416,7 +417,7 @@ connection.onCompletion((info) => {
 						const closestTypeCarrier = Ast.findClosestTypeCarrier(node, symbol);
 						if(closestTypeCarrier === undefined) { return ; }
 						const kind = closestTypeCarrier.hasUniqueType() ?
-							TypeCarrier.typeToVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].id) : 
+							TypeInfo.toVSCodeCompletionItemKind(closestTypeCarrier.getTypes()[0].type) : 
 							vscodeLanguageServer.CompletionItemKind.Variable;
 						const signature = SignatureFinder.computeSignature(node, closestTypeCarrier);
 						completionItems.push({

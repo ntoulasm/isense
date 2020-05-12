@@ -43,18 +43,19 @@ x;
 let global = {};
 let glob = 5;
 
-function foo() {
-	if(true) {
-		if(2) {
-			return;
-		}
-		global.x = 5;
-	} else {
-		global.y = 2;
-	}
-	global.z = 5;
-	return 10;
-}
 
-foo();
-global;
+// function foo() {
+// 	if(true) {
+// 		if(2) {
+// 			return;
+// 		}
+// 		global.x = 5;
+// 	} else {
+// 		global.y = 2;
+// 	}
+// 	global.z = 5;
+// 	return 10;
+// }
+
+// foo();
+// global;

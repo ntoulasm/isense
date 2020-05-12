@@ -1,4 +1,5 @@
 const Ast = require('../ast/ast');
+const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('./type-carrier');
 
 const me = {};
@@ -13,12 +14,12 @@ me.computeSpaces = () => {
 };
 
 me.typeToString = type => {
-	switch(type.id) {
-		case TypeCarrier.Type.Object: {
+	switch(type.type) {
+		case TypeInfo.Type.Object: {
 			return type.hasOwnProperty('constructorName') ? type.constructorName : 'Object';
 		}
 		default: {
-			return Object.keys(TypeCarrier.Type)[type.id];
+			return Object.keys(TypeCarrier.Type)[type.type];
 		}
 	}
 
@@ -32,21 +33,21 @@ me.computeSignature = function computeSignature(node, typeCarrier, typeSeparator
 
 	function computeSignatureValue(type) {
 
-		switch(type.id) {
-			case TypeCarrier.Type.Number:
-			case TypeCarrier.Type.Boolean: {
-				return type.hasOwnProperty("value") ? ` = ${String(type.value)}` : '';
+		switch(type.type) {
+			case TypeInfo.Type.Number:
+			case TypeInfo.Type.Boolean: {
+				return type.hasValue ? ` = ${String(type.value)}` : '';
 			}
-			case TypeCarrier.Type.String: {
-				return type.hasOwnProperty("value") ? ` = '${String(type.value)}'` : '';
+			case TypeInfo.Type.String: {
+				return type.hasValue ? ` = '${String(type.value)}'` : '';
 			}
-			case TypeCarrier.Type.Array: {
+			case TypeInfo.Type.Array: {
 				// TODO: 
 				return '';
 			}
-			case TypeCarrier.Type.Object: {
+			case TypeInfo.Type.Object: {
 
-				if(!type.hasOwnProperty('value')) { return ''; }
+				if(!type.hasValue) { return ''; }
 				if(type.properties.getSymbols().length === 0) { return ''; }
 
 				++objectNesting;
@@ -65,17 +66,14 @@ me.computeSignature = function computeSignature(node, typeCarrier, typeSeparator
 				return value;
 
 			}
-			case TypeCarrier.Type.Function:
-			case TypeCarrier.Type.Class: {
-				return type.node ? ` = ${type.node.getText()}` : '';
+			case TypeInfo.Type.Function:
+			case TypeInfo.Type.Class: {
+				return type.value ? ` = ${type.value.getText()}` : '';
 			}
-			case TypeCarrier.Type.Null:
-			case TypeCarrier.Type.Undefined: 
-			case TypeCarrier.Type.Any: {
+			case TypeInfo.Type.Null:
+			case TypeInfo.Type.Undefined: 
+			case TypeInfo.Type.Any: {
 				return '';
-			}
-			case TypeCarrier.Type.TypeVariable: {
-				return ' ' + type.value.name;
 			}
 			default: {
 				console.assert(false);
@@ -97,7 +95,7 @@ me.computeSignature = function computeSignature(node, typeCarrier, typeSeparator
 		} else {
 			signature += typeSeparator;
 		}
-        signature += `${TypeCarrier.typeToString(type)}`;
+        signature += `${TypeInfo.typeToString(type)}`;
 		computeValues && (signature += computeSignatureValue(type));
 	}
 

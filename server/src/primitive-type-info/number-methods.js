@@ -1,4 +1,4 @@
-const TypeCarrier = require('../utility/type-carrier');
+const TypeInfo = require('../utility/type-info');
 
 module.exports = [
     {
@@ -6,26 +6,26 @@ module.exports = [
         parameters: [
 
         ],
-        returns: TypeCarrier.Type.Number
+        returns: TypeInfo.Type.Number
     },
     {
         name: 'toExponential',
-        returns: TypeCarrier.Type.Number
+        returns: TypeInfo.Type.Number
     },
     {
         name: 'toFixed',
-        returns: TypeCarrier.Type.Number
+        returns: TypeInfo.Type.Number
     },
     {
         name: 'toLocaleString'
     },
     {
         name: 'toPrecision',
-        returns: TypeCarrier.Type.Number
+        returns: TypeInfo.Type.Number
     },
     {
         name: 'toString',
-        returns: TypeCarrier.Type.String
+        returns: TypeInfo.Type.String
     },
     {
         name: 'valueOf'
