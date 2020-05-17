@@ -150,6 +150,7 @@ if(true) {
 } else {
     computed = 'computed2';
 }
+
 z = {
     a: 2,
     "b": "aaa",

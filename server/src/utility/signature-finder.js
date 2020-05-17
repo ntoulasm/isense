@@ -27,7 +27,7 @@ me.typeToString = type => {
 
 me.computeSignature = function computeSignature(node, binder, typeSeparator = ' || ', computeValues = true) {
 
-	const symbol = binder.getSymbol();
+	const symbol = binder.symbol;
 	let firstTime = true;
 	let signature = symbol.isConst ? 'const ' : '';
 
@@ -81,7 +81,7 @@ me.computeSignature = function computeSignature(node, binder, typeSeparator = ' 
 		}
 	}
 
-	for(const type of binder.getTypes()) {
+	for(const type of binder.carrier.info) {
 		if(firstTime) { 
 			const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
 			signature += `${name}: `;

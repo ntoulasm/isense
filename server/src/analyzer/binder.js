@@ -2,6 +2,7 @@ const Ast = require('../ast/ast');
 const Symbol = require('../utility/symbol');
 const SymbolTable = require('../utility/symbol-table');
 const TypeInfo = require('../utility/type-info');
+const TypeCarrier = require('../utility/type-carrier');
 const TypeBinder = require('../utility/type-binder');
 
 // ----------------------------------------------------------------------------
@@ -215,7 +216,7 @@ function declareImportClause(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeInfo.createUndefined()));    // TODO: Fixme
+    Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())));    // TODO: Fixme
 
 }
 
@@ -234,7 +235,7 @@ function declareImportSpecifier(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeInfo.createAny)); // TODO: Fixme
+    Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createAny()))); // TODO: Fixme
 
 }
 
@@ -253,7 +254,7 @@ function declareNamespaceImport(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeInfo.createAny()));    // TODO: Fixme
+    Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createAny())));    // TODO: Fixme
 
 }
 
@@ -269,7 +270,7 @@ function declareFunction(node, block) {
     const symbol = Symbol.create(name, start, end, false, block.getStart());
 
     block.symbols.insert(symbol);
-    Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeInfo.createFunction(node)));
+    Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createFunction(node))));
 
 }
 
@@ -287,12 +288,12 @@ function declareFunctionScopedVariable(node, block) {
         const symbol = Symbol.create(name, start, end, false, block.getStart());
 
         block.symbols.insert(symbol);
-        Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeInfo.createUndefined()));
+        Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())));
 
     } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
         bindBindingPatternDeclarations(node.name, (node, name, start, end) => {
             const symbol = Symbol.create(name, start, end, false, block.getStart());
-            Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeInfo.createUndefined()));
+            Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())));
             block.symbols.insert(symbol);
         });
     } else {
@@ -313,7 +314,7 @@ function declareClass(node, block) {
     const symbol = Symbol.create(name, start, end);
 
     block.symbols.insert(symbol);
-    Ast.addTypeBinder(node, TypeBinder.create(symbol, TypeInfo.createClass(node)));
+    Ast.addTypeBinder(node, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createClass(node))));
 
 }
 
@@ -328,7 +329,7 @@ function declareBlockScopedVariable(node, block) {
     if(node.name.kind === ts.SyntaxKind.Identifier) {
 
         const name = node.name.text;
-        if(Ast.lookUp(node, name)) { return; }
+        // if(Ast.lookUp(node, name)) { return; } // TODO: lookUp only on current scope
         const start = node.name.getStart();
         const end = node.name.end;
         const symbol = Symbol.create(name, start, end, isConst);
@@ -339,7 +340,7 @@ function declareBlockScopedVariable(node, block) {
         bindBindingPatternDeclarations(node.name, (node, name, start, end) => {
             const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
             block.symbols.insert(symbol);
-            Ast.addTypeBinderToExpression(node, TypeBinder.create(symbol, [TypeInfo.createUndefined()]))
+            Ast.addTypeBinderToExpression(node, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())))
         });
     } else {
         console.assert(false);
@@ -403,7 +404,7 @@ function declareParameters(func) {
             // const end = node.name.end;
             const symbol = Symbol.createDeclaration(name, node);
             const type = TypeInfo.createAny();
-            Ast.addTypeBinder(node, TypeBinder.create(symbol, [type]));
+            Ast.addTypeBinder(node, TypeBinder.create(symbol, TypeCarrier.createConstant(type)));
             node.symbols.insert(symbol);
         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
             // visitDestructuringDeclerations(node.name, (name, start, end) => {

@@ -183,4 +183,134 @@ TypeInfo.createNull = value => TypeInfo.create(TypeInfo.Type.Null, value);
  */
 TypeInfo.createAny = value => TypeInfo.create(TypeInfo.Type.Any, value);
 
+/**
+ * @param {isense.TypeInfo} info
+ * 
+ * @returns {isense.TypeInfo}
+ */
+TypeInfo.toNumber = info => {
+    switch(info.type) {
+        case TypeInfo.Type.Number: {
+            return info;
+        }
+        case TypeInfo.Type.String:
+        case TypeInfo.Type.Boolean: {
+            if(info.hasValue) {
+                return TypeInfo.createNumber(Number(info.value));
+            }
+            break;
+        }
+        case TypeInfo.Type.Array:
+        case TypeInfo.Type.Object:
+        case TypeInfo.Type.Function:
+        case TypeInfo.Type.Class:
+        case TypeInfo.Type.Undefined: {
+            return TypeInfo.createNumber(NaN);
+        }
+        case TypeInfo.Type.Null: {
+            return TypeInfo.createNumber(0);
+        }
+        case TypeInfo.Type.Any: {
+            break;
+        }
+        default: {
+            console.assert(false, `Can not cast '${TypeInfo.typeTextMap[info.type]}' to number`);
+            break;
+        }
+    }
+
+    return TypeInfo.createNumber();
+
+};
+
+/**
+ * @param {isense.TypeInfo} info
+ * 
+ * @returns {isense.TypeInfo}
+ */
+TypeInfo.toString = info => {
+
+    switch(info.type) {
+        case TypeInfo.Type.Number:
+        case TypeInfo.Type.Boolean: {
+            if(info.hasValue) {
+                return TypeInfo.createString(String(info.value));
+            }
+            break;
+        }
+        case TypeInfo.Type.String: {
+            return info;
+        }
+        case TypeInfo.Type.Array: {
+            // TODO: add logic
+            break;
+        }
+        case TypeInfo.Type.Object:
+        case TypeInfo.Type.Function:
+        case TypeInfo.Type.Class: {
+            if(info.hasValue) {
+                return TypeInfo.createString(info.value.getText());
+            }
+            break;
+        }
+        case TypeInfo.Type.Null: {
+            return TypeInfo.createString('null');
+        }
+        case TypeInfo.Type.Undefined: {
+            return TypeInfo.createString('undefined');
+        }
+        case TypeInfo.Type.Any: {
+            break;
+        }
+        default: {
+            console.assert(false, `Can not cast '${TypeInfo.typeTextMap[info.type]}' to string`);
+            break;
+        }
+    }
+
+    return TypeInfo.createString();
+
+};
+
+/**
+ * @param {isense.TypeInfo} info
+ * 
+ * @returns {isense.TypeInfo}
+ */
+TypeInfo.toBoolean = info => {
+
+    switch(info.type) {
+        case TypeInfo.Type.Number:
+        case TypeInfo.Type.String: {
+            if(info.hasValue) {
+                return TypeInfo.createBoolean(Boolean(info.value))
+            }
+            break;
+        }
+        case TypeInfo.Type.Boolean: {
+            return info;
+        }
+        case TypeInfo.Type.Array:
+        case TypeInfo.Type.Object:
+        case TypeInfo.Type.Function:
+        case TypeInfo.Type.Class: {
+            return TypeInfo.createBoolean(true);
+        }
+        case TypeInfo.Type.Null:
+        case TypeInfo.Type.Undefined: {
+            return TypeInfo.createBoolean(false);
+        }
+        case TypeInfo.Type.Any: {
+            break;
+        }
+        default: {
+            console.assert(false, `Can not cast '${TypeInfo.typeTextMap[type.type]}' to boolean`);
+            break;
+        }
+    }
+
+    return TypeInfo.createBoolean();
+
+};
+
 module.exports = TypeInfo;

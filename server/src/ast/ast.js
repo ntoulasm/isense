@@ -259,9 +259,9 @@ Ast.findAllSymbols = node => {
 Ast.addTypeBinder = (node, binder) => {
     console.assert(node.hasOwnProperty('binders'), "Trying to add binder to node without 'binders' property");
     binder.parent = node;
-    for(const c of node.binders) {
-        if(c.getSymbol() === binder.getSymbol()) {
-            c.setTypes(binder.getTypes());
+    for(const b of node.binders) {
+        if(b.symbol === binder.symbol) {
+            b.carrier = binder.carrier;
             return;
         }
     }
@@ -332,7 +332,7 @@ Ast.findClosestTypeBinder = (node, symbol) => {
         return previousNode ? Ast.findClosestTypeBinder(previousNode, symbol) : undefined;
     }
     for(const binder of node.binders) {
-        if(binder.getSymbol() === symbol) {
+        if(binder.symbol === symbol) {
             return binder;
         }
     }
@@ -357,9 +357,9 @@ Ast.findAllTypeBinders = node => {
 
     function findAllTypeBindersInternal(node) {
         console.assert(node.hasOwnProperty("binders"));
-        const symbols = binders.map(c => { return c.getSymbol(); });
+        const symbols = binders.map(b => { return b.symbol; });
         for(const binder of node.binders) {
-            const index = symbols.indexOf(binder.getSymbol());
+            const index = symbols.indexOf(binder.symbol);
             if(index !== -1) { binders.splice(index, 1); }
             binders.push(binder);
         }
