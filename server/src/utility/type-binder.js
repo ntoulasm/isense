@@ -30,6 +30,8 @@ TypeBinder.create = (symbol, carrier) => {
 
     const binder = {};
 
+    symbol.binders.push(binder);
+
     binder.symbol = symbol;
     binder.carrier = carrier;
 

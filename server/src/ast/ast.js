@@ -327,17 +327,24 @@ Ast.findBinaryExpressionAncestors = node => {
  * @param {object} symbol
  */
 Ast.findClosestTypeBinder = (node, symbol) => {
-    if(!node.hasOwnProperty("binders")) {
-        const previousNode = Ast.findPreviousNode(node);
-        return previousNode ? Ast.findClosestTypeBinder(previousNode, symbol) : undefined;
-    }
-    for(const binder of node.binders) {
-        if(binder.symbol === symbol) {
-            return binder;
+    if(node.hasOwnProperty("binders")) {
+        for(const binder of node.binders) {
+            if(binder.symbol === symbol) {
+                return binder;
+            }
         }
     }
-    const previousNode = Ast.findPreviousNode(node);
-    return previousNode ? Ast.findClosestTypeBinder(previousNode, symbol) : undefined;
+    const leftSibling = Ast.findLeftSibling(node);
+    if(leftSibling) {
+        switch(leftSibling.kind) {
+            case ts.SyntaxKind.Block:
+                if(ts.isFunctionLike(leftSibling.parent)) { break; }
+                return Ast.findClosestTypeBinder(Ast.findLastStatement(leftSibling) || leftSibling);
+            default:
+                return Ast.findClosestTypeBinder(leftSibling, symbol);
+        }
+    }
+    return node.parent ? Ast.findClosestTypeBinder(node.parent, symbol) : undefined;
 };
 
 /**

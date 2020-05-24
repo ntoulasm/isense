@@ -24,7 +24,8 @@ Symbol.create = function(name, start, end, isConst = false, visibleOffset = star
         start,
         end,
         isConst,
-        visibleOffset
+        visibleOffset,
+        binders: []
     };
 };
 
@@ -33,14 +34,10 @@ Symbol.createDeclaration = function(name, declaration, isConst = false, visibleO
     const start = declaration.getStart();
     const end = declaration.end;
 
-    return {
-        name,
-        start,
-        end,
-        declaration,
-        isConst,
-        visibleOffset: visibleOffset !== null ? visibleOffset : start
-    };
+    const symbol = Symbol.create(name, start, end, isConst, visibleOffset !== null ? visibleOffset : start);
+    symbol.declaration = declaration;
+
+    return symbol;
 
 };
 
