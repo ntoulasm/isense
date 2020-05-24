@@ -88,6 +88,18 @@ function activate(context) {
 
 	});
 
+	vscode.commands.registerTextEditorCommand('extension.generateISenseDot', textEditor => {
+
+		const activeDocumentPath = textEditor.document.uri.toString();
+		
+		vscode.window.showInformationMessage(`Isense Dot file for AST of '${activeDocumentPath}' is being generated`);
+		
+		client.sendNotification('custom/generateISenseDot', {
+			fileName: activeDocumentPath
+		});
+
+	});
+
 	vscode.commands.registerTextEditorCommand('extension.goToOffset', (textEditor) => {
 
 		if(!textEditor) { return ; }
@@ -120,6 +132,10 @@ function activate(context) {
 		// ------------------------------------------------------------------------
 
 		client.onNotification('custom/generateDotFinish', (params) => {
+			vscode.window.showTextDocument(vscode.Uri.parse(params.dotUri), {});
+		});
+
+		client.onNotification('custom/generateISenseDotFinish', params => {
 			vscode.window.showTextDocument(vscode.Uri.parse(params.dotUri), {});
 		});
 

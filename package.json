@@ -31,6 +31,10 @@
 			{
 				"command": "extension.generateDot",
 				"title": "Generate DOT file for the AST of current file"
+			},
+			{
+				"command": "extension.generateISenseDot",
+				"title": "Generate ISense DOT file for the AST of current file"
 			}
 		],
 		"configuration": {

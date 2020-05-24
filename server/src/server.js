@@ -5,6 +5,7 @@ const TypeInfo = require('./utility/type-info');
 const TypeBinder = require('./utility/type-binder');
 const SignatureFinder = require('./utility/signature-finder');
 const NumberMethods = require('./primitive-type-info/number-methods');
+const IstDotGenerator = require('./ast/ist-dot-generator');
 const AstDotGenerator = require('./ast/ast-dot-generator');
 
 // ----------------------------------------------------------------------------
@@ -510,6 +511,13 @@ connection.onNotification('custom/generateDot', (params) => {
 	const dotFileName = last(dotUri.split('/'));
 	AstDotGenerator.generate(asts[params.fileName], dotFileName);
 	connection.sendNotification('custom/generateDotFinish', { dotUri });
+});
+
+connection.onNotification('custom/generateISenseDot', params => {
+	const dotUri = params.fileName.replace('.js', '.dot');
+	const dotFileName = last(dotUri.split('/'));
+	IstDotGenerator.generate(asts[params.fileName], dotFileName);
+	connection.sendNotification('custom/generateISenseDotFinish', { dotUri });
 });
 
 // connection.onNotification('custom/focusChanged', (params) => {
