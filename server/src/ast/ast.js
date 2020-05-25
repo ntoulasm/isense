@@ -283,11 +283,7 @@ Ast.addTypeBinderToClosestStatement = (node, binder) => {
         ts.SyntaxKind.ReturnStatement,
         ts.SyntaxKind.SwitchStatement,
         ts.SyntaxKind.FunctionDeclaration,
-        ts.SyntaxKind.ClassDeclaration,
-        ts.SyntaxKind.EmptyStatement,
-        ts.SyntaxKind.FunctionDeclaration,
-        ts.SyntaxKind.FunctionExpression,
-        ts.SyntaxKind.ArrowFunction
+        ts.SyntaxKind.ClassDeclaration
     ];
 
     while (statements.indexOf(node.kind) === -1) {
@@ -571,32 +567,6 @@ Ast.findAncestor = (node, kind) => {
     }
 
     return undefined;
-
-};
-
-/**
- * @param {ts.Node} node
- */
-Ast.copy = (node, parent) => {
-
-    const copy = {};
-
-    for(const [key, value] of Object.entries(node)) {
-        if(key === 'parent') {
-            copy.parent = parent;
-        } else if(Utility.isObject(value)) {
-            Ast.copy(value, copy);
-        } else if(Utility.isArray(value)) {
-            copy[key] = [];
-            for(const n of value) {
-                copy[key].push(Ast.copy(n, copy));
-            }
-        } else {
-            copy[key] = value;
-        }
-    }
-
-    return copy;
 
 };
 

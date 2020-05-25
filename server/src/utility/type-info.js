@@ -304,7 +304,7 @@ TypeInfo.toBoolean = info => {
             break;
         }
         default: {
-            console.assert(false, `Can not cast '${TypeInfo.typeTextMap[type.type]}' to boolean`);
+            console.assert(false, `Can not cast '${TypeInfo.typeTextMap[info.type]}' to boolean`);
             break;
         }
     }
