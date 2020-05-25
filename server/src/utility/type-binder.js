@@ -34,6 +34,16 @@ TypeBinder.create = (symbol, carrier) => {
 
     binder.symbol = symbol;
     binder.carrier = carrier;
+    binder.parent = null;
+
+    binder.setParentNode = parent => {
+        if(!binder.parent) {
+            binder.parent = parent;
+            binder.carrier.parent = parent;
+        }
+    };
+
+    binder.getInfo = () => binder.carrier.getInfo(binder.parent);
 
     return binder;
 

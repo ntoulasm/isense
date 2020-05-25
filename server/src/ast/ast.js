@@ -1,4 +1,3 @@
-const TypeBinder = require('../utility/type-binder');
 const Utility = require('../utility/utility');
 
 // ----------------------------------------------------------------------------
@@ -254,11 +253,11 @@ Ast.findAllSymbols = node => {
 
 /**
  * @param {ts.Node} node
- * @param {object} binder
+ * @param {isense.TypeBinder} binder
  */
 Ast.addTypeBinder = (node, binder) => {
     console.assert(node.hasOwnProperty('binders'), "Trying to add binder to node without 'binders' property");
-    binder.parent = node;
+    binder.setParentNode(node);
     for(const b of node.binders) {
         if(b.symbol === binder.symbol) {
             b.carrier = binder.carrier;
@@ -285,7 +284,10 @@ Ast.addTypeBinderToClosestStatement = (node, binder) => {
         ts.SyntaxKind.SwitchStatement,
         ts.SyntaxKind.FunctionDeclaration,
         ts.SyntaxKind.ClassDeclaration,
-        ts.SyntaxKind.EmptyStatement
+        ts.SyntaxKind.EmptyStatement,
+        ts.SyntaxKind.FunctionDeclaration,
+        ts.SyntaxKind.FunctionExpression,
+        ts.SyntaxKind.ArrowFunction
     ];
 
     while (statements.indexOf(node.kind) === -1) {
@@ -303,9 +305,9 @@ Ast.addTypeBinderToClosestStatement = (node, binder) => {
  */
 Ast.addTypeBinderToExpression = (node, binder) => {
     Ast.findBinaryExpressionAncestors(node).forEach(node => {
-        Ast.addTypeBinder(node, TypeBinder.copy(binder));
+        Ast.addTypeBinder(node, binder);
     });
-    Ast.addTypeBinderToClosestStatement(node, TypeBinder.copy(binder));
+    Ast.addTypeBinderToClosestStatement(node, binder);
 };
 
 /**

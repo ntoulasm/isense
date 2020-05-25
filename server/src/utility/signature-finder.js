@@ -57,8 +57,10 @@ me.computeSignature = function computeSignature(node, binder, typeSeparator = ' 
 				for(const [,property] of Object.entries(type.properties.getSymbols())) {
 					if(comma) { value += ',\n'; }
 					comma = true;
-					value += me.computeSpaces();
-					value += computeSignature(node, Ast.findClosestTypeBinder(node, property));
+					for(const b of property.binders) {
+						value += me.computeSpaces();
+						value += computeSignature(node, b);
+					}
 				}
 	
 				--objectNesting;
@@ -81,7 +83,7 @@ me.computeSignature = function computeSignature(node, binder, typeSeparator = ' 
 		}
 	}
 
-	for(const type of binder.carrier.info) {
+	for(const type of binder.carrier.getInfo()) {
 		if(firstTime) { 
 			const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
 			signature += `${name}: `;
@@ -89,7 +91,7 @@ me.computeSignature = function computeSignature(node, binder, typeSeparator = ' 
 		} else {
 			signature += typeSeparator;
 		}
-        signature += `${TypeInfo.typeToString(type)}`;
+		signature += `${TypeInfo.typeToString(type)}`;
 		computeValues && (signature += computeSignatureValue(type));
 	}
 
