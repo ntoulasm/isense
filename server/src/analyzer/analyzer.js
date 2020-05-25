@@ -546,26 +546,14 @@ const callReplicationOptions = {
 };
 
 /**
- * @returns {ts.Node}
- */
-function createCalleeDependenciesNode() {
-    const calleeDependenciesNode = ts.createEmptyStatement();
-    calleeDependenciesNode.symbols = SymbolTable.create();
-    calleeDependenciesNode.binders = [];
-    return calleeDependenciesNode;
-}
-
-/**
  * @param {ts.Node} callee 
  * 
  * @returns {ts.Node}
  */
 function createCallee(callee) {
-    const calleeDependenciesNode = createCalleeDependenciesNode();
-    calleeDependenciesNode.parent = callee.parent;
     callee = Replicator.replicate(callee, callReplicationOptions);
+    callee.parent = callee._original.parent;
     callee.freeVariables = new Set(callee._original.freeVariables);
-    callee.parent = calleeDependenciesNode;
     callee.symbols = SymbolTable.create();
     return callee;
 }
