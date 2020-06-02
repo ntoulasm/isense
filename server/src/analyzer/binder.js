@@ -136,6 +136,7 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = (node,
         return; 
     }
     declareClass(node, body);
+    Binder.bindFunctionScopedDeclarations(node);
 };
 
 /**
@@ -158,6 +159,17 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.Block] = (node, body) => {
     Binder.bindBlockScopedDeclarations(node);
     return true;
 };
+
+/**
+ * @param {ts.Constructor} node
+ * @param {ts.Node} body
+ */
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.Constructor] = (node, body) => {
+    declareConstructor(node, body);
+    declareParameters(node);
+    node._original = node;
+    Binder.bindFunctionScopedDeclarations(node.body);
+}
 
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] = 
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ForStatement] =
@@ -416,6 +428,22 @@ function declareParameters(func) {
             console.assert(false);
         }
     }
+
+}
+
+/**
+ * @param {ts.Constructor} constructor 
+ * @param {ts.Node} classNode 
+ */
+function declareConstructor(constructor, classNode) {
+
+    const name = "constructor";
+    const start = constructor.getStart();
+    const end = constructor.end;
+    const symbol = Symbol.create(name, start, end);
+
+    Ast.addTypeBinder(classNode, TypeBinder.create(symbol, TypeInfo.createFunction(constructor)));
+    classNode.symbols.insert(symbol);
 
 }
 

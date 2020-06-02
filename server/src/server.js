@@ -185,27 +185,19 @@ connection.onHover(info => {
 				}; 
 			}
 			const contents = [];
-			const closestBinder = Ast.findClosestTypeBinder(node, symbol);
+			const closestBinders = Ast.findActiveTypeBinders(node, symbol);
 			for(const b of symbol.binders) {
 				const line = ts.getLineAndCharacterOfPosition(ast, b.parent.getStart()).line + 1;
-				const isActive = b === closestBinder;
+				const isActive = closestBinders.indexOf(b) !== -1;
 				const binderLineInfo = `at line ${line}`;
 				isActive && contents.push({ language: 'typescript', value: '***' });
 				contents.push({
 					language: 'typescript',
-					value: `${SignatureFinder.computeSignature(node, b)} ${binderLineInfo}`
+					value: `${SignatureFinder.computeSignature(node, [b])} ${binderLineInfo}`
 				});
 				isActive && contents.push({ language: 'typescript', value: '***' });
 			}
 			return { contents };
-			// const closestBinder = Ast.findClosestTypeBinder(node, symbol);
-			// if(closestBinder === undefined) { return { contents: [] }; }
-			// return {
-			// 	contents: {
-			// 		language: "typescript",
-			// 		value: SignatureFinder.computeSignature(node, closestBinder)
-			// 	}
-			// };
 		}
 		default: {
 			return { contents: [] };
@@ -259,18 +251,20 @@ const computeParametersSignature = (callee) => {
 			Ast.findLastParameter(callee),
 			parameterName
 		);
-		const closestBinder = symbol && Ast.findClosestTypeBinder(symbol.declaration, symbol);
+		const closestBinders = symbol && Ast.findActiveTypeBinders(symbol.declaration, symbol);
 		let signature = parameterName;
-		if(closestBinder) {
+		if(closestBinders) {
 			let firstTime = true;
-			for(const type of closestBinder.getInfo()) {
-				if(firstTime) { 
-					signature += ':';
-					firstTime = false; 
-				} else { 
-					signature += ' ||' 
+			for(const b of closestBinders) {
+				for(const type of b.getInfo()) {
+					if(firstTime) { 
+						signature += ':';
+						firstTime = false; 
+					} else { 
+						signature += ' ||' 
+					}
+					signature += ` ${TypeInfo.typeToString(type)}`;
 				}
-				signature += ` ${TypeInfo.typeToString(type)}`;
 			}
 		}
 
@@ -343,7 +337,7 @@ connection.onSignatureHelp((info) => {
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
 
 	if(call === undefined) { return; }
-	let callees = call.carrier.getInfo(call).filter(t => t.type === TypeInfo.Type.Function && t.value);
+	let callees = call.expression.carrier.getInfo().filter(t => t.type === TypeInfo.Type.Function && t.value);
 	if(!callees.length) { return ; }
 	callees = callees.map(t => t.value);
 	const activeParameter = computeActiveParameter(call, offset);
@@ -386,11 +380,15 @@ connection.onCompletion((info) => {
 			if(type.type === TypeInfo.Type.Object && type.hasValue) {
 				for(const [,property] of Object.entries(type.properties.getSymbols())) {
 					const propertyName = property.name.split('.')[1];
-					const propertyBinder = Ast.findClosestTypeBinder(node, property);
-					const kind = propertyBinder.getInfo().length === 1 ?
-						typeInfoToVSCodeCompletionItemKind(propertyBinder.getInfo()[0].type) :
+					const propertyBinders = Ast.findActiveTypeBinders(node, property);
+					const typeInfo = [];
+					for(const b of propertyBinders) {
+						typeInfo.push(...b.getInfo());
+					}
+					const kind = typeInfo.length === 1 ?
+						typeInfoToVSCodeCompletionItemKind(typeInfo[0].type) :
 						vscodeLanguageServer.CompletionItemKind.Variable;
-					const signature = SignatureFinder.computeSignature(node, propertyBinder);
+					const signature = SignatureFinder.computeSignature(node, propertyBinders);
 					completionItems.push({
 						label: propertyName,
 						kind,
@@ -412,11 +410,15 @@ connection.onCompletion((info) => {
 						if(type.type === TypeInfo.Type.Object && type.hasValue) {
 							for(const [,property] of Object.entries(type.properties.getSymbols())) {
 								const propertyName = property.name.split('.')[1];
-								const propertyBinder = Ast.findClosestTypeBinder(node, property);
-								const kind = propertyBinder.getInfo().length === 0 ?
-									typeInfoToVSCodeCompletionItemKind(propertyBinder.getInfo()[0].type) :
+								const propertyBinders = Ast.findActiveTypeBinders(node, property);
+								const typeInfo = [];
+								for(const b of propertyBinders) {
+									typeInfo.push(...b.getInfo());
+								}
+								const kind = typeInfo.length === 0 ?
+									typeInfoToVSCodeCompletionItemKind(typeInfo[0].type) :
 									vscodeLanguageServer.CompletionItemKind.Variable;
-								const signature = SignatureFinder.computeSignature(node, propertyBinder);
+								const signature = SignatureFinder.computeSignature(node, propertyBinders);
 								completionItems.push({
 									label: propertyName,
 									kind,
@@ -428,12 +430,16 @@ connection.onCompletion((info) => {
 					
 				} else {
 					Ast.findVisibleSymbols(node).forEach(symbol => {
-						const closestBinder = Ast.findClosestTypeBinder(node, symbol);
-						if(closestBinder === undefined) { return ; }
-						const kind = closestBinder.getInfo().length === 0 ?
-							typeInfoToVSCodeCompletionItemKind(closestBinder.getInfo()[0].type) : 
+						const binders = Ast.findActiveTypeBinders(node, symbol);
+						if(!binders.length) { return ; }
+						const typeInfo = [];
+						for(const b of binders) {
+							typeInfo.push(...b.getInfo());
+						}
+						const kind = typeInfo.length === 0 ?
+							typeInfoToVSCodeCompletionItemKind(typeInfo[0].type) : 
 							vscodeLanguageServer.CompletionItemKind.Variable;
-						const signature = SignatureFinder.computeSignature(node, closestBinder);
+						const signature = SignatureFinder.computeSignature(node, binders);
 						completionItems.push({
 							label: symbol.name, 
 							kind,

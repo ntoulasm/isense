@@ -31,14 +31,13 @@ x;
 
 x;
 
-//	This is not permited in JS
-// hoisted();
-// x;
+hoisted();
+x;
 
-// function hoisted() {
-// 	x;
-// 	x = 50;
-// }
+function hoisted() {
+	x;
+	x = 50;
+}
 
 let global = {};
 let glob = 5;

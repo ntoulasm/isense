@@ -1,5 +1,6 @@
 const Utility = require('./utility');
 const Ast = require('../ast/ast');
+const TypeInfo = require('./type-info');
 
 const TypeCarrier = {};
 
@@ -11,7 +12,9 @@ TypeCarrier.createConstant = info => {
 
     carrier.getInfo = () => carrier.info;
 
-    carrier.copy = () => TypeCarrier.createConstant([...carrier.info]);
+    carrier.copy = () => {
+        return TypeCarrier.createConstant(carrier.info.map(i => TypeInfo.copy(i)));
+    };
 
     return carrier;
 
@@ -26,11 +29,19 @@ TypeCarrier.createVariable = (symbol, node) => {
 
     carrier.getInfo = () => {
         console.assert(carrier.node);
-        const binder = Ast.findClosestTypeBinder(carrier.node, carrier.symbol);
-        return binder.getInfo();
+        const binders = Ast.findActiveTypeBinders(carrier.node, carrier.symbol);
+        const typeInfo = [];
+        for(const b of binders) {
+            typeInfo.push(...b.getInfo());
+        }
+        return typeInfo;
     };
 
-    carrier.copy = () => TypeCarrier.createVariable(carrier.symbol);
+    carrier.copy = () => TypeCarrier.createVariable(carrier.symbol, carrier.node);
+
+    return carrier;
+
+};
 
     return carrier;
 

@@ -1,4 +1,5 @@
 const Utility = require('../utility/utility');
+const TypeInfo = require('../utility/type-info');
 
 // ----------------------------------------------------------------------------
 
@@ -211,12 +212,21 @@ Ast.findVisibleSymbols = node => {
 
     const symbols = [];
     const offset = node.end;
-
+    
     function findVisibleSymbols(node) {
         if(node.symbols) { 
             for(const [, symbol] of Object.entries(node.symbols.getSymbols())) {
                 if(offset > symbol.visibleOffset) {
-                    symbols.push(symbol);
+                    let exist = false;
+                    for(const s of symbols) {
+                        if(s.name === symbol.name) {
+                            exist = true;
+                            break;
+                        }
+                    }
+                    if(!exist) {
+                        symbols.push(symbol);   
+                    }
                 }
             }
         }
@@ -324,25 +334,58 @@ Ast.findBinaryExpressionAncestors = node => {
  * @param {ts.Node} node
  * @param {object} symbol
  */
-Ast.findClosestTypeBinder = (node, symbol) => {
+Ast.findActiveTypeBindersInStatement = (node, symbol) => {
+    switch(node.kind) {
+        case ts.SyntaxKind.Block:
+            if(ts.isFunctionLike(node.parent)) { break; }
+            return Ast.findActiveTypeBinders(Ast.findLastStatement(node) || node, symbol);
+        case ts.SyntaxKind.IfStatement:
+            const thenBinders = Ast.findActiveTypeBindersInStatement(node.thenStatement, symbol);
+            const elseBinders = node.elseStatement ? 
+                Ast.findActiveTypeBindersInStatement(node.elseStatement, symbol) :
+                Ast.findActiveTypeBinders(Ast.findTopLevelIfStatement(node), symbol);
+            if(node.conditionBoolean && node.conditionBoolean.hasValue) {
+                return node.conditionBoolean.value ? thenBinders : elseBinders
+            } else {
+                return Array.from(new Set([...thenBinders, ...elseBinders]));
+            }
+        case ts.SyntaxKind.ForStatement:
+        case ts.SyntaxKind.ForInStatement:
+        case ts.SyntaxKind.ForOfStatement:
+            // TODO: logic
+        default:
+            return Ast.findActiveTypeBinders(node, symbol);
+    }
+};
+
+/**
+ * @param {ts.Node} node
+ * @param {object} symbol
+ */
+Ast.findActiveTypeBinders = (node, symbol) => {
+
     if(node.hasOwnProperty("binders")) {
         for(const binder of node.binders) {
             if(binder.symbol === symbol) {
-                return binder;
+                return [ binder ];
             }
         }
     }
+
+    const parent = node.parent;
+    if(!parent) { return []; }
     const leftSibling = Ast.findLeftSibling(node);
-    if(leftSibling) {
-        switch(leftSibling.kind) {
-            case ts.SyntaxKind.Block:
-                if(ts.isFunctionLike(leftSibling.parent)) { break; }
-                return Ast.findClosestTypeBinder(Ast.findLastStatement(leftSibling) || leftSibling);
-            default:
-                return Ast.findClosestTypeBinder(leftSibling, symbol);
+    if(leftSibling && (leftSibling.kind !== ts.SyntaxKind.Block || (leftSibling.parent && leftSibling.parent.kind !== ts.SyntaxKind.IfStatement) || node.kind !== ts.SyntaxKind.IfStatement)) { 
+        return Ast.findActiveTypeBindersInStatement(leftSibling, symbol);
+    } else if(parent) {
+        if(parent.kind === ts.SyntaxKind.Block && parent.parent && parent.parent.kind === ts.SyntaxKind.IfStatement) {
+            return Ast.findActiveTypeBinders(Ast.findTopLevelIfStatement(parent.parent), symbol);
         }
+        return Ast.findActiveTypeBinders(parent, symbol);
     }
-    return node.parent ? Ast.findClosestTypeBinder(node.parent, symbol) : undefined;
+
+    return [];
+
 };
 
 /**
@@ -613,6 +656,7 @@ Ast.findLastParameter = node => {
     return Ast.findLastNodeOfArray(node, 'parameters');
 };
 
+// TODO: unused, use or remove
 /**
  * @param {ts.Identifier} id
  */
@@ -748,42 +792,6 @@ Ast.findTopLevelParenthesizedExpression = node => {
         node = node.parent;
     }
     return node;
-};
-
-/**
- * @param {ts.Block} node
- */
-Ast.findNextStatementOfBlock = node => {
-    if(node.parent.kind === ts.SyntaxKind.IfStatement) {
-        node = Ast.findTopLevelIfStatement(node.parent);
-    }
-    return Ast.findRightSibling(node);
-};
-
-/** TODO: unused, use or remove
- * @param {ts.Node} node
- * @param {isense.symbol} symbol
- */
-Ast.findLastTypeBinder = (node, symbol) => {
-    const lastStatement = Ast.findLastStatement(node);
-    if(lastStatement) {
-        return Ast.findClosestTypeBinder(lastStatement, symbol);
-    }
-};
-
-/**
- * @param {ts.Block} node
- */
-Ast.copyTypeBindersFromBlockToNextStatement = node => {
-
-    if(ts.isFunctionLike(node.parent)) { return ; }
-
-    const blockBinders = Ast.findAllTypeBinders(node);
-    const nextStatement = Ast.findNextStatementOfBlock(node);
-    
-    nextStatement && (nextStatement.binders = blockBinders);
-    node.blockBinders = blockBinders;
-
 };
 
 /**

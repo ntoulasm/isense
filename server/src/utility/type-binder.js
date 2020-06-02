@@ -39,7 +39,6 @@ TypeBinder.create = (symbol, carrier) => {
     binder.setParentNode = parent => {
         if(!binder.parent) {
             binder.parent = parent;
-            binder.carrier.parent = parent;
         }
     };
 
@@ -56,7 +55,7 @@ TypeBinder.create = (symbol, carrier) => {
  */
 TypeBinder.copy = binder => {
     const symbol = binder.symbol;
-    const carrier = TypeCarrier.copy(binder.carrier);
+    const carrier = binder.carrier.copy();
     return TypeBinder.create(symbol, carrier);
 };
 

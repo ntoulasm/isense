@@ -25,9 +25,9 @@ me.typeToString = type => {
 
 }
 
-me.computeSignature = function computeSignature(node, binder, typeSeparator = ' || ', computeValues = true) {
+me.computeSignature = function computeSignature(node, binders, typeSeparator = ' || ', computeValues = true) {
 
-	const symbol = binder.symbol;
+	const symbol = binders[0].symbol;
 	let firstTime = true;
 	let signature = symbol.isConst ? 'const ' : '';
 
@@ -59,7 +59,7 @@ me.computeSignature = function computeSignature(node, binder, typeSeparator = ' 
 					comma = true;
 					for(const b of property.binders) {
 						value += me.computeSpaces();
-						value += computeSignature(node, b);
+						value += computeSignature(node, [b]);
 					}
 				}
 	
@@ -83,18 +83,21 @@ me.computeSignature = function computeSignature(node, binder, typeSeparator = ' 
 		}
 	}
 
-	for(const type of binder.carrier.getInfo()) {
-		if(firstTime) { 
-			const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
-			signature += `${name}: `;
-			firstTime = false;
-		} else {
-			signature += typeSeparator;
+	for(const b of binders) {
+		for(const type of b.getInfo()) {
+			if(firstTime) { 
+				const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
+				signature += `${name}: `;
+				firstTime = false;
+			} else {
+				signature += typeSeparator;
+			}
+			signature += `${TypeInfo.typeToString(type)}`;
+			computeValues && (signature += computeSignatureValue(type));
 		}
-		signature += `${TypeInfo.typeToString(type)}`;
-		computeValues && (signature += computeSignatureValue(type));
+	
 	}
-
+	
     return signature;
 }
 

@@ -3,7 +3,7 @@ let x = {
 };
 
 let y = x;
-x.b = {};
+x.b = {};;
 y.b.b = {};
 x.b.b.c = 2;
-y;
+// y;

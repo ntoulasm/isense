@@ -1,133 +1,37 @@
-// function foo() {
-//     this.x = 2;
-// }
+// let x = 2;
+// let y;
+// x = 5;
+// y = x;
+// x = 3;
+// y;
 
-// let x = new foo();
-// x.z = 2;
-// x.a = 5;
+// if(true) {
+//     x = "";
+// } else {
+//     x = 10;
+// }
 // x;
 
-// class X {
-//     y = 2;
-//     constructor() {
-//         this.x = 2;
+// if(!y) {
+//     x = 2;
+// }
+// x;
+
+// function foo(a, b) {
+//     let x;
+//     if(a) {
+//         x = 2;
+//     } else if(true) {
+//         x = 5;
+//     } else if(b) {
+//         x = 1;
+//     } else {
+//         x = 10;
 //     }
-//     getY() {
-        
-//     }
-// }
-
-// let x = new X();
-// x.b = 2;
-
-
-// let x = 2;
-
-
-////////////////// free variables
-// let global = 2;
-
-// let x = function() {
-//     global = 5;
-// };
-
-// global;
-
-// x();
-
-// global;
-
-
-/////////////////// if else
-
-// let global = 5;
-
-// if(true) {
-//     global = 2;
-// } else if(true) {
-//     global = ''
-// } else if(true) {
-
-// } else {
-//     global = 100;
-// }
-
-// global;
-
-
-///////////////// inference
-
-// function computeMagnitude(p) {
-//     p.magnitude = 13;
-//     return p.x * p.x + p.y * p.y
-// }
-
-// let point = {x: 2, y: 3};
-// let y = computeMagnitude(point);
-
-
-
-// function foo2(a) {
-//     // function foo3() {
-//     //     return a + 2;
-//     // }
-//     return new foo3();
-// };
-
-
-// object free variables
-// let global = {a: {b: 1}};
-
-// function foo() {
-//     global.c = 2;
-//     global.a.b = {};
-//     global.a.b.c = {};
-//     global.a.b.c.d = {};
-//     global.a.b.c.d.e = {};
-//     global.a.b.c.d.e.f = 10;
-//     global.b = 5;
+//     x;
 // }
 
 
 
-// foo();
-// global;
 
-
-
-// if(true) {
-// 	x = 5;
-// 	glob = 2;
-// 	global.z = 5;
-// } else if(false) {
-// 	global.z = 2;
-// 	glob = 12
-// 	x = 10;
-// } else {
-// 	global.aaa = 5;
-// 	glob = 15;
-// 	x = 15;
-// };
-
-// global.a = 100;
-// glob;
-
-// {
-// 	glob = 10000000;
-// }
-
-// {
-//     var x = 10;
-//     const y = 30;
-//     {
-//         var ooooo = 100;
-//     }
-// }
-
-
-let x = 2;
-let y;
-x = 5;
-y = x;
-x = 3;
-y;
+x + y + z;

@@ -28,7 +28,7 @@ function y(a, {z: b, c, d},  [e, f, ...g],  {h, i, j, k: {l, m}}) {
 	let n = 2;
 	// global = 5;
 }
-y();
+// y();  // TODO: fix destructuring
 y = x;
 y(); // y is now a number
 
