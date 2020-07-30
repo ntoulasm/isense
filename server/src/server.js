@@ -2,6 +2,7 @@ const Utility = require('./utility/utility');
 const Analyzer = require('./analyzer/analyzer');
 const Ast = require('./ast/ast');
 const TypeInfo = require('./utility/type-info');
+const TypeCarrier = require('./utility/type-carrier');
 const SignatureFinder = require('./utility/signature-finder');
 const NumberMethods = require('./primitive-type-info/number-methods');
 const IstDotGenerator = require('./ast/ist-dot-generator');
@@ -190,12 +191,11 @@ connection.onHover(info => {
 				const line = ts.getLineAndCharacterOfPosition(ast, b.parent.getStart()).line + 1;
 				const isActive = closestBinders.indexOf(b) !== -1;
 				const binderLineInfo = `at line ${line}`;
-				isActive && contents.push({ language: 'typescript', value: '***' });
+				const postfix = isActive ? '(up to here)' : '';
 				contents.push({
 					language: 'typescript',
-					value: `${SignatureFinder.computeSignature(node, [b])} ${binderLineInfo}`
+					value: `${SignatureFinder.computeSignature(node, [b])} ${binderLineInfo} ${postfix}`
 				});
-				isActive && contents.push({ language: 'typescript', value: '***' });
 			}
 			return { contents };
 		}
@@ -256,7 +256,7 @@ const computeParametersSignature = (callee) => {
 		if(closestBinders) {
 			let firstTime = true;
 			for(const b of closestBinders) {
-				for(const type of b.getInfo()) {
+				for(const type of TypeCarrier.evaluate(b.carrier)) {
 					if(firstTime) { 
 						signature += ':';
 						firstTime = false; 
@@ -337,7 +337,7 @@ connection.onSignatureHelp((info) => {
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
 
 	if(call === undefined) { return; }
-	let callees = call.expression.carrier.getInfo().filter(t => t.type === TypeInfo.Type.Function && t.value);
+	let callees = TypeCarrier.evaluate(call.expression.carrier).filter(t => t.type === TypeInfo.Type.Function && t.value);
 	if(!callees.length) { return ; }
 	callees = callees.map(t => t.value);
 	const activeParameter = computeActiveParameter(call, offset);
@@ -368,7 +368,7 @@ connection.onCompletion((info) => {
 		if(!node) { return ; }
 		const expressionCarrier = node.name.escapedText == "" ? node.expression.carrier : node.carrier;
 
-		for(const type of expressionCarrier.getInfo()) {
+		for(const type of TypeCarrier.evaluate(expressionCarrier)) {
 			if(type.type === TypeInfo.Type.Number) {
 				for(const m of NumberMethods) {
 					completionItems.push({
@@ -383,7 +383,7 @@ connection.onCompletion((info) => {
 					const propertyBinders = Ast.findActiveTypeBinders(node, property);
 					const typeInfo = [];
 					for(const b of propertyBinders) {
-						typeInfo.push(...b.getInfo());
+						typeInfo.push(...TypeCarrier.evaluate(b.carrier));
 					}
 					const kind = typeInfo.length === 1 ?
 						typeInfoToVSCodeCompletionItemKind(typeInfo[0].type) :
@@ -404,7 +404,7 @@ connection.onCompletion((info) => {
 			case ts.SyntaxKind.Identifier: {
 				if(node.parent.kind === ts.SyntaxKind.PropertyAccessExpression) {
 
-					const expressionTypes = node.parent.expression.carrier.getInfo();
+					const expressionTypes = TypeCarrier.evaluate(node.parent.expression.carrier);
 
 					for(const type of expressionTypes) {
 						if(type.type === TypeInfo.Type.Object && type.hasValue) {
@@ -413,7 +413,7 @@ connection.onCompletion((info) => {
 								const propertyBinders = Ast.findActiveTypeBinders(node, property);
 								const typeInfo = [];
 								for(const b of propertyBinders) {
-									typeInfo.push(...b.getInfo());
+									typeInfo.push(...TypeCarrier.evaluate(b.carrier));
 								}
 								const kind = typeInfo.length === 0 ?
 									typeInfoToVSCodeCompletionItemKind(typeInfo[0].type) :
@@ -434,7 +434,7 @@ connection.onCompletion((info) => {
 						if(!binders.length) { return ; }
 						const typeInfo = [];
 						for(const b of binders) {
-							typeInfo.push(...b.getInfo());
+							typeInfo.push(...TypeCarrier.evaluate(b.carrier));
 						}
 						const kind = typeInfo.length === 0 ?
 							typeInfoToVSCodeCompletionItemKind(typeInfo[0].type) : 

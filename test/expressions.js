@@ -87,7 +87,7 @@ z = typeof (class {});
 z = typeof null;
 z = typeof undefined;
 class p {};
-z = typeof new p();
+// z = typeof new p();
 
 /* Binary - */
 x = 5;
@@ -106,10 +106,10 @@ z = 5 - (function() {});
 z = 5 - (class {});
 z = 5 - null;
 z = 5 - undefined;
-z = 5 - new p();
+// z = 5 - new p();;
 /* Binary * */
 z = 3 * 3;
-z = 3 * z * "3";
+// z = 3 * z * "3";
 z = 3 * "a";
 
 
@@ -151,20 +151,20 @@ if(true) {
     computed = 'computed2';
 }
 
-z = {
-    a: 2,
-    "b": "aaa",
-    a: 5,
-    c: {
-        a: 2
-    },
-    5: 5,
-    shorthandProperty,
-    [computed]: 100
-};
+// z = {
+//     a: 2,
+//     "b": "aaa",
+//     a: 5,
+//     c: {
+//         a: 2
+//     },
+//     5: 5,
+//     shorthandProperty,
+//     [computed]: 100
+// };
 
-const propertyAccessA = z.a;
-let propertyAccessB = z.b;
-var propertyAccessC = z.c;
-let propertyAccess5 = z[5];
-let propertyAccessShorthand = z["shorthandProperty"];
+// const propertyAccessA = z.a;
+// let propertyAccessB = z.b;
+// var propertyAccessC = z.c;
+// let propertyAccess5 = z[5];
+// let propertyAccessShorthand = z["shorthandProperty"];

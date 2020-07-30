@@ -105,12 +105,12 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.PrefixUnaryExpression: {
                 ts.forEachChild(node, visitDeclarations);
-                analyzePrefixUnaryExpression(node);
+                node.carrier = TypeCarrier.createPrefixUnaryExpression(node.operator, node.operand.carrier);
                 break;
             }
             case ts.SyntaxKind.PostfixUnaryExpression: {
                 ts.forEachChild(node, visitDeclarations);
-                analyzePostfixUnaryExpression(node);
+                node.carrier = TypeCarrier.createPostfixUnaryExpression(node.operator, node.operand.carrier);
                 break;
             }
             case ts.SyntaxKind.VoidExpression: {
@@ -120,7 +120,7 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.TypeOfExpression: {
                 ts.forEachChild(node, visitDeclarations);
-                analyzeTypeOfExpression(node);
+                node.carrier = TypeCarrier.createTypeOfExpression(node.expression.carrier);
                 break;
             }
             case ts.SyntaxKind.ThisKeyword: {
@@ -155,9 +155,9 @@ Analyzer.analyze = ast => {
                     } else if (lvalue.kind === ts.SyntaxKind.PropertyAccessExpression) {
 
                         const info = [];
-                        const leftTypes = lvalue.expression.carrier.getInfo();
+                        const leftTypes = TypeCarrier.evaluate(lvalue.expression.carrier);
                         const propertyName = lvalue.name.text;
-                        const rightTypes = node.right.carrier.getInfo();
+                        const rightTypes = TypeCarrier.evaluate(node.right.carrier);
 
                         // if(leftTypes === undefined) { break; } // TODO: maybe change?
 
@@ -174,7 +174,7 @@ Analyzer.analyze = ast => {
                         console.assert(false, 'left side of assignment is not lvalue');
                     }
 				} else {
-                    analyzeBinaryExpression(node);
+                    node.carrier = TypeCarrier.createBinaryExpression(node.left.carrier, node.operatorToken, node.right.carrier);
                 }
 				
 				break;
@@ -273,7 +273,7 @@ Analyzer.analyze = ast => {
 
                 ts.forEachChild(node, visitDeclarations);
                 
-                const types = node.expression.carrier.getInfo();
+                const types = TypeCarrier.evaluate(node.expression.carrier);
                 const callees = types.flatMap(t => t.type === TypeInfo.Type.Function ? [t.value] : []);
                 const callee = !callees.length ? undefined : callees[0];
 
@@ -321,7 +321,7 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.IfStatement: {
                 ts.forEachChild(node, visitDeclarations);
-                const conditionInfo = node.expression.carrier.getInfo();
+                const conditionInfo = TypeCarrier.evaluate(node.expression.carrier);
                 node.conditionBoolean = TypeInfo.createBoolean();
                 if(conditionInfo.length === 1 && conditionInfo[0].hasValue) {
                     node.conditionBoolean = TypeInfo.toBoolean(conditionInfo[0]);
@@ -365,12 +365,24 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.ReturnStatement: {
                 ts.forEachChild(node, visitDeclarations);
                 if(node.expression && !node.unreachable && !callStack.isEmpty()) {
-                    const returnTypes = node.expression.carrier.getInfo() || [TypeInfo.createAny()];
+                    const returnTypes = TypeCarrier.evaluate(node.expression.carrier) || [TypeInfo.createAny()];
                     const call = callStack.top();
-                    call.carrier.getInfo().push(...returnTypes);
+                    TypeCarrier.evaluate(call.carrier).push(...returnTypes);
                 }
                 if(!node.unreachable) {
                     markUnreachableStatements(Ast.findRightSiblings(node));
+                }
+                break;
+            }
+            case ts.SyntaxKind.Block: {
+                node.innerBinders = new Map();
+                node.freeVariables = new Set();
+                ts.forEachChild(node, visitDeclarations);
+                const lastStatement = Ast.findLastStatement(node);
+                if(!lastStatement) { break; }
+                const rightBracket = node.getChildren()[node.getChildCount() - 1];
+                for(const fv of node.freeVariables) {
+                    node.innerBinders.set(fv, Ast.findActiveTypeBindersLeftSibling(rightBracket, lastStatement, fv));
                 }
                 break;
             }
@@ -406,7 +418,7 @@ Analyzer.analyze = ast => {
  */
 
 function copyPropertiesTypeBindersIfObject(source, carrier, destination) {
-    for(const t of carrier.getInfo()) {
+    for(const t of TypeCarrier.evaluate(carrier)) {
         if(t.type === TypeInfo.Type.Object && t.hasValue) {
             for(const [, p] of Object.entries(t.properties.getSymbols())) {
                 const propertyBinder = Ast.findActiveTypeBinders(source, p)[0]; // TODO: fixme
@@ -506,7 +518,7 @@ function copyFreeVariablesTypeBindersToCallee(callee, call) {
         // Use addTypeBinder instead of assign because this is not a binary expression.
         Ast.addTypeBinder(callee, closestBinder);
         copyPropertiesTypeBindersIfObject(call, carrier, callee);
-        for(const t of closestBinder.getInfo()) {
+        for(const t of TypeCarrier.evaluate(closestBinder.carrier)) {
             if(t.type === TypeInfo.Type.Object && t.hasValue) {
                 for(const [, propertySymbol] of Object.entries(t.properties.getSymbols())) {
                     callee.freeVariables.add(propertySymbol);
@@ -539,20 +551,18 @@ function copyFreeVariablesTypeBindersToCaller(callee, call) {
  */
 function call(call, callee, thisObject = TypeInfo.createObject(true), beforeCall = noOp) {
     call.carrier = TypeCarrier.createConstant([]);
-    // if(!callee.body) {
-    //     call.carrier.getInfo().push(TypeInfo.createUndefined);
-    //     return; 
-    // }
     callStack.push(call);
     Ast.addCallSite(callee, call);
     callee = call.callee = createCallee(callee);
+    callee.call = call;
     defineThis(callee, thisObject);
     copyParameterTypeBindersToCallee(callee, call.arguments || []);
-    copyFreeVariablesTypeBindersToCallee(callee, call);
+    // copyFreeVariablesTypeBindersToCallee(callee, call);
     beforeCall(callee);
     Analyzer.analyze(callee.body);
-    copyFreeVariablesTypeBindersToCaller(callee, call);
-    if(!call.carrier.getInfo().length) { call.carrier.getInfo().push(TypeInfo.createUndefined()); }
+    // copyFreeVariablesTypeBindersToCaller(callee, call);
+    const callInfo = TypeCarrier.evaluate(call.carrier);
+    if(!callInfo.length) { callInfo.push(TypeInfo.createUndefined()); }
     callStack.pop();
 }
 
@@ -602,7 +612,7 @@ const copyThisToNewExpression = (constructor, newExpression) => {
     const thisSymbol = Ast.lookUp(constructorLastStatement, 'this');
     const thisBinder = Ast.findActiveTypeBinders(constructorLastStatement, thisSymbol)[0];  // TODO: fixme
     const thisCarrier = thisBinder.carrier;
-    const thisTypes = thisCarrier.getInfo();
+    const thisTypes = TypeCarrier.evaluate(thisCarrier);
     thisTypes.forEach(e => e.references = []);
     if(constructor.hasOwnProperty("constructorName")) {
         for(const thisType of thisTypes) {
@@ -617,7 +627,7 @@ const copyThisToNewExpression = (constructor, newExpression) => {
  * @param {ts.NewExpression} node 
  */
 function newExpression(node) {
-    const types = node.expression.carrier.getInfo();
+    const types = TypeCarrier.evaluate(node.expression.carrier);
     const constructors = types.filter(t => (t.type === TypeInfo.Type.Function || t.type === TypeInfo.Type.Class));
     const constructor = !constructors.length ? undefined : constructors[0];
     if(constructor === undefined) {
@@ -645,7 +655,7 @@ function assign(node, symbol, rvalue, carrier) {
 
     if(lvalueBinders.length) {
         for(const b of lvalueBinders) {
-            for(const type of b.getInfo()) {
+            for(const type of TypeCarrier.evaluate(b.carrier)) {
                 if(type.type === TypeInfo.Type.Object) {
                     const index = type.references.indexOf(symbol);
                     console.assert(index != -1, "Remove reference from object");
@@ -658,7 +668,7 @@ function assign(node, symbol, rvalue, carrier) {
     const binder = TypeBinder.create(symbol, carrier);
     Ast.addTypeBinderToExpression(node, binder);
 
-    for(const type of carrier.getInfo()) {
+    for(const type of TypeCarrier.evaluate(carrier)) {
         if(type.type === TypeInfo.Type.Object && type.hasValue) {
             type.references.push(symbol);
         }
@@ -704,7 +714,7 @@ function setProperty(node, object, name, rvalue, carrier) {
         const previousBinder = Ast.findActiveTypeBinders(node, reference)[0]; // TODO: fixme
         const b = TypeBinder.copy(previousBinder);
         
-        for(const info of b.getInfo()) {
+        for(const info of TypeCarrier.evaluate(b.carrier)) {
             if(info.type === TypeInfo.Type.Object) {
                 info.properties.insert(symbol);
             }
@@ -718,1182 +728,12 @@ function setProperty(node, object, name, rvalue, carrier) {
 
 // ----------------------------------------------------------------------------
 
-const binaryExpressionFunctions = {};
-const addFunctions = {};
-
-addFunctions[TypeInfo.Type.Number] = (left, right, node) => {
-
-    const type = {};
-
-    switch(right.type) {
-        case TypeInfo.Type.Number: {
-            type.type = TypeInfo.Type.Number;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = Number(left.value) + Number(right.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.String: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = String(left.value) + right.value;
-            }
-            break;
-        }
-        case TypeInfo.Type.Boolean: {
-            type.type = TypeInfo.Type.Number;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = Number(left.value) + Number(right.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            type.type = TypeInfo.Type.String;
-            type.value = "TODO: number + array";
-            break;
-        }
-        case TypeInfo.Type.Object: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = String(left.value) + "[object Object]";
-            }
-            break;
-        }
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = String(left.value) + right.value.getText();
-            }
-            break;
-        }
-        case TypeInfo.Type.Null: {
-            type.type = TypeInfo.Type.Number;
-            if(left.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = left.value
-            }
-            break;
-        }
-        case TypeInfo.Type.Undefined: {
-            type.type = TypeInfo.Type.Number;
-            type.hasValue = true; // TODO: fix me?
-            type.value = "NaN";
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            return [
-                TypeInfo.createNumber(),
-                TypeInfo.createString()
-            ];
-        }
-        default: {
-            console.assert(false, "Unknown Type");
-            break;
-        }
-    };
-
-    return [type];
-
-};
-
-addFunctions[TypeInfo.Type.String] = (left, right, node) => {
-
-    const type = {};
-
-    switch(right.type) {
-        case TypeInfo.Type.Number: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = left.value + String(right.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.String: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = left.value + right.value;
-            }
-            break;
-        }
-        case TypeInfo.Type.Boolean: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = left.value + String(right.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = "TODO: string + array"
-            }
-            break;
-        }
-        case TypeInfo.Type.Object: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = left.value + "[object Object]";
-            }
-            break;
-        }
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = left.value + right.value.getText();
-            }
-            break;
-        }
-        case TypeInfo.Type.Null: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = left.value + "null";
-            }
-            break;
-        }
-        case TypeInfo.Type.Undefined: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = left.value + "undefined";
-            }
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            type.type = TypeInfo.Type.String;
-            break;
-        }
-        default: {
-            console.assert(false, "Unknown Type");
-            break;
-        }
-    };
-
-    return [type];
-
-};
-
-addFunctions[TypeInfo.Type.Boolean] = (left, right, node) => {
-
-    const type = {};
-
-    switch(right.type) {
-        case TypeInfo.Type.Number: {
-            type.type = TypeInfo.Type.Number;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = Number(left.value) + Number(right.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.String: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = String(left.value) + right.value;
-            }
-            break;
-        }
-        case TypeInfo.Type.Boolean: {
-            type.type = TypeInfo.Type.Number;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = Number(left.value) + Number(right.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue && right.hasValue) {
-                type.value = "TODO: boolean + array";
-            }
-            break;
-        }
-        case TypeInfo.Type.Object: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = String(left.value) + "[object Object]";
-            }
-            break;
-        }
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class: {
-            type.type = TypeInfo.Type.String;
-            if(left.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = String(left.value) + right.value.getText();
-            } 
-            break;
-        }
-        case TypeInfo.Type.Null: {
-            type.type = TypeInfo.Type.Number;
-            if(left.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = Number(left.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.Undefined: {
-            type.type = TypeInfo.Type.Number;
-            type.hasValue = true; // TODO: fix me?
-            type.value = NaN;
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            return [
-                TypeInfo.createNumber(),
-                TypeInfo.createString()
-            ];
-        }
-        default: {
-            console.assert(false, "Unknown Type");
-            break;
-        }
-    };
-
-    return [type];
-
-};
-
-addFunctions[TypeInfo.Type.Array] = (left, right) => {
-    const type = { id: TypeInfo.Type.String };
-    if(left.hasValue && right.hasValue) {
-        type.value = "TODO: array + " + TypeInfo.typeToString(right);
-    }
-    return [type];
-};
-
-addFunctions[TypeInfo.Type.Object] = (left, right, node) => {
-
-    const type = {};
-
-    switch(right.type) {
-        case TypeInfo.Type.Number:
-        case TypeInfo.Type.String:
-        case TypeInfo.Type.Boolean: {
-            type.type = TypeInfo.Type.String;
-            if(right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = "[object Object]" + String(right.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            type.type = TypeInfo.Type.String;
-            if(right.hasValue) {
-                type.value = "TODO: object + array";
-            }
-            break;
-        }
-        case TypeInfo.Type.Object: {
-            type.type = TypeInfo.Type.String;
-            type.hasValue = true; // TODO: fix me?
-            type.value = "[object Object][object Object]";
-            break;
-        }
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class: {
-            type.type = TypeInfo.Type.String;
-            type.hasValue = true; // TODO: fix me?
-            type.value = "[object Object]" + right.value.getText();
-            break;
-        }
-        case TypeInfo.Type.Null: {
-            type.type = TypeInfo.Type.String;
-            type.hasValue = true; // TODO: fix me?
-            type.value = "[object Object]null";
-            break;
-        }
-        case TypeInfo.Type.Undefined: {
-            type.type = TypeInfo.Type.String;
-            type.hasValue = true; // TODO: fix me?
-            type.value = "[object Object]undefined";
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            type.type = TypeInfo.Type.String;
-        }
-        default: {
-            console.assert(false, "Unknown Type");
-            break;
-        }
-    };
-
-    return [type];
-
-};
-
-addFunctions[TypeInfo.Type.Function] = 
-addFunctions[TypeInfo.Type.Class] = (left, right, node) => {
-
-    const type = {};
-
-    switch(right.type) {
-        case TypeInfo.Type.Number:
-        case TypeInfo.Type.String:
-        case TypeInfo.Type.Boolean:
-        case TypeInfo.Type.Null:
-        case TypeInfo.Type.Undefined: {
-            type.type = TypeInfo.Type.String;
-            if(right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = left.value.getText() + String(right.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            type.type = TypeInfo.Type.String;
-            if(right.hasValue) {
-                type.value = "TODO: function + array";
-            }
-            break;
-        }
-        case TypeInfo.Type.Object: {
-            type.type = TypeInfo.Type.String;
-            type.hasValue = true; // TODO: fix me?
-            type.value = left.value.getText() + "[object Object]";
-            break;
-        }
-        case TypeInfo.Type.Function: 
-        case TypeInfo.Type.Class: {
-            type.type = TypeInfo.Type.String;
-            type.hasValue = true; // TODO: fix me?
-            type.value = left.value.getText() + right.value.getText();
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            type.type = TypeInfo.Type.String;
-        }
-        default: {
-            console.assert(false, "Unknown Type");
-            break;
-        }
-    };
-
-    return [type];
-
-};
-
-addFunctions[TypeInfo.Type.Null] = (left, right, node) => {
-
-    const type = {};
-
-    switch(right.type) {
-        case TypeInfo.Type.Number:
-        case TypeInfo.Type.Boolean: {
-            type.type = TypeInfo.Type.Number;
-            if(right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = Number(right.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.String: {
-            type.type = TypeInfo.Type.String;
-            if(right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = "null" + right.value;
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            type.type = TypeInfo.Type.String;
-            if(right.hasValue) {
-                type.value = "TODO: null + array";
-            }
-            break;
-        }
-        case TypeInfo.Type.Object: {
-            type.type = TypeInfo.Type.String;
-            type.hasValue = true; // TODO: fix me?
-            type.value = "null[object Object]";
-            break;
-        }
-        case TypeInfo.Type.Null: {
-            type.type = TypeInfo.Type.Number;
-            type.hasValue = true; // TODO: fix me?
-            type.value = 0;
-            break;
-        }
-        case TypeInfo.Type.Undefined: {
-            type.type = TypeInfo.Type.Number;
-            type.hasValue = true; // TODO: fix me?
-            type.value = NaN;
-        }
-        case TypeInfo.Type.Any: {
-            return [
-                TypeInfo.createNumber(),
-                TypeInfo.createString()
-            ];
-        }
-        default: {
-            console.assert(false, "Unknown Type");
-            break;
-        }
-    };
-
-    return [type];
-
-};
-
-addFunctions[TypeInfo.Type.Undefined] = (left, right, node) => {
-
-    const type = {};
-
-    switch(right.type) {
-        case TypeInfo.Type.Number:
-        case TypeInfo.Type.Boolean:
-        case TypeInfo.Type.Null:
-        case TypeInfo.Type.Undefined: {
-            type.type = TypeInfo.Type.Number;
-            type.hasValue = true; // TODO: fix me?
-            type.value = NaN;
-            break;
-        }
-        case TypeInfo.Type.String: {
-            type.type = TypeInfo.Type.String;
-            if(right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = "undefined" + right.value;
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            type.type = TypeInfo.Type.String;
-            if(right.hasValue) {
-                type.value = "TODO: undefined + array";
-            }
-            break;
-        }
-        case TypeInfo.Type.Object: {
-            type.type = TypeInfo.Type.String;
-            type.hasValue = true; // TODO: fix me?
-            type.value = "undefined[object Object]";
-            break;
-        }
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class: {
-            type.type = TypeInfo.Type.String;
-            type.hasValue = true; // TODO: fix me?
-            type.value = "undefined" + right.value.getText();
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            return [
-                TypeInfo.createNumber(),
-                TypeInfo.createString()
-            ];
-        }
-        default: {
-            console.assert(false, "Unknown Type");
-            break;
-        }
-    };
-
-    return [type];
-
-};
-
-addFunctions[TypeInfo.Type.Any] = (left, right, node) => {
-    const info = [
-        TypeInfo.createNumber(),
-        TypeInfo.createString()
-    ];
-    return info;
-};
-
-/**
- * @param {ts.Node} node
- */
-binaryExpressionFunctions[ts.SyntaxKind.PlusToken] = node => {
-
-    const info = [];
-    const leftTypes = node.left.carrier.getInfo();
-    const rightTypes = node.right.carrier.getInfo();
-
-    for(const leftType of leftTypes) {
-        for(const rightType of rightTypes) {
-            console.assert(addFunctions.hasOwnProperty(leftType.type));
-            info.push(...addFunctions[leftType.type](leftType, rightType, node));
-        }
-    }
-
-    node.carrier = TypeCarrier.createConstant(info);
-
-};
-
-/**
- * @param {ts.Node} node
- */
-binaryExpressionFunctions[ts.SyntaxKind.MinusToken] = 
-binaryExpressionFunctions[ts.SyntaxKind.AsteriskToken] = 
-binaryExpressionFunctions[ts.SyntaxKind.SlashToken] = 
-binaryExpressionFunctions[ts.SyntaxKind.PercentToken] = 
-binaryExpressionFunctions[ts.SyntaxKind.AsteriskAsteriskToken] = 
-binaryExpressionFunctions[ts.SyntaxKind.LessThanToken] = 
-binaryExpressionFunctions[ts.SyntaxKind.LessThanEqualsToken] = 
-binaryExpressionFunctions[ts.SyntaxKind.GreaterThanToken] = 
-binaryExpressionFunctions[ts.SyntaxKind.GreaterThanEqualsToken] =
-binaryExpressionFunctions[ts.SyntaxKind.AmpersandToken] =
-binaryExpressionFunctions[ts.SyntaxKind.BarToken] =
-binaryExpressionFunctions[ts.SyntaxKind.CaretToken] =
-binaryExpressionFunctions[ts.SyntaxKind.LessThanLessThanToken] =
-binaryExpressionFunctions[ts.SyntaxKind.GreaterThanGreaterThanToken] =
-binaryExpressionFunctions[ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken] = node => {
-
-    const info = [];
-    const leftTypes = node.left.carrier.getInfo();
-    const rightTypes = node.right.carrier.getInfo();
-    const op = Ast.operatorTokenToString(node.operatorToken);
-
-    for(const leftType of leftTypes) {
-        for(const rightType of rightTypes) {
-            
-            const type = {};
-            type.type = TypeInfo.Type.Number;
-
-            const left = TypeInfo.toNumber(leftType);
-            const right = TypeInfo.toNumber(rightType);
-            if(left.hasValue && right.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = eval(left.value + op + right.value);
-            }
-    
-            info.push(type);
-            
-        }
-    }
-
-    node.carrier = TypeCarrier.createConstant(info);
-
-};
-
-/**
- * @param {ts.Node} node
- */
-binaryExpressionFunctions[ts.SyntaxKind.EqualsEqualsToken] = node => {
-    
-    const info = [];
-    const leftTypes = node.left.carrier.getInfo();
-    const rightTypes = node.right.carrier.getInfo();
-
-    for(const leftType of leftTypes) {
-        for(const rightType of rightTypes) {
-
-            const type = {};
-            type.type = TypeInfo.Type.Boolean;
-
-            // TODO: check for null, undefined, any?
-
-            if(leftType.hasValue && rightType.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = (leftType.value == rightType.value);
-            }
-
-            info.push(type);
-
-        }
-    }
-
-    node.carrier = TypeCarrier.createConstant(info);
-
-};
-
-/**
- * @param {ts.Node} node
- */
-binaryExpressionFunctions[ts.SyntaxKind.ExclamationEqualsToken] = node => {
-    
-    const info = [];
-    const leftTypes = node.left.carrier.getInfo();
-    const rightTypes = node.right.carrier.getInfo();
-
-    for(const leftType of leftTypes) {
-        for(const rightType of rightTypes) {
-
-            const type = {};
-            type.type = TypeInfo.Type.Boolean;
-
-            // TODO: check for null, undefined, any?
-
-            if(leftType.hasValue && rightType.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = leftType.value != rightType.value;
-            }
-
-            info.push(type);
-
-        }
-    }
-
-    node.carrier = TypeCarrier.createConstant(info);
-
-};
-
-/**
- * @param {ts.Node} node
- */
-binaryExpressionFunctions[ts.SyntaxKind.EqualsEqualsEqualsToken] = node => {
-    
-    const info = [];
-    const leftTypes = node.left.carrier.getInfo();
-    const rightTypes = node.right.carrier.getInfo();
-
-    for(const leftType of leftTypes) {
-        for(const rightType of rightTypes) {
-
-            const type = {};
-            type.type = TypeInfo.Type.Boolean;
-
-            if(leftType.type === rightType.type) {
-                if(leftType.hasValue && rightType.hasValue) {
-                    type.hasValue = true; // TODO: fix me?
-                    type.value = leftType.value == rightType.value;
-                }
-            } else {
-                type.hasValue = true; // TODO: fix me?
-                type.value = false;
-            }
-
-            info.push(type);
-
-        }
-    }
-
-    node.carrier = TypeCarrier.createConstant(info);
-
-};
-
-/**
- * @param {ts.Node} node
- */
-binaryExpressionFunctions[ts.SyntaxKind.ExclamationEqualsEqualsToken] = node => {
-    
-    const info = [];
-    const leftTypes = node.left.carrier.getInfo();
-    const rightTypes = node.right.carrier.getInfo();
-
-    for(const leftType of leftTypes) {
-        for(const rightType of rightTypes) {
-
-            const type = {};
-            type.type = TypeInfo.Type.Boolean;
-
-            if(leftType.type === rightType.type) {
-                if(leftType.hasValue && rightType.hasValue) {
-                    type.hasValue = true; // TODO: fix me?
-                    type.value = leftType.value != rightType.value;
-                }
-            } else {
-                type.hasValue = true; // TODO: fix me?
-                type.value = true;
-            }
-
-            info.push(type);
-
-        }
-    }
-
-    node.carrier = TypeCarrier.createConstant(info);
-
-};
-
-/**
- * @param {ts.Node} node
- */
-binaryExpressionFunctions[ts.SyntaxKind.AmpersandAmpersandToken] = node => {
-
-    const info = [];
-    const leftTypes = node.left.carrier.getInfo();
-    const rightTypes = node.right.carrier.getInfo();
-
-    for(const leftType of leftTypes) {
-        for(const rightType of rightTypes) {
-            
-            if(leftType.hasValue) {
-                info.push(Boolean(leftType.value) ? rightType : leftType);
-            } else {
-                info.push(leftType);
-                info.push(rightType);
-            }
-
-        }
-    }
-
-    node.carrier = TypeCarrier.createConstant(info);
-
-};
-
-/**
- * @param {ts.Node} node
- */
-binaryExpressionFunctions[ts.SyntaxKind.BarBarToken] = node => {
-
-    const info = [];
-    const leftTypes = node.left.carrier.getInfo();
-    const rightTypes = node.right.carrier.getInfo();
-
-    for(const leftType of leftTypes) {
-        for(const rightType of rightTypes) {
-        
-            if(leftType.hasValue) {
-                info.push(Boolean(leftType.value) ? leftType : rightType);
-            } else {
-                info.push(leftType);
-                info.push(rightType);
-            }
-
-        }
-    }
-
-    node.carrier = TypeCarrier.createConstant(info);
-
-};
-
-function analyzeBinaryExpression(node) {
-    console.assert(
-        binaryExpressionFunctions.hasOwnProperty(node.operatorToken.kind),
-        "Binary expression '" + node.operatorToken.kind +  "' not implemented yet" 
-    );
-    binaryExpressionFunctions[node.operatorToken.kind](node);
-}
-
-// ----------------------------------------------------------------------------
-
-const prefixUnaryExpressionFunctions = {};
-
-prefixUnaryExpressionFunctions[ts.SyntaxKind.PlusToken] = operandType => {
-
-    const type = {};
-    type.type = TypeInfo.Type.Number;
-    
-    switch(operandType.type) {
-        case TypeInfo.Type.Number:
-        case TypeInfo.Type.String:
-        case TypeInfo.Type.Boolean: {
-            if(operandType.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = Number(operandType.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            type.hasValue = true; // TODO: fix me?
-            // TODO: add logic for array +[] = 0, +[x] = Number(x) 
-            type.value = NaN;
-            break;
-        }
-        case TypeInfo.Type.Object:
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class:
-        case TypeInfo.Type.Undefined: {
-            type.hasValue = true; // TODO: fix me?
-            type.value = NaN;
-            break;
-        }
-        case TypeInfo.Type.Null: {
-            type.hasValue = true; // TODO: fix me?
-            type.value = 0;
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            break;
-        }
-        default: {
-            console.assert(false, "Unknown type");
-            break;
-        }
-    }
-
-    return type;
-
-};
-
-prefixUnaryExpressionFunctions[ts.SyntaxKind.MinusToken] = (operandType, node) => {
-    
-    const type = {};
-    type.type = TypeInfo.Type.Number;
-    
-    switch(operandType.type) {
-        case TypeInfo.Type.Number:
-        case TypeInfo.Type.String:
-        case TypeInfo.Type.Boolean: {
-            if(operandType.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = -Number(operandType.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            type.hasValue = true; // TODO: fix me?
-            // TODO: add logic for array -[] = 0, -[x] = -Number(x) 
-            type.value = NaN;
-            break;
-        }
-        case TypeInfo.Type.Object:
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class:
-        case TypeInfo.Type.Undefined: {
-            type.hasValue = true; // TODO: fix me?
-            type.value = NaN;
-            break;
-        }
-        case TypeInfo.Type.Null: {
-            type.hasValue = true; // TODO: fix me?
-            type.value = 0;
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            break;
-        }
-        default: {
-            console.assert(false, "Unknown type");
-            break;
-        }
-    }
-
-    return type;
-
-};
-
-prefixUnaryExpressionFunctions[ts.SyntaxKind.PlusPlusToken] = operandType => {
-
-    const type = {};
-    type.type = TypeInfo.Type.Number;
-    
-    switch(operandType.type) {
-        case TypeInfo.Type.Number:
-        case TypeInfo.Type.String:
-        case TypeInfo.Type.Boolean: {
-            if(operandType.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = Number(operandType.value) + 1;
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            // TODO: add logic for array
-            type.value = NaN;
-            break;
-        }
-        case TypeInfo.Type.Object:
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class:
-        case TypeInfo.Type.Undefined: {
-            type.value = NaN;
-            break;
-        }
-        case TypeInfo.Type.Null: {
-            type.value = 0;
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            break;
-        }
-        default: {
-            console.assert(false, "Unknown type");
-            break;
-        }
-    }
-
-    return type;
-
-};
-
-prefixUnaryExpressionFunctions[ts.SyntaxKind.MinusMinusToken] = (operandType, node) => {
-
-    const type = {};
-    type.type = TypeInfo.Type.Number;
-    
-    switch(operandType.type) {
-        case TypeInfo.Type.Number:
-        case TypeInfo.Type.String:
-        case TypeInfo.Type.Boolean: {
-            if(operandType.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = Number(operandType.value) - 1;
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            // TODO: add logic for array
-            type.value = NaN;
-            break;
-        }
-        case TypeInfo.Type.Object:
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class:
-        case TypeInfo.Type.Undefined: {
-            type.value = NaN;
-            break;
-        }
-        case TypeInfo.Type.Null: {
-            type.value = 0;
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            break;
-        }
-        default: {
-            console.assert(false, "Unknown type");
-            break;
-        }
-    }
-
-    return type;
-
-};
-
-prefixUnaryExpressionFunctions[ts.SyntaxKind.ExclamationToken] = operandType => {
-
-    const type = {};
-    type.type = TypeInfo.Type.Boolean;
-
-    switch(operandType.type) {
-        case TypeInfo.Type.Number:
-        case TypeInfo.Type.String:
-        case TypeInfo.Type.Boolean: {
-            if(operandType.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = !Boolean(operandType.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            // TODO: add logic
-            type.value = false;
-            break;
-        }
-        case TypeInfo.Type.Object:
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class: {
-            type.hasValue = true;
-            type.value = false;
-            break;
-        }
-        case TypeInfo.Type.Null:
-        case TypeInfo.Type.Undefined: {
-            type.hasValue = true;
-            type.value = true;
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            break;
-        }
-        default: {
-            console.assert(false, "Unknown type");
-            break;
-        }
-    }
-
-    return type;
-
-};
-
-prefixUnaryExpressionFunctions[ts.SyntaxKind.TildeToken] = (operandType, node) => {
-
-    const type = {};
-    type.type = TypeInfo.Type.Number;
-
-    switch(operandType.type) {
-        case TypeInfo.Type.Number:
-        case TypeInfo.Type.String:
-        case TypeInfo.Type.Boolean: {
-            if(operandType.hasValue) {
-                type.hasValue = true; // TODO: fix me?
-                type.value = ~Number(operandType.value);
-            }
-            break;
-        }
-        case TypeInfo.Type.Array: {
-            // TODO: add logic
-            type.value = -1;
-            break;
-        }
-        case TypeInfo.Type.Object:
-        case TypeInfo.Type.Function:
-        case TypeInfo.Type.Class:
-        case TypeInfo.Type.Null:
-        case TypeInfo.Type.Undefined: {
-            type.value = -1;
-            break;
-        }
-        case TypeInfo.Type.Any: {
-            break;
-        }
-        default: {
-            console.assert(false, "Unknown type");
-            break;
-        }
-    }
-
-    return type;
-
-};
-
-/**
- * @param {ts.PrefixUnaryExpression} node 
- */
-function analyzePrefixUnaryExpression(node) {
-
-    const operandTypes = node.operand.carrier.getInfo();
-    const info = [];
-
-    for(const operandType of operandTypes) {
-        console.assert(
-            prefixUnaryExpressionFunctions.hasOwnProperty(node.operator), 
-            "Prefix unary operator " + node.operator + " not implemented yet"
-        );
-        info.push(prefixUnaryExpressionFunctions[node.operator](operandType, node));
-    }
-
-    node.carrier = TypeCarrier.createConstant(info);
-
-}
-
-// ----------------------------------------------------------------------------
-
-/**
- * @param {ts.PostfixUnaryExpression} node 
- */
-function analyzePostfixUnaryExpression(node) {
-
-    const operandTypes = node.operand.carrier.getInfo();
-    const info = [];
-
-    for(const operandType of operandTypes) {
-        
-        const type = {};
-        type.type = TypeInfo.Type.Number;
-
-        switch(operandType.type) {
-            case TypeInfo.Type.Number:
-            case TypeInfo.Type.String:
-            case TypeInfo.Type.Boolean: {
-                if(operandType.hasValue) {
-                    type.hasValue = true; // TODO: fix me?
-                    type.value = Number(operandType.value);
-                }
-                break;
-            }
-            case TypeInfo.Type.Array: {
-                // TODO: add logic
-                type.value = NaN;
-                break;
-            }
-            case TypeInfo.Type.Object:
-            case TypeInfo.Type.Function:
-            case TypeInfo.Type.Class:
-            case TypeInfo.Type.Undefined: {
-                type.value = NaN;
-                break;
-            }
-            case TypeInfo.Type.Null: {
-                type.value = 0;
-                break;
-            }
-            case TypeInfo.Type.Any: {
-                break;
-            }
-            default: {
-                console.assert(false, "Unknown Type");
-                break;
-            }
-        }
-
-        info.push(type);
-
-    }
-
-    TypeCarrier.createConstant(info);
-
-}
-
-// ----------------------------------------------------------------------------
-
-/**
- * 
- * @param {ts.TypeOfExpression} node 
- */
-function analyzeTypeOfExpression(node) {
-
-    const info = [];
-    const operandTypes = node.expression.carrier.getInfo();
-
-    for(const operandType of operandTypes) {
-
-        const type = {};
-        type.type = TypeInfo.Type.String;
-
-        switch(operandType.type) {
-            case TypeInfo.Type.Number:
-            case TypeInfo.Type.String:
-            case TypeInfo.Type.Boolean:
-            case TypeInfo.Type.Object:
-            case TypeInfo.Type.Function:
-            case TypeInfo.Type.Undefined: {
-                type.hasValue = true; // TODO: fix me?
-                type.value = TypeInfo.typeToString(operandType);
-                break;
-            }
-            case TypeInfo.Type.Array:
-            case TypeInfo.Type.Class:
-            case TypeInfo.Type.Null: {
-                type.hasValue = true; // TODO: fix me?
-                type.value = "object";
-                break;
-            }
-            case TypeInfo.Type.Any: {
-                type.hasValue = true; // TODO: fix me?
-                type.value = "number";
-                info.push(...[
-                    TypeInfo.createString('number'),
-                    TypeInfo.createString('string'),
-                    TypeInfo.createString('boolean'),
-                    TypeInfo.createString('array'),
-                    TypeInfo.createString('object'),
-                    TypeInfo.createString('function'),
-                    TypeInfo.createString('class'),
-                    TypeInfo.createString('undefined'),
-                    TypeInfo.createString('null'),
-                ]);
-            }
-            default: {
-                console.assert(false, "Unknown type");
-                break;
-            }
-        }
-
-        info.push(type);
-
-    }
-
-    node.carrier = TypeCarrier.createConstant(info);
-
-}
-
-// ----------------------------------------------------------------------------
-
 /**
  * @param {ts.PropertyAccessExpression} node 
  */
 function analyzePropertyAccessExpression(node) {
 
-    const expressionTypes = node.expression.carrier.getInfo();
+    const expressionTypes = TypeCarrier.evaluate(node.expression.carrier);
     const propertyName = node.name.getText();
     const info = [];
     let typesContainUndefined = false;
@@ -1904,7 +744,7 @@ function analyzePropertyAccessExpression(node) {
             for(const [,property] of Object.entries(type.properties.getSymbols())) {
                 if(property.name === name) {
                     // TODO: fixme
-                    info.push(...Ast.findActiveTypeBinders(node, property)[0].getInfo());
+                    info.push(...TypeCarrier.evaluate(Ast.findActiveTypeBinders(node, property)[0]));
                 } 
             }
         }
@@ -1921,8 +761,8 @@ function analyzePropertyAccessExpression(node) {
  */
 function analyzeElementAccessExpression(node) {
 
-    const expressionTypes = node.expression.carrier.getInfo();
-    const elementTypes = node.argumentExpression.carrier.getInfo();
+    const expressionTypes = TypeCarrier.evaluate(node.expression.carrier);
+    const elementTypes = TypeCarrier.evaluate(node.argumentExpression.carrier);
     const info = [];
     let typesContainUndefined = false;
     // TODO: FIXME

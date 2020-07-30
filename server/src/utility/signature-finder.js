@@ -1,5 +1,6 @@
 const Ast = require('../ast/ast');
 const TypeInfo = require('../utility/type-info');
+const TypeCarrier = require('../utility/type-carrier');
 const TypeBinder = require('./type-binder');
 
 const me = {};
@@ -84,7 +85,7 @@ me.computeSignature = function computeSignature(node, binders, typeSeparator = '
 	}
 
 	for(const b of binders) {
-		for(const type of b.getInfo()) {
+		for(const type of TypeCarrier.evaluate(b.carrier)) {
 			if(firstTime) { 
 				const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
 				signature += `${name}: `;

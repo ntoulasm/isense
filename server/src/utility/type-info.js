@@ -245,7 +245,9 @@ TypeInfo.toString = info => {
             // TODO: add logic
             break;
         }
-        case TypeInfo.Type.Object:
+        case TypeInfo.Type.Object: {
+            return TypeInfo.createString("[object Object]");
+        }
         case TypeInfo.Type.Function:
         case TypeInfo.Type.Class: {
             if(info.hasValue) {
@@ -311,6 +313,14 @@ TypeInfo.toBoolean = info => {
 
     return TypeInfo.createBoolean();
 
+};
+
+TypeInfo.isStringLike = info => {
+    return info.type === TypeInfo.Type.String || 
+        info.type === TypeInfo.Type.Array || 
+        info.type === TypeInfo.Type.Object || 
+        info.type === TypeInfo.Type.Function || 
+        info.type === TypeInfo.Type.Class;
 };
 
 module.exports = TypeInfo;
