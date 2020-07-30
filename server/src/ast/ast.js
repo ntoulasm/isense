@@ -412,9 +412,20 @@ Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode) => {
         }
         case ts.SyntaxKind.ForStatement:
         case ts.SyntaxKind.ForInStatement:
-        case ts.SyntaxKind.ForOfStatement:
-            break;
-            // TODO: logic
+        case ts.SyntaxKind.ForOfStatement: {
+
+            const statement = node.statement;
+            const binders = new Set();
+
+            Ast.findActiveTypeBindersInLeftSibling(statement, symbol)
+                .forEach(b => binders.add(b));
+
+            Ast.findActiveTypeBinders(statement, symbol)
+                .forEach(b => binders.add(b));
+
+            return Array.from(binders);
+            
+        }
         default: {
             const binders = Ast.findActiveTypeBindersInLeftSibling(
                 Ast.findRightMostDescendant(node),
