@@ -20,6 +20,6 @@ if(true) {
   x = 2;
 } else if(false) {
   y = "";
-} else y = {};
+} else y = {a: 2};
 y;
 x;

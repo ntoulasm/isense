@@ -1,12 +1,4 @@
-const SymbolTable = require('./symbol-table');
-const Utility = require('./utility');
-const Symbol = require('./symbol');
-const TypeInfo = require('./type-info');
 const TypeCarrier = require('./type-carrier');
-
-// ----------------------------------------------------------------------------
-
-const ts = require('typescript');
 
 // ----------------------------------------------------------------------------
 
@@ -58,26 +50,5 @@ TypeBinder.copy = binder => {
     const carrier = TypeCarrier.copy(binder.carrier);
     return TypeBinder.create(symbol, carrier);
 };
-
-/**
- * 
- * @param {ts.Node} node 
- */
-function findRightMostDescendant(node) {
-    const children = node.getChildren();
-    const total = children.length;
-    return total ? findRightMostDescendant(children[total - 1]) : node;
-}
-
-/**
- * 
- * @param {ts.Node} node 
- */
-function findPreviousNode(node) {
-    let parent = node.parent;
-    if(!parent) { return ; }
-    const leftSibling = Ast.findLeftSibling(node);
-    return leftSibling ? findRightMostDescendant(leftSibling) : parent;
-}
 
 module.exports = TypeBinder;

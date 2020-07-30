@@ -3,7 +3,6 @@ const Ast = require('../ast/ast');
 const TypeInfo = require('./type-info');
 
 const ts = require('typescript');
-const { findPreviousNode } = require('../ast/ast');
 
 //  ----------------------------------------------------------------------------------
 
@@ -96,7 +95,7 @@ TypeCarrier.createTypeOfExpression = expression => {
 const copyFunctions = TypeCarrier.copyFunctions = [];
 
 TypeCarrier.copy = carrier => {
-    const f = copyFunctions[carrier.type];
+    const f = copyFunctions[carrier.kind];
     if(f) {
         return f(carrier);
     } else {

@@ -374,18 +374,6 @@ Analyzer.analyze = ast => {
                 }
                 break;
             }
-            case ts.SyntaxKind.Block: {
-                node.innerBinders = new Map();
-                node.freeVariables = new Set();
-                ts.forEachChild(node, visitDeclarations);
-                const lastStatement = Ast.findLastStatement(node);
-                if(!lastStatement) { break; }
-                const rightBracket = node.getChildren()[node.getChildCount() - 1];
-                for(const fv of node.freeVariables) {
-                    node.innerBinders.set(fv, Ast.findActiveTypeBindersLeftSibling(rightBracket, lastStatement, fv));
-                }
-                break;
-            }
 			default: {
 				ts.forEachChild(node, visitDeclarations);
 				break;
