@@ -27,7 +27,7 @@ for(const b in {}) {
 let g;
 
 for(;;) {
-    g = {a: 5, b: 200}
+    g = {a: 5, b: 200};
     if(a) {
         g = {a: 2};
     }

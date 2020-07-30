@@ -369,6 +369,19 @@ Ast.findIfStatementBlocks = node => {
 
 };
 
+// /**
+//  * @param {ts.Node} node 
+//  */
+// Ast.findSwitchStatementCaseClauses = node => {
+
+//     const blocks = [];
+
+//     const findSwitchStatementCaseClausesInternal = node => {
+
+//     };
+
+// };
+
 /**
  * @param {ts.Node} node 
  * @param {isense.symbol} symbol
@@ -410,6 +423,29 @@ Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode) => {
             return Array.from(binders);
 
         }
+        case ts.SyntaxKind.SwitchStatement: {
+
+            const clauses = node.caseBlock.clauses;
+            const binders = new Set();
+
+            for(const clause of clauses) {
+
+                const statements = clause.statements;
+                const totalStatements = statements.length;
+                const lastStatement = totalStatements ? statements[totalStatements - 1] : undefined;
+                if(lastStatement === undefined) { break; }
+
+                Ast.findActiveTypeBindersInLeftSibling(lastStatement, symbol, clause)
+                    .forEach(b => binders.add(b));
+            
+            }
+
+            Ast.findActiveTypeBinders(node, symbol)
+                .forEach(b => binders.add(b));
+
+            return Array.from(binders);
+
+        }
         case ts.SyntaxKind.ForStatement:
         case ts.SyntaxKind.ForInStatement:
         case ts.SyntaxKind.ForOfStatement: {
@@ -424,7 +460,7 @@ Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode) => {
                 .forEach(b => binders.add(b));
 
             return Array.from(binders);
-            
+
         }
         default: {
             const binders = Ast.findActiveTypeBindersInLeftSibling(
