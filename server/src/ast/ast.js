@@ -369,19 +369,6 @@ Ast.findIfStatementBlocks = node => {
 
 };
 
-// /**
-//  * @param {ts.Node} node 
-//  */
-// Ast.findSwitchStatementCaseClauses = node => {
-
-//     const blocks = [];
-
-//     const findSwitchStatementCaseClausesInternal = node => {
-
-//     };
-
-// };
-
 /**
  * @param {ts.Node} node 
  * @param {isense.symbol} symbol
