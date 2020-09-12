@@ -146,6 +146,7 @@ Analyzer.analyze = ast => {
                             // TODO: move to assign?
                             node.carrier = carrier;
 
+
                         } else {
                             Ast.addAnalyzeDiagnostic(
                                 node.getSourceFile(), 
@@ -174,6 +175,7 @@ Analyzer.analyze = ast => {
                         console.assert(false, 'left side of assignment is not lvalue');
                     }
 				} else {
+                    induceParameterType(node);
                     node.carrier = TypeCarrier.createBinaryExpression(node.left.carrier, node.operatorToken, node.right.carrier);
                 }
 				
@@ -638,6 +640,11 @@ function newExpression(node) {
  * @param {*} carrier
  */
 function assign(node, symbol, rvalue, carrier) {
+
+    // Same symbols? Ignore.
+    if(rvalue.carrier.kind === TypeCarrier.Kind.Variable && symbol === rvalue.carrier.symbol) {
+        return ;
+    }
 
     const lvalueBinders = Ast.findActiveTypeBinders(node, symbol);
 

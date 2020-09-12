@@ -375,7 +375,7 @@ Ast.findIfStatementBlocks = node => {
  * @param {ts.Node} stopNode  
  */
 
-Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode) => {
+Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode, startNode) => {
 
     if(node === stopNode) { return ; }
 
@@ -390,7 +390,8 @@ Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode) => {
             const binders = Ast.findActiveTypeBindersInLeftSibling(
                 Ast.findLastStatement(node) || node,
                 symbol,
-                node
+                node,
+                startNode
             );
             if(binders) { return binders; }
             break;
@@ -401,11 +402,11 @@ Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode) => {
             const binders = new Set();
 
             for(const b of blocks) {
-                Ast.findActiveTypeBindersInLeftSibling(b, symbol)
+                Ast.findActiveTypeBindersInLeftSibling(b, symbol, undefined, startNode)
                     .forEach(b => binders.add(b));
             }
 
-            Ast.findActiveTypeBinders(node, symbol)
+            Ast.findActiveTypeBinders(node, symbol, undefined, startNode)
                 .forEach(b => binders.add(b));
             return Array.from(binders);
 
@@ -422,12 +423,12 @@ Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode) => {
                 const lastStatement = totalStatements ? statements[totalStatements - 1] : undefined;
                 if(lastStatement === undefined) { break; }
 
-                Ast.findActiveTypeBindersInLeftSibling(lastStatement, symbol, clause)
+                Ast.findActiveTypeBindersInLeftSibling(lastStatement, symbol, clause, startNode)
                     .forEach(b => binders.add(b));
             
             }
 
-            Ast.findActiveTypeBinders(node, symbol)
+            Ast.findActiveTypeBinders(node, symbol, undefined, startNode)
                 .forEach(b => binders.add(b));
 
             return Array.from(binders);
@@ -440,10 +441,10 @@ Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode) => {
             const statement = node.statement;
             const binders = new Set();
 
-            Ast.findActiveTypeBindersInLeftSibling(statement, symbol)
+            Ast.findActiveTypeBindersInLeftSibling(statement, symbol, undefined, startNode)
                 .forEach(b => binders.add(b));
 
-            Ast.findActiveTypeBinders(statement, symbol)
+            Ast.findActiveTypeBinders(statement, symbol, undefined, startNode)
                 .forEach(b => binders.add(b));
 
             return Array.from(binders);
@@ -453,14 +454,15 @@ Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode) => {
             const binders = Ast.findActiveTypeBindersInLeftSibling(
                 Ast.findRightMostDescendant(node),
                 symbol,
-                node
+                node,
+                startNode
             );
             if(binders) { return binders; }
             break;
         }
     }
 
-    return Ast.findActiveTypeBinders(node, symbol);
+    return Ast.findActiveTypeBinders(node, symbol, undefined, startNode);
 
 };
 
@@ -468,22 +470,43 @@ Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode) => {
  * @param {ts.Node} node
  * @param {object} symbol
  */
-Ast.findActiveTypeBindersInParent = (node, symbol) => {
+Ast.findActiveTypeBindersInParent = (node, symbol, startNode) => {
 
     if(node.kind === ts.SyntaxKind.CallExpression && node.callee && node.callee.body) {
         const callee = node.callee;
         const binders = Ast.findActiveTypeBindersInLeftSibling(
             callee.body,
-            symbol
+            symbol,
+            undefined,
+            startNode
         );
         if(binders) { return binders; }
     }
 
     if(ts.isFunctionLike(node) && node.call) {
-        return Ast.findActiveTypeBinders(node.call, symbol);
+        return Ast.findActiveTypeBinders(node.call, symbol, undefined, startNode);
     }
 
-    return Ast.findActiveTypeBinders(node, symbol);
+    // if the starting node of the search is child of assign expression, 
+    // ignore the binder of the assign expression. 
+    // e.g  let x = 2;
+    //      x = x + 3;
+    //      x on x + 3 needs to evaluate to 2.
+    // Otherwise it is stack overflow
+    //      evaluate(x + 3) -> evaluate(x) -> evaluate(x + 3) -> evaluate(x) -> ...
+    if(node.parent && node.parent.kind === ts.SyntaxKind.BinaryExpression && node.parent.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+        const startNodeOffset = startNode.getStart();
+        if(node.parent.getStart() <= startNodeOffset && startNodeOffset <= node.parent.getEnd()) {
+            return Ast.findActiveTypeBinders(
+                Ast.findLeftSibling(node.parent) || node.parent.parent,
+                symbol,
+                undefined,
+                startNode
+            );
+        }
+    }
+
+    return Ast.findActiveTypeBinders(node, symbol, undefined, startNode);
 
 };
 
@@ -492,7 +515,7 @@ Ast.findActiveTypeBindersInParent = (node, symbol) => {
  * @param {object} symbol
  * @param {ts.Node} stopNode
  */
-Ast.findActiveTypeBinders = (node, symbol, stopNode) => {
+Ast.findActiveTypeBinders = (node, symbol, stopNode, startNode = node) => {
 
     if(node.hasOwnProperty("binders")) {
         for(const binder of node.binders) {
@@ -509,10 +532,10 @@ Ast.findActiveTypeBinders = (node, symbol, stopNode) => {
 
     const leftSibling = Ast.findLeftSibling(node);
     if(leftSibling) {
-        return Ast.findActiveTypeBindersInLeftSibling(leftSibling, symbol);
+        return Ast.findActiveTypeBindersInLeftSibling(leftSibling, symbol, undefined, startNode);
     }
     if(parent) {
-        return Ast.findActiveTypeBindersInParent(parent, symbol);
+        return Ast.findActiveTypeBindersInParent(parent, symbol, startNode);
     }
 
     return [];
