@@ -642,7 +642,7 @@ function newExpression(node) {
 function assign(node, symbol, rvalue, carrier) {
 
     // Same symbols? Ignore.
-    if(rvalue.carrier.kind === TypeCarrier.Kind.Variable && symbol === rvalue.carrier.symbol) {
+    if(rvalue && rvalue.carrier.kind === TypeCarrier.Kind.Variable && symbol === rvalue.carrier.symbol) {
         return ;
     }
 
