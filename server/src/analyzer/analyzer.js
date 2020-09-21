@@ -175,7 +175,7 @@ Analyzer.analyze = ast => {
                         console.assert(false, 'left side of assignment is not lvalue');
                     }
 				} else {
-                    induceParameterType(node);
+                    induceParameterType(node);   
                     node.carrier = TypeCarrier.createBinaryExpression(node.left.carrier, node.operatorToken, node.right.carrier);
                 }
 				
@@ -814,6 +814,93 @@ function markUnreachableStatements(stmts) {
     }
 
 }
+
+// ----------------------------------------------------------------------------
+
+/**
+ * 
+ * @param {ts.Node} node 
+ */
+function getParameterSymbol(node) {
+    if(node.carrier.kind === TypeCarrier.Kind.Variable) {
+        const symbol = node.carrier.symbol;
+        if(symbol.declaration && symbol.declaration.kind === ts.SyntaxKind.Parameter) {
+            return symbol;
+        } else {
+            // TODO: Add code for these cases a => { let x = a; return x + 2; }
+        }
+    }
+}
+
+/**
+ * 
+ * @param {ts.Node} node 
+ */
+function induceParameterType(node) {
+
+    const outerFunction = Ast.findAncestorFunction(node);
+    if(!(outerFunction && outerFunction.hasOwnProperty('_original') && outerFunction === outerFunction._original)) {
+        return ; 
+    }
+
+    const leftParameterSymbol = getParameterSymbol(node.left);
+    const rightParameterSymbol = getParameterSymbol(node.right);
+    
+    if(leftParameterSymbol) {
+        const carrier = induceTypeFromUse(node);
+        const binder = TypeBinder.create(leftParameterSymbol, carrier);
+        Ast.addTypeBinder(node, binder);
+    }
+
+    if(rightParameterSymbol && rightParameterSymbol !== leftParameterSymbol) {
+        const carrier = induceTypeFromUse(node);
+        const binder = TypeBinder.create(rightParameterSymbol, carrier);
+        Ast.addTypeBinder(node, binder);
+    }
+
+};
+
+/**
+ * @param {ts.BinaryExpression} node
+ */
+function induceTypeFromUse (node) {
+
+    switch(node.operatorToken.kind) {
+        case ts.SyntaxKind.PlusToken:
+            var carrier = TypeCarrier.createConstant([
+                TypeInfo.create(TypeInfo.Type.Number),
+                TypeInfo.create(TypeInfo.Type.String)
+            ]);
+            break;
+        case ts.SyntaxKind.MinusToken:
+        case ts.SyntaxKind.AsteriskToken:
+        case ts.SyntaxKind.SlashToken:
+        case ts.SyntaxKind.PercentToken:
+        case ts.SyntaxKind.AsteriskAsteriskToken:
+        case ts.SyntaxKind.LessThanToken:
+        case ts.SyntaxKind.LessThanEqualsToken:
+        case ts.SyntaxKind.GreaterThanToken:
+        case ts.SyntaxKind.GreaterThanEqualsToken:
+        case ts.SyntaxKind.AmpersandToken:
+        case ts.SyntaxKind.BarToken:
+        case ts.SyntaxKind.CaretToken:
+        case ts.SyntaxKind.LessThanLessThanToken:
+        case ts.SyntaxKind.GreaterThanGreaterThanToken:
+        case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
+            var carrier = TypeCarrier.createConstant([
+                TypeInfo.create(TypeInfo.Type.Number),
+            ]);
+            break;
+        default:
+            console.assert(false, "Induce from use");
+    }
+
+    carrier.induced = true;
+    return carrier;
+
+};
+
+
 
 // ----------------------------------------------------------------------------
 

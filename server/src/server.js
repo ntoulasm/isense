@@ -251,21 +251,24 @@ const computeParametersSignature = (callee) => {
 			Ast.findLastParameter(callee),
 			parameterName
 		);
-		const closestBinders = symbol && Ast.findActiveTypeBinders(symbol.declaration, symbol);
+		
+		// We need to filter similar types because on call new carriers for the parameter will be added.
+		// TODO: Should i change this?
+		const inducedBinders = symbol && symbol.binders.filter(b => b.carrier.induced);
+		let inducedTypeInfos = [];
+		inducedBinders.forEach(b => inducedTypeInfos.push(...TypeCarrier.evaluate(b.carrier)));
+
 		let signature = parameterName;
-		if(closestBinders) {
-			let firstTime = true;
-			for(const b of closestBinders) {
-				for(const type of TypeCarrier.evaluate(b.carrier)) {
-					if(firstTime) { 
-						signature += ':';
-						firstTime = false; 
-					} else { 
-						signature += ' ||' 
-					}
-					signature += ` ${TypeInfo.typeToString(type)}`;
-				}
+		let firstTime = true;
+
+		for(const type of inducedTypeInfos) {
+			if(firstTime) { 
+				signature += ':';
+				firstTime = false; 
+			} else { 
+				signature += ' ||' 
 			}
+			signature += ` ${TypeInfo.typeToString(type)}`;
 		}
 
 		return signature;
