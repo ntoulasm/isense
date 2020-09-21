@@ -960,4 +960,72 @@ Ast.findNextStatement = node => {
     return Ast.findRightSibling(node);
 };
 
+/**
+ * @param {ts.Identifier} node 
+ */
+Ast.isVariableDeclarationName = node => {
+    return node.parent && node.parent.kind === ts.SyntaxKind.VariableDeclaration && node.parent.name === node;
+};
+
+/**
+ * @param {ts.Identifier} node
+ */
+Ast.isFunctionName = node => {
+    return node.parent && node.parent.kind === ts.SyntaxKind.FunctionDeclaration && node.parent.name === node;
+};
+
+/**
+ * @param {ts.Identifier} node 
+ */
+Ast.isParameterName = node => {
+    return node.parent && node.parent.kind === ts.SyntaxKind.Parameter && node.parent.name === node;
+    // TODO: handle destructuring pattern
+};
+
+/**
+ * @param {ts.Identifier} node 
+ */
+Ast.isClassName = node => {
+    return node.parent && node.parent.kind === ts.SyntaxKind.ClassDeclaration && node.parent.name === node;
+};
+
+/**
+ * @param {ts.Identifier} node 
+ */
+Ast.isPropertyName = node => {
+    return node.parent && node.parent.kind === ts.SyntaxKind.PropertyDeclaration && node.parent.name === node;
+};
+
+/**
+ * @param {ts.Identifier} node 
+ */
+Ast.isMethodName = node => {
+    return node.parent && node.parent.kind === ts.SyntaxKind.MethodDeclaration && node.parent.name === node;
+};
+
+/**
+ * @param {ts.Identifier} node 
+ */
+Ast.isGetterName = node => {
+    return node.parent && node.parent.kind === ts.SyntaxKind.GetAccessor && node.parent.name === node;
+};
+
+Ast.isSetterName = node => {
+    return node.parent && node.parent.kind === ts.SyntaxKind.SetAccessor && node.parent.name === node;
+};
+
+/**
+ * @param {ts.Node} node 
+ */
+Ast.isDeclarationName = node => {
+    return Ast.isVariableDeclarationName(node) || 
+        Ast.isFunctionName(node) ||
+        Ast.isParameterName(node) ||
+        Ast.isClassName(node) ||
+        Ast.isPropertyName(node) ||
+        Ast.isMethodName(node) ||
+        Ast.isGetterName(node) ||
+        Ast.isSetterName(node);
+};
+
 module.exports = Ast;

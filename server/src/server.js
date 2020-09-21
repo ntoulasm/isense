@@ -405,6 +405,7 @@ connection.onCompletion((info) => {
 		const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
 		switch(node.kind) {
 			case ts.SyntaxKind.Identifier: {
+				if(Ast.isDeclarationName(node)) { return ; }
 				if(node.parent.kind === ts.SyntaxKind.PropertyAccessExpression) {
 
 					const expressionTypes = TypeCarrier.evaluate(node.parent.expression.carrier);
