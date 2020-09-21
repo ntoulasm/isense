@@ -817,19 +817,36 @@ function markUnreachableStatements(stmts) {
 
 // ----------------------------------------------------------------------------
 
+function isParameter(symbol) {
+    return symbol.declaration && symbol.declaration.kind === ts.SyntaxKind.Parameter;
+}
+
+function needsInduction(binders) {
+    return !binders.length || binders.filter(b => b.carrier.induced).length;
+}
+
 /**
  * 
  * @param {ts.Node} node 
  */
 function getParameterSymbol(node) {
-    if(node.carrier.kind === TypeCarrier.Kind.Variable) {
-        const symbol = node.carrier.symbol;
-        if(symbol.declaration && symbol.declaration.kind === ts.SyntaxKind.Parameter) {
+
+    if(node.carrier.kind !== TypeCarrier.Kind.Variable) { return ; }
+
+    let symbol = node.carrier.symbol;
+
+    while(true) {
+        const binders = Ast.findActiveTypeBinders(node, symbol);
+        const variableCarriers = binders.map(b => b.carrier).filter(c => c.kind === TypeCarrier.Kind.Variable);
+        if(variableCarriers.length === 1) {
+            symbol = variableCarriers[0].symbol;
+        } else if(isParameter(symbol) && needsInduction(binders)) {
             return symbol;
         } else {
-            // TODO: Add code for these cases a => { let x = a; return x + 2; }
+            return ;
         }
     }
+
 }
 
 /**
@@ -893,13 +910,13 @@ function induceTypeFromUse (node) {
             break;
         default:
             console.assert(false, "Induce from use");
+            break;
     }
 
     carrier.induced = true;
     return carrier;
 
 };
-
 
 
 // ----------------------------------------------------------------------------

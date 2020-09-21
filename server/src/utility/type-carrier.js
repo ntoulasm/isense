@@ -127,7 +127,11 @@ const evaluateFunctions = TypeCarrier.evaluateFunctions = {};
 TypeCarrier.evaluate = carrier => {
     const f = evaluateFunctions[carrier.kind];
     if(f) {
-        return f(carrier);
+        const infos = f(carrier);
+        if(!infos.length) {
+            infos.push(TypeInfo.createAny());
+        }
+        return infos;
     } else {
         console.assert(false, `Trying to evaluate unknown carrier '${carrier.kind}'`);
     }

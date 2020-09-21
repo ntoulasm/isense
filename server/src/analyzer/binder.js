@@ -415,8 +415,6 @@ function declareParameters(func) {
             // const start = node.name.getStart();
             // const end = node.name.end;
             const symbol = Symbol.createDeclaration(name, node);
-            const type = TypeInfo.createAny();
-            Ast.addTypeBinder(node, TypeBinder.create(symbol, TypeCarrier.createConstant(type)));
             node.symbols.insert(symbol);
         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
             // visitDestructuringDeclerations(node.name, (name, start, end) => {

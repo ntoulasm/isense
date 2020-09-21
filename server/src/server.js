@@ -186,6 +186,14 @@ connection.onHover(info => {
 				}; 
 			}
 			const contents = [];
+			if(!symbol.binders.length) {
+				return {
+					contents: {
+						language: 'typescript',
+						value: node.text + ': any'
+					}
+				};
+			}
 			const closestBinders = Ast.findActiveTypeBinders(node, symbol);
 			for(const b of symbol.binders) {
 				const line = ts.getLineAndCharacterOfPosition(ast, b.parent.getStart()).line + 1;
