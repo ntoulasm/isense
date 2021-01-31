@@ -41,14 +41,15 @@ connection.onInitialize((params) => {
 		capabilities: {
 			textDocumentSync: vscodeLanguageServer.TextDocumentSyncKind.Incremental,
 			hoverProvider: true,
+			documentSymbolProvider: true,
+			definitionProvider: true,
 			signatureHelpProvider: {
 				triggerCharacters: ['(', ',']
 			},
 			completionProvider: {
 				resolveProvider: true,
 				triggerCharacters: ['.']
-			},
-			documentSymbolProvider: true
+			}
 		}
 	};
 
@@ -472,6 +473,30 @@ connection.onCompletionResolve(item => {
 	return item;
 });
 
+connection.onDefinition(info => {
+
+	const document = info.textDocument;
+	const fileName = document.uri;
+	const ast = asts[fileName];
+	const position = info.position;
+	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
+	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
+
+	switch(node.kind) {
+		case ts.SyntaxKind.Identifier: {
+			// TODO: Handle definition in different files.
+			const symbol = Ast.lookUp(node, node.getText());
+			const startPosition = ast.getLineAndCharacterOfPosition(symbol.start);
+			const endPosition = ast.getLineAndCharacterOfPosition(symbol.end);
+			const range = vscodeLanguageServer.Range.create(startPosition, endPosition);
+			const location = vscodeLanguageServer.Location.create(fileName, range);
+			return location;
+		}
+		default: break;
+	}
+
+});
+
 connection.onDidOpenTextDocument((params) => {
 
 	const document = params.textDocument;
@@ -599,6 +624,5 @@ function typeInfoToVSCodeCompletionItemKind(type) {
         }
     }
 };
-
 
 connection.listen();
