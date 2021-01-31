@@ -212,9 +212,7 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.SetAccessor: {
 
                 const name = "@set_accessor_" + node.name.text;
-				const start = node.getStart();
-				const end = node.end;
-                const symbol = Symbol.create(name, start, end);
+                const symbol = Symbol.create(name, node);
                 Ast.addTypeBinder(node, TypeBinder.create(symbol, {id: TypeInfo.Type.Function, node}));
                 const classDeclaration = classStack.top();
 				classDeclaration.symbols.insert(symbol);
@@ -226,9 +224,7 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.GetAccessor: {
 
                 const name = "@get_accessor_" + node.name.text;
-				const start = node.getStart();
-				const end = node.end;
-                const symbol = Symbol.create(name, start, end);
+                const symbol = Symbol.create(name, node);
                 Ast.addTypeBinder(node, TypeBinder.create(symbol, {id: TypeInfo.Type.Function, node}));
                 const classDeclaration = classStack.top();
                 classDeclaration.symbols.insert(symbol);
@@ -243,9 +239,7 @@ Analyzer.analyze = ast => {
 
                 if(node.parent.kind === ts.SyntaxKind.ClassDeclaration || node.parent.kind === ts.SyntaxKind.ClassExpression) {
                     const name = node.name.text;
-                    const start = node.getStart();
-                    const end = node.end;
-                    const symbol = Symbol.create(name, start, end);
+                    const symbol = Symbol.create(name, node);
                     Ast.addTypeBinder(node, TypeBinder.create(symbol, {id: TypeInfo.Type.Function, node}));
                     const classDeclaration = classStack.top();
                     classDeclaration.symbols.insert(symbol);
@@ -314,7 +308,7 @@ Analyzer.analyze = ast => {
                 const name = node.name.getText();
 
                 if(name !== undefined) {
-                    const symbol = Symbol.create(`@${object.type.value}.${name}`, node.pos, node.end);
+                    const symbol = Symbol.create(`@${object.type.value}.${name}`, node);
                     object.type.properties.insert(symbol);
                     assign(node, symbol, node.initializer, node.name.carrier);
                 }
@@ -357,7 +351,7 @@ Analyzer.analyze = ast => {
                 }
 
                 if(name !== undefined) {
-                    const symbol = Symbol.create(`@${object.type.value}.${name}`, node.pos, node.end);
+                    const symbol = Symbol.create(`@${object.type.value}.${name}`, node);
                     object.type.properties.insert(symbol);
                     assign(node, symbol, node.initializer, node.initializer.carrier);
                 }
@@ -456,7 +450,7 @@ function copyParameterTypeBindersToCallee(func, args) {
  * @param {*} thisObject 
  */
 function defineThis(node, thisObject = TypeInfo.createObject(true)) {
-    const thisSymbol = Symbol.create('this', 0, 0);
+    const thisSymbol = Symbol.create('this');
     node.symbols.insert(thisSymbol);
     // Use addTypeBinder instead of assign because this is not a binary expression.
     thisObject.references.push(thisSymbol);
@@ -700,7 +694,7 @@ function setProperty(node, object, name, rvalue, carrier) {
 
     const propertyName = `@${object.value}.${name}`;
     const property = getProperty(object, propertyName);
-    const symbol = property || Symbol.create(propertyName, node.pos, node.end);
+    const symbol = property || Symbol.create(propertyName, node);
     const binder = assign(node, symbol, rvalue, carrier);
     
     Ast.addTypeBinderToExpression(node, binder);

@@ -212,24 +212,10 @@ Ast.lookUp = (node, name) => {
 Ast.findVisibleSymbols = node => {
 
     const symbols = [];
-    const offset = node.end;
     
     function findVisibleSymbols(node) {
         if(node.symbols) { 
-            for(const [, symbol] of Object.entries(node.symbols.getSymbols())) {
-                if(offset > symbol.visibleOffset) {
-                    let exist = false;
-                    for(const s of symbols) {
-                        if(s.name === symbol.name) {
-                            exist = true;
-                            break;
-                        }
-                    }
-                    if(!exist) {
-                        symbols.push(symbol);   
-                    }
-                }
-            }
+            symbols.push(...Object.values(node.symbols.getSymbols()));
         }
         if(node.parent === undefined) { return; }
         let leftSibling = Ast.findLeftSiblingWithoutInnerScope(node);

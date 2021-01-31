@@ -221,26 +221,17 @@ connection.onDocumentSymbol((info) => {
 	const ast = asts[fileName];
 	const symbols = [];
 
-	Ast.findAllSymbols(ast).forEach(symbol => {
+	Ast.findAllSymbols(ast).filter(s => s.declaration).forEach(symbol => {
 
-		const description = "";
-		const startPosition = ast.getLineAndCharacterOfPosition(symbol.start);
-		const endPosition = ast.getLineAndCharacterOfPosition(symbol.end);
-		const range = vscodeLanguageServer.Range.create(
-			vscodeLanguageServer.Position.create(startPosition.line, startPosition.character), 
-			vscodeLanguageServer.Position.create(endPosition.line, endPosition.character)
-		);
-		const selectionRange = vscodeLanguageServer.Range.create(
-			vscodeLanguageServer.Position.create(startPosition.line, startPosition.character), 
-			vscodeLanguageServer.Position.create(endPosition.line, endPosition.character)
-		);
+		const description = '';
+		const range = createSymbolRange(symbol);
 	
 		symbols.push(vscodeLanguageServer.DocumentSymbol.create(
 			symbol.name,
 			description,
 			vscodeLanguageServer.SymbolKind.Variable,
 			range,
-			selectionRange
+			range
 		));
 
 	});
@@ -248,6 +239,16 @@ connection.onDocumentSymbol((info) => {
 	return symbols;
 
 });
+
+function createSymbolRange(symbol) {
+	const declaration = symbol.declaration;
+	console.assert(declaration);
+	const ast = declaration.getSourceFile();
+	const startPosition = ast.getLineAndCharacterOfPosition(declaration.getStart());
+	const endPosition = ast.getLineAndCharacterOfPosition(declaration.end);
+	const range = vscodeLanguageServer.Range.create(startPosition, endPosition);
+	return range;
+}
 
 /**
  * @param {ts.Node} callee
@@ -486,13 +487,11 @@ connection.onDefinition(info => {
 		case ts.SyntaxKind.Identifier: {
 			// TODO: Handle definition in different files.
 			const symbol = Ast.lookUp(node, node.getText());
-			const startPosition = ast.getLineAndCharacterOfPosition(symbol.start);
-			const endPosition = ast.getLineAndCharacterOfPosition(symbol.end);
-			const range = vscodeLanguageServer.Range.create(startPosition, endPosition);
+			const range = createSymbolRange(symbol);
 			const location = vscodeLanguageServer.Location.create(fileName, range);
 			return location;
 		}
-		default: break;
+		default: return null;
 	}
 
 });

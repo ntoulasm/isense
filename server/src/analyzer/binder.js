@@ -223,9 +223,7 @@ bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForInStatement] = noOp
 function declareImportClause(node, block) {
 
     const name = node.name.escapedText;
-    const start = node.name.getStart();
-    const end = node.name.end;
-    const symbol = Symbol.create(name, start, end);
+    const symbol = Symbol.create(name, node);
 
     block.symbols.insert(symbol);
     Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())));    // TODO: Fixme
@@ -242,9 +240,7 @@ function declareImportClause(node, block) {
 function declareImportSpecifier(node, block) {
 
     const name = node.name.text;
-    const start = node.name.getStart();
-    const end = node.name.end;
-    const symbol = Symbol.create(name, start, end);
+    const symbol = Symbol.create(name, node);
 
     block.symbols.insert(symbol);
     Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createAny()))); // TODO: Fixme
@@ -261,9 +257,7 @@ function declareImportSpecifier(node, block) {
 function declareNamespaceImport(node, block) {
 
     const name = node.name.text;
-    const start = node.name.getStart();
-    const end = node.name.end;
-    const symbol = Symbol.create(name, start, end);
+    const symbol = Symbol.create(name, node);
 
     block.symbols.insert(symbol);
     Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createAny())));    // TODO: Fixme
@@ -277,9 +271,7 @@ function declareNamespaceImport(node, block) {
 function declareFunction(node, block) {
 
     const name = node.name.text;
-    const start = node.getStart();
-    const end = node.end;
-    const symbol = Symbol.create(name, start, end, false, block.getStart());
+    const symbol = Symbol.create(name, node);
 
     block.symbols.insert(symbol);
     Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createFunction(node))));
@@ -295,16 +287,14 @@ function declareFunctionScopedVariable(node, block) {
     if(node.name.kind === ts.SyntaxKind.Identifier) {
 
         const name = node.name.text;
-        const start = node.name.getStart();
-        const end = node.name.end;
-        const symbol = Symbol.create(name, start, end, false, block.getStart());
+        const symbol = Symbol.create(name, node);
 
         block.symbols.insert(symbol);
         Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())));
 
     } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
         bindBindingPatternDeclarations(node.name, (node, name, start, end) => {
-            const symbol = Symbol.create(name, start, end, false, block.getStart());
+            const symbol = Symbol.create(name, node);
             Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())));
             block.symbols.insert(symbol);
         });
@@ -321,9 +311,7 @@ function declareFunctionScopedVariable(node, block) {
 function declareClass(node, block) {
 
     const name = node.name.text;
-    const start = node.getStart();
-    const end = node.end;
-    const symbol = Symbol.create(name, start, end);
+    const symbol = Symbol.create(name, node);
 
     block.symbols.insert(symbol);
     Ast.addTypeBinder(node, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createClass(node))));
@@ -336,21 +324,17 @@ function declareClass(node, block) {
  */
 function declareBlockScopedVariable(node, block) {
 
-    const isConst = Ast.isConstDeclaration(node.parent);
-
     if(node.name.kind === ts.SyntaxKind.Identifier) {
 
         const name = node.name.text;
         // if(Ast.lookUp(node, name)) { return; } // TODO: lookUp only on current scope
-        const start = node.name.getStart();
-        const end = node.name.end;
-        const symbol = Symbol.create(name, start, end, isConst);
+        const symbol = Symbol.create(name, node);
 
         block.symbols.insert(symbol);
 
     } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
         bindBindingPatternDeclarations(node.name, (node, name, start, end) => {
-            const symbol = Symbol.create(name, start, end, isConst, node.name.getStart());
+            const symbol = Symbol.create(name, node);
             block.symbols.insert(symbol);
             Ast.addTypeBinderToExpression(node, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())))
         });
@@ -414,7 +398,7 @@ function declareParameters(func) {
             const name = node.name.text;
             // const start = node.name.getStart();
             // const end = node.name.end;
-            const symbol = Symbol.createDeclaration(name, node);
+            const symbol = Symbol.create(name, node);
             node.symbols.insert(symbol);
         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
             // visitDestructuringDeclerations(node.name, (name, start, end) => {
@@ -436,9 +420,7 @@ function declareParameters(func) {
 function declareConstructor(constructor, classNode) {
 
     const name = "constructor";
-    const start = constructor.getStart();
-    const end = constructor.end;
-    const symbol = Symbol.create(name, start, end);
+    const symbol = Symbol.create(name, constructor);
 
     Ast.addTypeBinder(classNode, TypeBinder.create(symbol, TypeInfo.createFunction(constructor)));
     classNode.symbols.insert(symbol);

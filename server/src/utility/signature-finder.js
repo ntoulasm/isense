@@ -2,6 +2,7 @@ const Ast = require('../ast/ast');
 const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('../utility/type-carrier');
 const TypeBinder = require('./type-binder');
+const ts = require('typescript');
 
 const me = {};
 
@@ -26,11 +27,16 @@ me.typeToString = type => {
 
 }
 
+function isConstant(symbol) {
+	const declaration = symbol.declaration;
+	return declaration && declaration.kind === ts.SyntaxKind.VariableDeclaration && Ast.isConstDeclaration(declaration.parent);
+}
+
 me.computeSignature = function computeSignature(node, binders, typeSeparator = ' || ', computeValues = true) {
 
 	const symbol = binders[0].symbol;
 	let firstTime = true;
-	let signature = symbol.isConst ? 'const ' : '';
+	let signature = isConstant(symbol) ? 'const ' : '';
 
 	function computeSignatureValue(type) {
 
