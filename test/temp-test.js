@@ -132,3 +132,6 @@ function foo(a, b) {
     a = 2;
     return a + b;
 }
+
+// foo();
+let x = foo();
