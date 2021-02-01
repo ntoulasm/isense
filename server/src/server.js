@@ -1,17 +1,20 @@
-const Utility = require('./utility/utility');
 const Analyzer = require('./analyzer/analyzer');
 const Ast = require('./ast/ast');
-const TypeInfo = require('./utility/type-info');
-const TypeCarrier = require('./utility/type-carrier');
-const SignatureFinder = require('./utility/signature-finder');
-const NumberMethods = require('./primitive-type-info/number-methods');
+const Utility = require('./utility/utility');
+
 const IstDotGenerator = require('./ast/ist-dot-generator');
 const AstDotGenerator = require('./ast/ast-dot-generator');
 
+const DocumentSymbol = require('./services/document-symbol');
+const Hover = require('./services/hover');
+const Completion = require('./services/completion');
+const SignatureHelp = require('./services/signature-help');
+const Definition = require('./services/definition');
+
 // ----------------------------------------------------------------------------
 
-const vscodeLanguageServer = require('vscode-languageserver');
 const ts = require('typescript');
+const vscodeLanguageServer = require('vscode-languageserver');
 
 // ----------------------------------------------------------------------------
 
@@ -20,7 +23,9 @@ const connection = vscodeLanguageServer.createConnection(vscodeLanguageServer.Pr
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
-const asts = {};
+const asts = Ast.asts;
+
+// ----------------------------------------------------------------------------
 
 connection.onInitialize((params) => {
 
@@ -66,10 +71,14 @@ connection.onInitialized(() => {
 	}
 });
 
+// ----------------------------------------------------------------------------
+
 const defaultSettings = { maxNumberOfProblems: 1000 };
 let globalSettings = defaultSettings;
 
 const documentSettings = new Map();
+
+// ----------------------------------------------------------------------------
 
 connection.onDidChangeConfiguration(change => {
 	if (hasConfigurationCapability) {
@@ -93,6 +102,8 @@ function getDocumentSettings(resource) {
 	}
 	return result;
 }
+
+// ----------------------------------------------------------------------------
 
 /**
  * @param {ts.SourceFile} ast 
@@ -143,358 +154,13 @@ async function provideAnalyzeDiagnostics(ast) {
 	});
 }
 
+// ----------------------------------------------------------------------------
+
 connection.onDidChangeWatchedFiles(change => {
 	connection.console.log('We received a file change event');
 });
 
-connection.onHover(info => {
-
-	const document = info.textDocument;
-	const fileName = document.uri;
-	const ast = asts[fileName];
-	const position = info.position;
-	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
-	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
-
-	if(node === undefined) { return { contents: [] }; }
-	
-	switch(node.kind) {
-		case ts.SyntaxKind.Constructor: {
-			const parentName = node.parent.name ? node.parent.name.getText() : '';
-			return {
-				contents: {
-					language: "typescript",
-					value: `${parentName} constructor`
-				}
-			};
-		}
-		case ts.SyntaxKind.Identifier: {
-			if(node.parent.kind === ts.SyntaxKind.PropertyAccessExpression && node.parent.name === node) {
-				return { 
-					contents: {
-						language: 'typescript',
-						value: `property ${node.text}`
-					}
-				};
-			}
-			const symbol = Ast.lookUp(node, node.text);
-			if(symbol === undefined) { 
-				return { 
-					contents: {
-						language: 'typescript',
-						value: node.text + ': any'
-					} 
-				}; 
-			}
-			const contents = [];
-			if(!symbol.binders.length) {
-				return {
-					contents: {
-						language: 'typescript',
-						value: node.text + ': any'
-					}
-				};
-			}
-			const closestBinders = Ast.findActiveTypeBinders(node, symbol);
-			for(const b of symbol.binders) {
-				const line = ts.getLineAndCharacterOfPosition(ast, b.parent.getStart()).line + 1;
-				const isActive = closestBinders.indexOf(b) !== -1;
-				const binderLineInfo = `at line ${line}`;
-				const postfix = isActive ? '(up to here)' : '';
-				contents.push({
-					language: 'typescript',
-					value: `${SignatureFinder.computeSignature(node, [b])} ${binderLineInfo} ${postfix}`
-				});
-			}
-			return { contents };
-		}
-		default: {
-			return { contents: [] };
-		}
-	}
-	
-});
-
-connection.onDocumentSymbol((info) => {
-
-	const fileName = info.textDocument.uri;
-	const ast = asts[fileName];
-	const symbols = [];
-
-	Ast.findAllSymbols(ast).filter(s => s.declaration).forEach(symbol => {
-
-		const description = '';
-		const range = createSymbolRange(symbol);
-	
-		symbols.push(vscodeLanguageServer.DocumentSymbol.create(
-			symbol.name,
-			description,
-			vscodeLanguageServer.SymbolKind.Variable,
-			range,
-			range
-		));
-
-	});
-
-	return symbols;
-
-});
-
-function createSymbolRange(symbol) {
-	const declaration = symbol.declaration;
-	console.assert(declaration);
-	const ast = declaration.getSourceFile();
-	const startPosition = ast.getLineAndCharacterOfPosition(declaration.getStart());
-	const endPosition = ast.getLineAndCharacterOfPosition(declaration.end);
-	const range = vscodeLanguageServer.Range.create(startPosition, endPosition);
-	return range;
-}
-
-/**
- * @param {ts.Node} callee
- */
-const computeParametersSignature = (callee) => {
-	// TODO: Adjust for destructuring pattern
-	const computeParameterSignature = p => {
-		const parameterName = p.name.getText();
-		const symbol = Ast.lookUp(
-			Ast.findLastParameter(callee),
-			parameterName
-		);
-		
-		// We need to filter similar types because on call new carriers for the parameter will be added.
-		// TODO: Should i change this?
-		const inducedBinders = symbol && symbol.binders.filter(b => b.carrier.induced);
-		let inducedTypeInfos = [];
-		inducedBinders.forEach(b => inducedTypeInfos.push(...TypeCarrier.evaluate(b.carrier)));
-
-		let signature = parameterName;
-		let firstTime = true;
-
-		for(const type of inducedTypeInfos) {
-			if(firstTime) { 
-				signature += ':';
-				firstTime = false; 
-			} else { 
-				signature += ' ||' 
-			}
-			signature += ` ${TypeInfo.typeToString(type)}`;
-		}
-
-		return signature;
-	}
-
-	return callee.parameters.map(computeParameterSignature);
-
-};
-
-/**
- * @param {ts.Node} callee
- * @param {ts.Node} call 
- */
-const computeFunctionSignature = (callee, call) => {
-	let signature = '';
-	if(callee.name !== undefined) {
-		signature += callee.name.getText();
-	} else {
-		// TODO: check if this is fine
-		// refinement: it probably is 
-		//		eg: x()() -> x()()
-		signature += call.expression.getText();
-	}
-	const parametersSignature = computeParametersSignature(callee);
-	signature += `(${parametersSignature.join(', ')})`;
-	return {
-		documentation: '',
-		label: signature,
-		parameters: parametersSignature.map(p => vscodeLanguageServer.ParameterInformation.create(p, /* parameter documentation */))
-	};
-};
-
-/**
- * @param {ts.Node} call 
- * @param {Number} offset 
- */
-const computeActiveParameter = (call, offset) => {
-
-	const callChildren = call.getChildren();
-	const leftParenthesisToken = callChildren[1];
-	const leftParenthesisOffset = leftParenthesisToken.end - 1;
-	const cursorOffset = offset - leftParenthesisOffset;
-	const ast = call.getSourceFile();
-	const argumentsText = ast.getFullText().substring(leftParenthesisOffset, call.end);
-	const parenthesizedExpression = ts.createSourceFile('', argumentsText);
-	let activeParameter = 0;
-
-	const countCommas = (node) => {
-		if(node.kind === ts.SyntaxKind.BinaryExpression && node.operatorToken.kind === ts.SyntaxKind.CommaToken) {
-			countCommas(node.left);
-			if(node.operatorToken.end - 1 <= cursorOffset) {
-				activeParameter++;
-			}
-		} 
-	};
-	countCommas(parenthesizedExpression.statements[0].expression.expression);
-
-	return activeParameter;
-
-};
-
-connection.onSignatureHelp((info) => {
-
-	const document = info.textDocument;
-	const fileName = document.uri;
-	const ast = asts[fileName];
-	const position = info.position;
-	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
-	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
-
-	if(call === undefined) { return; }
-	let callees = TypeCarrier.evaluate(call.expression.carrier).filter(t => t.type === TypeInfo.Type.Function && t.value);
-	if(!callees.length) { return ; }
-	callees = callees.map(t => t.value);
-	const activeParameter = computeActiveParameter(call, offset);
-	const signatures = callees.map(callee => computeFunctionSignature(callee, call))
-
-	return {
-		activeParameter,
-		activeSignature: 0,
-		signatures
-	};
-
-});
-
-connection.onCompletion((info) => {
-
-	const document = info.textDocument;
-	const fileName = document.uri;
-	const ast = asts[fileName];
-	const position = info.position;
-	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
-	const completionItems = [];
-	const triggerCharacter = info.context.triggerCharacter;
-
-	if(triggerCharacter === '.') {
-
-		Analyzer.analyze(ast);
-		const node = Ast.findInnermostNode(ast, offset - 1, ts.SyntaxKind.PropertyAccessExpression);
-		if(!node) { return ; }
-		const expressionCarrier = node.name.escapedText == "" ? node.expression.carrier : node.carrier;
-
-		for(const type of TypeCarrier.evaluate(expressionCarrier)) {
-			if(type.type === TypeInfo.Type.Number) {
-				for(const m of NumberMethods) {
-					completionItems.push({
-						label: m.name,
-						kind: vscodeLanguageServer.CompletionItemKind.Variable
-					});
-				}
-			}
-			if(type.type === TypeInfo.Type.Object && type.hasValue) {
-				for(const [,property] of Object.entries(type.properties.getSymbols())) {
-					const propertyName = property.name.split('.')[1];
-					const propertyBinders = Ast.findActiveTypeBinders(node, property);
-					const typeInfo = [];
-					for(const b of propertyBinders) {
-						typeInfo.push(...TypeCarrier.evaluate(b.carrier));
-					}
-					const kind = typeInfo.length === 1 ?
-						typeInfoToVSCodeCompletionItemKind(typeInfo[0].type) :
-						vscodeLanguageServer.CompletionItemKind.Variable;
-					const signature = SignatureFinder.computeSignature(node, propertyBinders);
-					completionItems.push({
-						label: propertyName,
-						kind,
-						data: {signature}
-					});
-				}
-			}
-		}
-
-	} else {
-		const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
-		switch(node.kind) {
-			case ts.SyntaxKind.Identifier: {
-				if(Ast.isDeclarationName(node)) { return ; }
-				if(node.parent.kind === ts.SyntaxKind.PropertyAccessExpression) {
-
-					const expressionTypes = TypeCarrier.evaluate(node.parent.expression.carrier);
-
-					for(const type of expressionTypes) {
-						if(type.type === TypeInfo.Type.Object && type.hasValue) {
-							for(const [,property] of Object.entries(type.properties.getSymbols())) {
-								const propertyName = property.name.split('.')[1];
-								const propertyBinders = Ast.findActiveTypeBinders(node, property);
-								const typeInfo = [];
-								for(const b of propertyBinders) {
-									typeInfo.push(...TypeCarrier.evaluate(b.carrier));
-								}
-								const kind = typeInfo.length === 0 ?
-									typeInfoToVSCodeCompletionItemKind(typeInfo[0].type) :
-									vscodeLanguageServer.CompletionItemKind.Variable;
-								const signature = SignatureFinder.computeSignature(node, propertyBinders);
-								completionItems.push({
-									label: propertyName,
-									kind,
-									data: {signature}
-								});
-							}
-						}
-					}				
-					
-				} else {
-					Ast.findVisibleSymbols(node).forEach(symbol => {
-						const binders = Ast.findActiveTypeBinders(node, symbol);
-						if(!binders.length) { return ; }
-						const typeInfo = [];
-						for(const b of binders) {
-							typeInfo.push(...TypeCarrier.evaluate(b.carrier));
-						}
-						const kind = typeInfo.length === 0 ?
-							typeInfoToVSCodeCompletionItemKind(typeInfo[0].type) : 
-							vscodeLanguageServer.CompletionItemKind.Variable;
-						const signature = SignatureFinder.computeSignature(node, binders);
-						completionItems.push({
-							label: symbol.name, 
-							kind,
-							data: { signature }
-						});
-					});
-				}
-			}
-		}
-	}
-
-	return completionItems;
-
-});
-
-connection.onCompletionResolve(item => {
-	item.detail = item.data && item.data.signature;
-	return item;
-});
-
-connection.onDefinition(info => {
-
-	const document = info.textDocument;
-	const fileName = document.uri;
-	const ast = asts[fileName];
-	const position = info.position;
-	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
-	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
-
-	switch(node.kind) {
-		case ts.SyntaxKind.Identifier: {
-			// TODO: Handle definition in different files.
-			const symbol = Ast.lookUp(node, node.getText());
-			const range = createSymbolRange(symbol);
-			const location = vscodeLanguageServer.Location.create(fileName, range);
-			return location;
-		}
-		default: return null;
-	}
-
-});
+// ----------------------------------------------------------------------------
 
 connection.onDidOpenTextDocument((params) => {
 
@@ -518,6 +184,8 @@ connection.onDidOpenTextDocument((params) => {
 	}
 
 });
+
+// ----------------------------------------------------------------------------
 
 connection.onDidChangeTextDocument((params) => {
 
@@ -555,7 +223,32 @@ connection.onDidChangeTextDocument((params) => {
 
 });
 
-connection.onDidCloseTextDocument((params) => {});
+// ----------------------------------------------------------------------------
+
+connection.onDidCloseTextDocument(params => {});
+
+// ----------------------------------------------------------------------------
+
+connection.onHover(Hover.onHover);
+
+// ----------------------------------------------------------------------------
+
+connection.onDocumentSymbol(DocumentSymbol.onDocumentSymbol);
+
+// ----------------------------------------------------------------------------
+
+connection.onSignatureHelp(SignatureHelp.onSignatureHelp);
+
+// ----------------------------------------------------------------------------
+
+connection.onCompletion(Completion.onCompletion);
+connection.onCompletionResolve(Completion.onCompletionResolve);
+
+// ----------------------------------------------------------------------------
+
+connection.onDefinition(Definition.onDefinition);
+
+// ----------------------------------------------------------------------------
 
 const last = function(array) {
 	return array[array.length - 1];
@@ -568,12 +261,16 @@ connection.onNotification('custom/generateDot', (params) => {
 	connection.sendNotification('custom/generateDotFinish', { dotUri });
 });
 
+// ----------------------------------------------------------------------------
+
 connection.onNotification('custom/generateISenseDot', params => {
 	const dotUri = params.fileName.replace('.js', '.dot');
 	const dotFileName = last(dotUri.split('/'));
 	IstDotGenerator.generate(asts[params.fileName], dotFileName);
 	connection.sendNotification('custom/generateISenseDotFinish', { dotUri });
 });
+
+// ----------------------------------------------------------------------------
 
 // connection.onNotification('custom/focusChanged', (params) => {
 
@@ -595,33 +292,6 @@ connection.onNotification('custom/generateISenseDot', params => {
 // 	connection.sendNotification('custom/pickCallSite', {callSites});
 // });
 
-// TODO: unused, use or remove
-function typeInfoToVSCodeSymbolKind(type) {
-    switch (type) {
-        case TypeInfo.Type.Class: {
-            return vscodeLanguageServer.SymbolKind.Class;
-        }
-        case TypeInfo.Type.Function: {
-            return vscodeLanguageServer.SymbolKind.Function;
-        }
-        default: {
-            return vscodeLanguageServer.SymbolKind.Variable;
-        }
-    }
-};
-
-function typeInfoToVSCodeCompletionItemKind(type) {
-    switch (type) {
-        case TypeInfo.Type.Class: {
-            return vscodeLanguageServer.CompletionItemKind.Class;
-        }
-        case TypeInfo.Type.Function: {
-            return vscodeLanguageServer.CompletionItemKind.Function;
-        }
-        default: {
-            return vscodeLanguageServer.CompletionItemKind.Variable;
-        }
-    }
-};
+// ----------------------------------------------------------------------------
 
 connection.listen();

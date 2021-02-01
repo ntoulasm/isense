@@ -7,8 +7,13 @@ const ts = require('typescript');
 
 // ----------------------------------------------------------------------------
 
-
 const Ast = {};
+
+// ----------------------------------------------------------------------------
+
+Ast.asts = {};
+
+// ----------------------------------------------------------------------------
 
 /**
  * @param {ts.SourceFile} ast
@@ -219,7 +224,7 @@ Ast.findVisibleSymbols = node => {
         }
         if(node.parent === undefined) { return; }
         let leftSibling = Ast.findLeftSiblingWithoutInnerScope(node);
-        leftSibling ? findVisibleSymbols(leftSibling) : findVisibleSymbols(node.parent);
+        findVisibleSymbols(leftSibling || node.parent);
     }
     findVisibleSymbols(node);
     
@@ -1013,5 +1018,7 @@ Ast.isDeclarationName = node => {
         Ast.isGetterName(node) ||
         Ast.isSetterName(node);
 };
+
+// ----------------------------------------------------------------------------
 
 module.exports = Ast;
