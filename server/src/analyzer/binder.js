@@ -14,6 +14,13 @@ const ts = require('typescript');
 
 const Binder = {};
 
+//-----------------------------------------------------------------------------
+
+Binder.totalAnonymousFunctions = 0;
+Binder.totalAnonymousClasses = 0;
+
+//-----------------------------------------------------------------------------
+
 const bindFunctionScopedDeclarationsFunctions = {};
 const bindBlockScopedDeclarationsFunctions = {};
 const noOp = () => {};
@@ -66,6 +73,21 @@ Binder.bindBlockScopedDeclarations = block => {
 
 //-----------------------------------------------------------------------------
 
+Binder.reset = () => {
+    resetTotalAnonymousFunctions();
+    resetTotalAnonymousClasses();
+};
+
+function resetTotalAnonymousFunctions() {
+    Binder.totalAnonymousFunctions = 0;
+}
+
+function resetTotalAnonymousClasses() {
+    Binder.totalAnonymousClasses = 0;
+}
+
+//-----------------------------------------------------------------------------
+
 /** 
  * import x ...
  * import {x, y as ...} ...
@@ -109,7 +131,7 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ImportClause] = (node, bod
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (node, body) => {
     if(Ast.isVarDeclaration(node.parent)) {
         declareFunctionScopedVariable(node, body);
-    } else if(Ast.findAncestor(node, [ts.SyntaxKind.Block, ts.SyntaxKind.SourceFile]) === body) {
+    } else if(!isBoundByBindBlockScopedDeclarations(node, body)) {
         declareBlockScopedVariable(node, body);
     }
     return true;
@@ -119,37 +141,25 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (no
  * @param {ts.FunctionDeclaration} node
  * @param {ts.Block} body
  */
-bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] = (node, body) => {
-    declareFunction(node, body);
-    node._original = node;
-    node.freeVariables = new Set();
-    declareParameters(node);
-    Binder.bindFunctionScopedDeclarations(node.body);
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] =
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] = 
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.Constructor] = 
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.MethodDeclaration] = 
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.SetAccessor] = 
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.GetAccessor] = (node, body) => {
+    bindFunction(node, body);
 };
 
 /**
  * @param {ts.ClassDeclaration} node
  * @param {ts.Block} body
  */
-bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = (node, body) => {
-    if(Ast.findAncestor(node, [ts.SyntaxKind.Block, ts.SyntaxKind.SourceFile]) !== body) { 
-        return; 
-    }
-    declareClass(node, body);
-    Binder.bindFunctionScopedDeclarations(node);
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = 
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] = (node, body) => {
+    if(isBoundByBindBlockScopedDeclarations(node, body)) { return; }
+    bindClass(node, body);
 };
-
-/**
- * @param {ts.Node} node
- * @param {ts.Block} body 
- */
-bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
-bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] = (node, body) => {
-    node._original = node;
-    node.freeVariables = new Set();
-    declareParameters(node);
-    Binder.bindFunctionScopedDeclarations(node.body);
-}
 
 /**
  * @param {ts.Block} node
@@ -164,17 +174,16 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.Block] = (node, body) => {
  * @param {ts.Constructor} node
  * @param {ts.Node} body
  */
-bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.Constructor] = (node, body) => {
-    declareConstructor(node, body);
-    declareParameters(node);
-    node._original = node;
-    Binder.bindFunctionScopedDeclarations(node.body);
-}
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.PropertyDeclaration] = (node, body) => {
+    declareFunctionScopedVariable(node, body);
+};
 
-bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] = 
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ForStatement] =
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ForOfStatement] =
-bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ForInStatement] = noOp;
+bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ForInStatement] = (node, body) => {
+    Binder.bindBlockScopedDeclarations(node);
+    return true;
+};
 
 //-----------------------------------------------------------------------------
 
@@ -191,26 +200,103 @@ bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (node,
  * @param {ts.VariableDeclaration} node
  * @param {ts.Block} block
  */
-bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = (node, block) => {
-    declareClass(node, block);
+bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = 
+bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] = (node, block) => {
+    bindClass(node, block);
 };
 
 /**
  * @param {ts.Block} node
  * @param {ts.Block} block
  */
-bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.Block] = (node, block) => {
-    Binder.bindBlockScopedDeclarations(node);
-};
-
-bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] =
-bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
+bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.Block] = 
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.FunctionDeclaration] =
-// bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.Block] = 
-bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] =
+bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.FunctionExpression] =
+bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ArrowFunction] =
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForStatement] =
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForOfStatement] =
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ForInStatement] = noOp
+
+//-----------------------------------------------------------------------------
+
+function isBoundByBindBlockScopedDeclarations(node, body) {
+    return Ast.findAncestor(node, [ts.SyntaxKind.Block, ts.SyntaxKind.SourceFile, ts.SyntaxKind.ForStatement, ts.SyntaxKind.ForInStatement, ts.SyntaxKind.ForOfStatement]) !== body;
+}
+
+//-----------------------------------------------------------------------------
+
+function bindFunction(node, body) {
+    const name = findFunctionName(node);
+    declareFunction(name, node, body);
+    node._original = node;
+    node.freeVariables = new Set();
+    declareParameters(node);
+    Binder.bindFunctionScopedDeclarations(node.body);
+}
+
+function isDeclarationInitializer(node) {
+    return node.parent.kind === ts.SyntaxKind.VariableDeclaration && 
+        node.parent.initializer === node;
+}
+
+function isAssignmentRightValue(node) {
+    return node.parent.kind === ts.SyntaxKind.BinaryExpression && 
+        node.parent.operatorToken.kind === ts.SyntaxKind.EqualsToken && 
+        node.parent.right === node;
+}
+
+function findFunctionName(node) {
+    
+    switch(node.kind) {
+        case ts.SyntaxKind.FunctionDeclaration:
+        case ts.SyntaxKind.MethodDeclaration:
+            return node.name.text;
+        case ts.SyntaxKind.FunctionExpression:
+            if(node.name) {
+                return node.name.text;
+            }
+            break;
+        case ts.SyntaxKind.ArrowFunction:
+            break;
+        case ts.SyntaxKind.Constructor:
+            return 'constructor';
+        case ts.SyntaxKind.SetAccessor:
+            return `(set) ${node.name.text}`;
+        case ts.SyntaxKind.GetAccessor:
+            return `(get) ${node.name.text}`;
+        default: console.assert(false);
+    }
+
+    return findAnonymousName(node, () => Binder.totalAnonymousFunctions++);
+
+}
+
+function bindClass(node, block) {
+    const name = findClassName(node);
+    declareClass(name, node, block);
+    Binder.bindFunctionScopedDeclarations(node);
+}
+
+function findClassName(node) {
+    if(node.name) {
+        return node.name.text;
+    } else {
+        return findAnonymousName(node, () => Binder.totalAnonymousClasses++);
+    }
+}
+
+function findAnonymousName(node, incrementTotalAnonymous) {
+    const parent = node.parent;
+    if(isDeclarationInitializer(node)) { // let x = () => {};
+        return `<${parent.name.text}> anonymous`;
+    } else if(isAssignmentRightValue(node)) { // x = () => {};
+        return `<${parent.left.getText()}> anonymous`;
+    } else if(ts.isCallOrNewExpression(parent)) {
+        return `<${parent.expression.text}(...)> anonymous callback`;
+    } else {
+        return `<${incrementTotalAnonymous()}> anonymous`;
+    }
+}
 
 //-----------------------------------------------------------------------------
 
@@ -268,9 +354,8 @@ function declareNamespaceImport(node, block) {
  * @param {ts.FunctionDeclaration} node
  * @param {ts.Block} block
  */
-function declareFunction(node, block) {
+function declareFunction(name, node, block) {
 
-    const name = node.name.text;
     const symbol = Symbol.create(name, node);
 
     block.symbols.insert(symbol);
@@ -308,9 +393,8 @@ function declareFunctionScopedVariable(node, block) {
  * @param {ts.ClassDeclaration} node
  * @param {ts.Block} block
  */
-function declareClass(node, block) {
+function declareClass(name, node, block) {
 
-    const name = node.name.text;
     const symbol = Symbol.create(name, node);
 
     block.symbols.insert(symbol);
@@ -396,8 +480,6 @@ function declareParameters(func) {
         node.symbols = SymbolTable.create();
         if(node.name.kind === ts.SyntaxKind.Identifier) {
             const name = node.name.text;
-            // const start = node.name.getStart();
-            // const end = node.name.end;
             const symbol = Symbol.create(name, node);
             node.symbols.insert(symbol);
         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
@@ -410,20 +492,6 @@ function declareParameters(func) {
             console.assert(false);
         }
     }
-
-}
-
-/**
- * @param {ts.Constructor} constructor 
- * @param {ts.Node} classNode 
- */
-function declareConstructor(constructor, classNode) {
-
-    const name = "constructor";
-    const symbol = Symbol.create(name, constructor);
-
-    Ast.addTypeBinder(classNode, TypeBinder.create(symbol, TypeInfo.createFunction(constructor)));
-    classNode.symbols.insert(symbol);
 
 }
 

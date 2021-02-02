@@ -203,67 +203,23 @@ Analyzer.analyze = ast => {
 			case ts.SyntaxKind.ClassDeclaration:
             case ts.SyntaxKind.ClassExpression: {
                 node.carrier = TypeCarrier.createConstant(TypeInfo.createClass(node));
-                node.symbols = SymbolTable.create();
                 classStack.push(node);
                 ts.forEachChild(node, visitDeclarations);
                 classStack.pop();
 				break;
             }
-            case ts.SyntaxKind.SetAccessor: {
-
-                const name = "@set_accessor_" + node.name.text;
-                const symbol = Symbol.create(name, node);
-                Ast.addTypeBinder(node, TypeBinder.create(symbol, {id: TypeInfo.Type.Function, node}));
-                const classDeclaration = classStack.top();
-				classDeclaration.symbols.insert(symbol);
-
-                ts.forEachChild(node, visitDeclarations);
-				break;
-
-            }
-            case ts.SyntaxKind.GetAccessor: {
-
-                const name = "@get_accessor_" + node.name.text;
-                const symbol = Symbol.create(name, node);
-                Ast.addTypeBinder(node, TypeBinder.create(symbol, {id: TypeInfo.Type.Function, node}));
-                const classDeclaration = classStack.top();
-                classDeclaration.symbols.insert(symbol);
-                
-                ts.forEachChild(node, visitDeclarations);
-				break;
-            
-            }
-			case ts.SyntaxKind.MethodDeclaration: {
-
-                node.carrier = TypeCarrier.createConstant(TypeInfo.createFunction(node));
-
-                if(node.parent.kind === ts.SyntaxKind.ClassDeclaration || node.parent.kind === ts.SyntaxKind.ClassExpression) {
-                    const name = node.name.text;
-                    const symbol = Symbol.create(name, node);
-                    Ast.addTypeBinder(node, TypeBinder.create(symbol, {id: TypeInfo.Type.Function, node}));
-                    const classDeclaration = classStack.top();
-                    classDeclaration.symbols.insert(symbol);
-                }
-
-                ts.forEachChild(node, visitDeclarations);
-				break;
-
-            }
             case ts.SyntaxKind.FunctionDeclaration:
             case ts.SyntaxKind.FunctionExpression: 
-            case ts.SyntaxKind.ArrowFunction: {
+            case ts.SyntaxKind.ArrowFunction: 
+            case ts.SyntaxKind.MethodDeclaration: 
+            case ts.SyntaxKind.SetAccessor: 
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.Constructor: {
                 if(!node.body) { break; }
-                functionStack.push(node);
                 node.carrier = TypeCarrier.createConstant(TypeInfo.createFunction(node));
+                functionStack.push(node);
                 ts.forEachChild(node.body, visitDeclarations);
                 functionStack.pop(node);
-                break;
-            }
-            case ts.SyntaxKind.ForStatement:
-            case ts.SyntaxKind.ForInStatement:
-            case ts.SyntaxKind.ForOfStatement: {
-                Binder.bindBlockScopedDeclarations(node);
-                ts.forEachChild(node, visitDeclarations);
                 break;
             }
             case ts.SyntaxKind.CallExpression: {
@@ -385,6 +341,7 @@ Analyzer.analyze = ast => {
     };
     initializeTypeBinders(ast);
 
+    Binder.reset();
     Binder.bindFunctionScopedDeclarations(ast);
     if(ast.kind === ts.SyntaxKind.SourceFile) {
         defineThis(ast);
