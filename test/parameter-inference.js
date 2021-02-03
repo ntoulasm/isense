@@ -6,9 +6,9 @@ function add(a, b) {
 //     a();
 // }
 
-// function arithmOp(a, b) {
-//     return a - b;
-// }
+function arithmOp(a, b) {
+    return a - b;
+}
 
 // function getX(a) {
 //     return a.x;

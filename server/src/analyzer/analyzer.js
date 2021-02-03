@@ -774,7 +774,7 @@ function isParameter(symbol) {
 }
 
 function hasInducedBinders(binders) {
-    return !binders.length || binders.filter(b => b.carrier.induced).length;
+    return !!binders.find(b => b.carrier.induced);
 }
 
 function isInOriginalFunction(node) {
@@ -797,7 +797,7 @@ function getParameterSymbol(node) {
         const variableCarriers = binders.map(b => b.carrier).filter(c => c.kind === TypeCarrier.Kind.Variable);
         if(variableCarriers.length === 1) {
             symbol = variableCarriers[0].symbol;
-        } else if(isParameter(symbol) && hasInducedBinders(binders)) {
+        } else if(isParameter(symbol) && (!binders.length || hasInducedBinders(binders))) {
             return symbol;
         } else {
             return ;

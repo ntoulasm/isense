@@ -234,17 +234,6 @@ function bindFunction(node, body) {
     Binder.bindFunctionScopedDeclarations(node.body);
 }
 
-function isDeclarationInitializer(node) {
-    return node.parent.kind === ts.SyntaxKind.VariableDeclaration && 
-        node.parent.initializer === node;
-}
-
-function isAssignmentRightValue(node) {
-    return node.parent.kind === ts.SyntaxKind.BinaryExpression && 
-        node.parent.operatorToken.kind === ts.SyntaxKind.EqualsToken && 
-        node.parent.right === node;
-}
-
 function findFunctionName(node) {
     
     switch(node.kind) {
@@ -296,6 +285,17 @@ function findAnonymousName(node, incrementTotalAnonymous) {
     } else {
         return `<${incrementTotalAnonymous()}> anonymous`;
     }
+}
+
+function isDeclarationInitializer(node) {
+    return node.parent.kind === ts.SyntaxKind.VariableDeclaration && 
+        node.parent.initializer === node;
+}
+
+function isAssignmentRightValue(node) {
+    return node.parent.kind === ts.SyntaxKind.BinaryExpression && 
+        node.parent.operatorToken.kind === ts.SyntaxKind.EqualsToken && 
+        node.parent.right === node;
 }
 
 //-----------------------------------------------------------------------------
