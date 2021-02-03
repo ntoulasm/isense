@@ -24,4 +24,9 @@ Symbol.create = (name, declaration) => {
 
 };
 
+Symbol.isAnonymous = symbol => {
+    const first = symbol.name[0];
+    return first === '(' || first === '<';
+};
+
 module.exports = Symbol;

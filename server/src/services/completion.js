@@ -1,15 +1,16 @@
 const Analyzer = require('../analyzer/analyzer');
 const Ast = require('../ast/ast');
+const Symbol = require('../utility/symbol');
 const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('../utility/type-carrier');
 const NumberMethods = require('../primitive-type-info/number-methods');
 const SignatureFinder = require('../utility/signature-finder');
+const { getCompletionItemKind } = require('./utility');
 
 // ----------------------------------------------------------------------------
 
 const ts = require('typescript');
 const vscodeLanguageServer = require('vscode-languageserver');
-const { getCompletionItemKind } = require('./utility');
 
 // ----------------------------------------------------------------------------
 
@@ -96,7 +97,9 @@ Completion.onCompletion = info => {
 					}				
 					
 				} else {
-					Ast.findVisibleSymbols(node).forEach(symbol => {
+					Ast.findVisibleSymbols(node)
+					.filter(symbol => !Symbol.isAnonymous(symbol))
+					.forEach(symbol => {
 						if(completionItems.find(c => c.label === symbol.name)) { return; }
 						const binders = Ast.findActiveTypeBinders(node, symbol);
 						if(!binders.length) { return ; }
