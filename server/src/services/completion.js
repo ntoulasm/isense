@@ -98,8 +98,8 @@ Completion.onCompletion = info => {
 					
 				} else {
 					Ast.findVisibleSymbols(node)
-					.filter(symbol => !Symbol.isAnonymous(symbol))
 					.forEach(symbol => {
+						if(Symbol.isAnonymous(symbol)) { return; }
 						if(completionItems.find(c => c.label === symbol.name)) { return; }
 						const binders = Ast.findActiveTypeBinders(node, symbol);
 						if(!binders.length) { return ; }

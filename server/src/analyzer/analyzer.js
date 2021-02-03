@@ -364,7 +364,7 @@ function copyPropertiesTypeBindersIfObject(source, carrier, destination) {
         if(t.type === TypeInfo.Type.Object && t.hasValue) {
             for(const [, p] of Object.entries(t.properties.getSymbols())) {
                 const propertyBinder = Ast.findActiveTypeBinders(source, p)[0]; // TODO: fixme
-                Ast.addTypeBinderToClosestStatement(
+                Ast.addTypeBinder(
                     destination, 
                     propertyBinder
                 );
