@@ -78,7 +78,6 @@ Ast.findSiblings = function(node) {
     const parent = node.parent;
     if(parent === undefined) { return [node]; }
     return Ast.findChildren(parent);
-    // return parent.getChildren();
 };
 
 /**
@@ -200,12 +199,21 @@ Ast.findInnermostNodeOfAnyKind = (ast, offset) => {
  * 
  * @returns {isense.symbol}
  */
-Ast.lookUp = (node, name) => {
-    const visibleSymbols = Ast.findVisibleSymbols(node);
-    for(const symbol of visibleSymbols) {
-        if(symbol.name === name) {
-            return symbol;
+Ast.lookUp = (node, name) =>
+    Ast.visitVisibleSymbols(node, s => s.name === name);
+
+/**
+ * @param {ts.Node} node 
+ * @param {Function} callback 
+ */
+Ast.visitVisibleSymbols = (node, callback) => {
+    while(node) {
+        if(node.symbols) { 
+            for(const symbol of Object.values(node.symbols.getSymbols())) {
+                if(callback(symbol)) { return symbol; }
+            }
         }
+        node = Ast.findLeftSiblingWithoutInnerScope(node) || node.parent;
     }
 };
 
@@ -218,15 +226,10 @@ Ast.findVisibleSymbols = node => {
 
     const symbols = [];
     
-    function findVisibleSymbols(node) {
-        if(node.symbols) { 
-            symbols.push(...Object.values(node.symbols.getSymbols()));
-        }
-        if(node.parent === undefined) { return; }
-        let leftSibling = Ast.findLeftSiblingWithoutInnerScope(node);
-        findVisibleSymbols(leftSibling || node.parent);
-    }
-    findVisibleSymbols(node);
+    Ast.visitVisibleSymbols(node, s => {
+        symbols.push(s);
+        return false;
+    });
     
     return symbols;
 
@@ -258,7 +261,6 @@ Ast.findAllSymbols = node => {
  * @param {isense.TypeBinder} binder
  */
 Ast.addTypeBinder = (node, binder) => {
-    console.assert(node.hasOwnProperty('binders'), "Trying to add binder to node without 'binders' property");
     binder.setParentNode(node);
     for(const b of node.binders) {
         if(b.symbol === binder.symbol) {
