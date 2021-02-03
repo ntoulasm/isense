@@ -22,21 +22,6 @@ Utility.createRange = symbol => {
 
 // ----------------------------------------------------------------------------
 
-// TODO: unused, use or remove
-Utility.getSymbolKind = type => {
-    switch (type) {
-        case TypeInfo.Type.Class: {
-            return vscodeLanguageServer.SymbolKind.Class;
-        }
-        case TypeInfo.Type.Function: {
-            return vscodeLanguageServer.SymbolKind.Function;
-        }
-        default: {
-            return vscodeLanguageServer.SymbolKind.Variable;
-        }
-    }
-};
-
 Utility.getCompletionItemKind = type => {
     switch (type) {
         case TypeInfo.Type.Class: {

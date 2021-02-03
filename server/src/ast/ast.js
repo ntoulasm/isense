@@ -273,48 +273,6 @@ Ast.addTypeBinder = (node, binder) => {
 
 /**
  * @param {ts.Node} node
- * @param {isense.typeBinder} binder
- */
-// TODO: Delete if finally we don't need it.
-Ast.addTypeBinderToClosestStatement = (node, binder) => { 
-    
-    // const statements = [
-    //     ts.SyntaxKind.VariableStatement,
-    //     ts.SyntaxKind.ExpressionStatement,
-    //     ts.SyntaxKind.ForStatement,
-    //     ts.SyntaxKind.ForOfStatement,
-    //     ts.SyntaxKind.ForInStatement,
-    //     ts.SyntaxKind.ThrowStatement,
-    //     ts.SyntaxKind.ReturnStatement,
-    //     ts.SyntaxKind.SwitchStatement,
-    //     ts.SyntaxKind.FunctionDeclaration,
-    //     ts.SyntaxKind.ClassDeclaration
-    // ];
-
-    // while (statements.indexOf(node.kind) === -1) {
-    //     console.assert(node.parent !== undefined);
-    //     node = node.parent;
-    // }
-
-    Ast.addTypeBinder(node, binder);
-
-};
-
-/**
- * @param {ts.Node} node
- * @param {isense.typeBinder} binder
- */
-// TODO: Delete if finally we don't need it.
-Ast.addTypeBinderToExpression = (node, binder) => {
-    Ast.addTypeBinder(node, binder);
-    // Ast.findBinaryExpressionAncestors(node).forEach(node => {
-    //     Ast.addTypeBinder(node, binder);
-    // });
-    // Ast.addTypeBinderToClosestStatement(node, binder);
-};
-
-/**
- * @param {ts.Node} node
  */
 Ast.findBinaryExpressionAncestors = node => {
     const exprs = []
@@ -758,26 +716,6 @@ Ast.findAncestor = (node, kind) => {
 
     return undefined;
 
-};
-
-/**
- * TODO: unused, use or remove
- * 
- * @param {ts.Token} operator
- */
-Ast.isArithmeticOperator = (operator) => {
-    switch(operator.kind) {
-        case ts.SyntaxKind.PlusToken:
-        case ts.SyntaxKind.MinusToken:
-        case ts.SyntaxKind.AsteriskToken:
-        case ts.SyntaxKind.SlashToken:
-        case ts.SyntaxKind.PercentToken: {
-            return true;
-        }
-        default: {
-            return false;
-        }
-    }
 };
 
 /**
