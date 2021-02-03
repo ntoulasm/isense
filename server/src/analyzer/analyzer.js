@@ -613,7 +613,7 @@ function assign(node, symbol, rvalue, carrier) {
     }
 
     const binder = TypeBinder.create(symbol, carrier);
-    Ast.addTypeBinderToExpression(node, binder);
+    Ast.addTypeBinder(node, binder);
 
     for(const type of TypeCarrier.evaluate(carrier)) {
         if(type.type === TypeInfo.Type.Object && type.hasValue) {
@@ -654,7 +654,7 @@ function setProperty(node, object, name, rvalue, carrier) {
     const symbol = property || Symbol.create(propertyName, node);
     const binder = assign(node, symbol, rvalue, carrier);
     
-    Ast.addTypeBinderToExpression(node, binder);
+    Ast.addTypeBinder(node, binder);
 
     !property && object.references.forEach(reference => {
 
@@ -667,7 +667,7 @@ function setProperty(node, object, name, rvalue, carrier) {
             }
         }
 
-        Ast.addTypeBinderToExpression(node, b);
+        Ast.addTypeBinder(node, b);
     
     });
 

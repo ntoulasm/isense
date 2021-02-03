@@ -312,7 +312,7 @@ function declareImportClause(node, block) {
     const symbol = Symbol.create(name, node);
 
     block.symbols.insert(symbol);
-    Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())));    // TODO: Fixme
+    Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createAny())));    // TODO: Fixme
 
 }
 
@@ -420,7 +420,7 @@ function declareBlockScopedVariable(node, block) {
         bindBindingPatternDeclarations(node.name, (node, name, start, end) => {
             const symbol = Symbol.create(name, node);
             block.symbols.insert(symbol);
-            Ast.addTypeBinderToExpression(node, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())))
+            Ast.addTypeBinder(node, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())))
         });
     } else {
         console.assert(false);
