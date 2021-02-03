@@ -259,7 +259,7 @@ function findFunctionName(node) {
         case ts.SyntaxKind.ArrowFunction:
             break;
         case ts.SyntaxKind.Constructor:
-            return 'constructor';
+            return `(constructor) ${node.parent.name.text}`;
         case ts.SyntaxKind.SetAccessor:
             return `(set) ${node.name.text}`;
         case ts.SyntaxKind.GetAccessor:
