@@ -62,12 +62,19 @@ me.computeSignature = function computeSignature(node, binders, typeSeparator = '
 				let value = ` = {\n`;
 
 				for(const [,property] of Object.entries(type.properties.getSymbols())) {
+					
+					// If binders are empty the property is not declared yet.
+					const binders = Ast.findActiveTypeBinders(node, property);
+					if(!binders.length) { continue; }
+
 					if(comma) { value += ',\n'; }
 					comma = true;
-					for(const b of property.binders) {
+					
+					for(const b of binders) {
 						value += me.computeSpaces();
 						value += computeSignature(node, [b]);
 					}
+
 				}
 	
 				--objectNesting;

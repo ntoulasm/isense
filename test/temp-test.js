@@ -128,10 +128,35 @@
 
 //////////////////////////////////////////////////////
 
-function foo(a, b) {
-    a = 2;
-    return a + b;
+// function foo(a, b) {
+//     a = 2;
+//     return a + b;
+// }
+
+// // foo();
+// let x = foo();
+
+//////////////////////////////////////////////////////
+
+function createPoint(x, y) {
+    const point = { x, y };
+    return point;
 }
 
-// foo();
-let x = foo();
+let p = createPoint(1, 2);
+
+let ref = p;
+p.b = 10;
+ref.a = 2;
+
+// let x = {a: 2};
+// let y = x;
+
+// x.b = 5;
+// y.b = 10;
+
+// let aaa = 100;
+// aaa = 200;;
+
+let x = 2;
+x = x + 5;

@@ -445,7 +445,7 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode) => {
     //      x on x + 3 needs to evaluate to 2.
     // Otherwise it is stack overflow
     //      evaluate(x + 3) -> evaluate(x) -> evaluate(x + 3) -> evaluate(x) -> ...
-    if(node.parent && node.parent.kind === ts.SyntaxKind.BinaryExpression && node.parent.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+    if(Ast.isRightPartOfAssignment(node)) {
         const startNodeOffset = startNode.getStart();
         if(node.parent.getStart() <= startNodeOffset && startNodeOffset <= node.parent.getEnd()) {
             return Ast.findActiveTypeBinders(
@@ -460,6 +460,13 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode) => {
     return Ast.findActiveTypeBinders(node, symbol, undefined, startNode);
 
 };
+
+Ast.isAssignment = node =>
+    node.kind === ts.SyntaxKind.BinaryExpression && 
+    node.operatorToken.kind === ts.SyntaxKind.EqualsToken;
+
+Ast.isRightPartOfAssignment = node => 
+    node.parent && Ast.isAssignment(node.parent) && node.parent.left !== node;
 
 /**
  * @param {ts.Node} node

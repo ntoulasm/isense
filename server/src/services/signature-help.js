@@ -14,7 +14,6 @@ const SignatureHelp = {};
 // ----------------------------------------------------------------------------
 
 SignatureHelp.onSignatureHelp = info => {
-    
 
 	const document = info.textDocument;
 	const fileName = document.uri;
@@ -23,7 +22,7 @@ SignatureHelp.onSignatureHelp = info => {
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
 
-	if(call === undefined) { return; }
+	if(call === undefined) { return ; }
 	let callees = TypeCarrier.evaluate(call.expression.carrier).filter(t => t.type === TypeInfo.Type.Function && t.value);
 	if(!callees.length) { return ; }
 	callees = callees.map(t => t.value);

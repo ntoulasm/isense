@@ -410,7 +410,7 @@ function defineThis(node, thisObject = TypeInfo.createObject(true)) {
     const thisSymbol = Symbol.create('this');
     node.symbols.insert(thisSymbol);
     // Use addTypeBinder instead of assign because this is not a binary expression.
-    thisObject.references.push(thisSymbol);
+    // thisObject.references.push(thisSymbol);
     Ast.addTypeBinder(node, TypeBinder.create(thisSymbol, TypeCarrier.createConstant(thisObject)));
 }
 
@@ -555,7 +555,7 @@ const copyThisToNewExpression = (constructor, newExpression) => {
     const thisBinder = Ast.findActiveTypeBinders(constructorLastStatement, thisSymbol)[0];  // TODO: fixme
     const thisCarrier = thisBinder.carrier;
     const thisTypes = TypeCarrier.evaluate(thisCarrier);
-    thisTypes.forEach(e => e.references = []);
+    // thisTypes.forEach(e => e.references = []);
     if(constructor.hasOwnProperty("constructorName")) {
         for(const thisType of thisTypes) {
             thisType.constructorName = constructor.constructorName;
@@ -598,35 +598,8 @@ function assign(node, symbol, rvalue, carrier) {
         return ;
     }
 
-    const lvalueBinders = Ast.findActiveTypeBinders(node, symbol);
-
-    if(lvalueBinders.length) {
-        for(const b of lvalueBinders) {
-            for(const type of TypeCarrier.evaluate(b.carrier)) {
-                if(type.type === TypeInfo.Type.Object) {
-                    const index = type.references.indexOf(symbol);
-                    console.assert(index != -1, "Remove reference from object");
-                    type.references.splice(index, 1);
-                }
-            }   
-        }
-    }
-
     const binder = TypeBinder.create(symbol, carrier);
     Ast.addTypeBinder(node, binder);
-
-    for(const type of TypeCarrier.evaluate(carrier)) {
-        if(type.type === TypeInfo.Type.Object && type.hasValue) {
-            type.references.push(symbol);
-        }
-    }
-
-    if(rvalue) {
-        rvalue = Ast.stripOutParenthesizedExpressions(rvalue);
-        if(rvalue.kind === ts.SyntaxKind.CallExpression && rvalue.callee) {
-            copyPropertiesTypeBindersIfObject(Ast.findLastStatement(rvalue.callee.body) || rvalue.callee.body, carrier, rvalue);
-        }
-    }
 
     return binder;
 
@@ -651,25 +624,15 @@ function setProperty(node, object, name, rvalue, carrier) {
 
     const propertyName = `@${object.value}.${name}`;
     const property = getProperty(object, propertyName);
-    const symbol = property || Symbol.create(propertyName, node);
-    const binder = assign(node, symbol, rvalue, carrier);
+    let propertySymbol = property;
+
+    if(!property) {
+        propertySymbol = Symbol.create(propertyName, node);
+        object.properties.insert(propertySymbol);
+    }
     
+    const binder = assign(node, propertySymbol, rvalue, carrier);
     Ast.addTypeBinder(node, binder);
-
-    !property && object.references.forEach(reference => {
-
-        const previousBinder = Ast.findActiveTypeBinders(node, reference)[0]; // TODO: fixme
-        const b = TypeBinder.copy(previousBinder);
-        
-        for(const info of TypeCarrier.evaluate(b.carrier)) {
-            if(info.type === TypeInfo.Type.Object) {
-                info.properties.insert(symbol);
-            }
-        }
-
-        Ast.addTypeBinder(node, b);
-    
-    });
 
 }
 
@@ -691,7 +654,7 @@ function analyzePropertyAccessExpression(node) {
             for(const [,property] of Object.entries(type.properties.getSymbols())) {
                 if(property.name === name) {
                     // TODO: fixme
-                    info.push(...TypeCarrier.evaluate(Ast.findActiveTypeBinders(node, property)[0]));
+                    info.push(...TypeCarrier.evaluate(Ast.findActiveTypeBinders(node, property)[0].carrier));
                 } 
             }
         }
