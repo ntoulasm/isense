@@ -418,12 +418,52 @@ Ast.findActiveTypeBindersInLeftSibling = (node, symbol, stopNode, startNode) => 
 };
 
 /**
+ * e.g let point = createPoint(x, y);
+ * On hover of point, its properties will be resolved.
+ * But their binders exist inside createPoint. 
+ * To reach them we need to search in the right sub-tree of the 'assignment' node.
+ * So, the node which the search for active binders starts, is adjusted to start from the right sub-tree.
+ * 
+ * @param {ts.Identifier} node 
+ */
+Ast.AdjustObjectPropertyStartingSearchNode = node => {
+    const isLeftPartOfAssignmentLike = Ast.isLeftPartOfAssignmentLike(node);
+    return isLeftPartOfAssignmentLike || node;
+};
+
+Ast.isInner = (outer, inner) => 
+    outer.pos <= inner.pos && inner.end <= outer.end;
+
+Ast.isLeftPartOfAssignmentLike = node => {
+    let currentNode = node;
+    while(currentNode) {
+        switch(currentNode.kind) {
+            case ts.SyntaxKind.VariableDeclaration:
+                if(Ast.isInner(currentNode.name, node)) {
+                    return currentNode;
+                }
+                return false;
+            case ts.SyntaxKind.BinaryExpression:
+                if(currentNode.operatorToken.kind === ts.SyntaxKind.EqualsToken && 
+                    Ast.isInner(currentNode.left, node)) {
+                    return currentNode;
+                }
+                return false;
+            default:
+                currentNode = currentNode.parent;
+                break;
+        }
+    }
+    return false;
+};
+
+/**
  * @param {ts.Node} node
  * @param {object} symbol
  */
 Ast.findActiveTypeBindersInParent = (node, symbol, startNode) => {
 
-    if(node.kind === ts.SyntaxKind.CallExpression && node.callee && node.callee.body) {
+    if(ts.isCallLikeExpression(node) && node.callee && node.callee.body) {
         const callee = node.callee;
         const binders = Ast.findActiveTypeBindersInLeftSibling(
             callee.body,
@@ -435,6 +475,14 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode) => {
     }
 
     if(ts.isFunctionLike(node) && node.call) {
+        if(Ast.isClassMember(node)) {
+            const classNode = node.parent;
+            const binders = Ast.findActiveTypeBinders(node, symbol, classNode, startNode);
+            if(binders && binders.length) { return binders; }
+        } else {
+            const binders = Ast.findActiveTypeBinders(node, symbol, node, startNode);
+            if(binders) { return binders; }
+        }
         return Ast.findActiveTypeBinders(node.call, symbol, undefined, startNode);
     }
 
@@ -460,6 +508,11 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode) => {
     return Ast.findActiveTypeBinders(node, symbol, undefined, startNode);
 
 };
+
+Ast.isClassMember = node => node.kind === ts.SyntaxKind.MethodDeclaration ||
+    node.kind === ts.SyntaxKind.Constructor ||
+    node.kind === ts.SyntaxKind.GetAccessor ||
+    node.kind === ts.SyntaxKind.SetAccessor;
 
 Ast.isAssignment = node =>
     node.kind === ts.SyntaxKind.BinaryExpression && 

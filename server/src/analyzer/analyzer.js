@@ -353,29 +353,6 @@ Analyzer.analyze = ast => {
 // ----------------------------------------------------------------------------
 
 /**
- * @param {ts.Node} source
- * @param {Array} carrier 
- * @param {ts.Node} destination
- */
-
-function copyPropertiesTypeBindersIfObject(source, carrier, destination) {
-    for(const t of TypeCarrier.evaluate(carrier)) {
-        if(t.type === TypeInfo.Type.Object && t.hasValue) {
-            for(const [, p] of Object.entries(t.properties.getSymbols())) {
-                const propertyBinder = Ast.findActiveTypeBinders(source, p)[0]; // TODO: fixme
-                Ast.addTypeBinder(
-                    destination, 
-                    propertyBinder
-                );
-                copyPropertiesTypeBindersIfObject(source, propertyBinder.carrier, destination);
-            }
-        }
-    }
-}
-
-// ----------------------------------------------------------------------------
-
-/**
  * @param {ts.Node} func 
  * @param {*} args 
  */
@@ -389,7 +366,6 @@ function copyParameterTypeBindersToCallee(func, args) {
         const carrier = argument.carrier;
         const binder = TypeBinder.create(parameterSymbol, carrier);
         Ast.addTypeBinder(parameter, binder);
-        copyPropertiesTypeBindersIfObject(argument, carrier, parameter);
     }
     for(let i = args.length; i < func.parameters.length; ++i) {
         const parameter = func.parameters[i];
@@ -406,10 +382,8 @@ function copyParameterTypeBindersToCallee(func, args) {
  * @param {*} thisObject 
  */
 function defineThis(node, thisObject = TypeInfo.createObject(true)) {
-    const thisSymbol = Symbol.create('this');
+    const thisSymbol = Symbol.create('this', node);
     node.symbols.insert(thisSymbol);
-    // Use addTypeBinder instead of assign because this is not a binary expression.
-    // thisObject.references.push(thisSymbol);
     Ast.addTypeBinder(node, TypeBinder.create(thisSymbol, TypeCarrier.createConstant(thisObject)));
 }
 
@@ -491,7 +465,8 @@ function newClassExpression(node, classNode) {
     const beforeCall = (constructor) => {
         for(const member of classNode.members) {
             if(member.kind === ts.SyntaxKind.PropertyDeclaration) {
-                setProperty(constructor, thisObject, member.name.getText(), member.initializer, member.initializer.carrier);
+                const carrier = member.initializer ? member.initializer.carrier : TypeCarrier.createConstant([TypeInfo.createUndefined()]);
+                setProperty(constructor, thisObject, member.name.getText(), member.initializer, carrier);
             } else if(member.kind === ts.SyntaxKind.MethodDeclaration) {
                 setProperty(constructor, thisObject, member.name.getText(), undefined, member.carrier);
             }
@@ -505,41 +480,35 @@ function newClassExpression(node, classNode) {
 /**
  * @param {ts.Node} constructor 
  */
-const copyThisToNewExpression = (constructor, newExpression) => {
-    const constructorLastStatement = Ast.findLastStatement(newExpression.callee.body) || newExpression.callee.body;
-    if(constructorLastStatement === undefined) { return; }
-    const thisSymbol = Ast.lookUp(constructorLastStatement, 'this');
-    const thisBinder = Ast.findActiveTypeBinders(constructorLastStatement, thisSymbol)[0];  // TODO: fixme
-    const thisCarrier = thisBinder.carrier;
-    const thisTypes = TypeCarrier.evaluate(thisCarrier);
-    // thisTypes.forEach(e => e.references = []);
-    if(constructor.hasOwnProperty("constructorName")) {
-        for(const thisType of thisTypes) {
-            thisType.constructorName = constructor.constructorName;
-        }
+const setNewExpressionCarrier = newExpression => {
+    if(newExpression.callee) {
+        const isBinderForThis = b => b.symbol.name === 'this';
+        const thisBinder = newExpression.callee.binders.find(isBinderForThis);
+        newExpression.carrier = thisBinder.carrier;
+    } else {
+        newExpression.carrier = TypeCarrier.createConstant(TypeInfo.createAny());
     }
-    newExpression.carrier = thisCarrier;
-    copyPropertiesTypeBindersIfObject(constructorLastStatement, thisCarrier, newExpression);
 };
 
 /**
  * @param {ts.NewExpression} node 
  */
 function newExpression(node) {
+
     const types = TypeCarrier.evaluate(node.expression.carrier);
-    const constructors = types.filter(t => (t.type === TypeInfo.Type.Function || t.type === TypeInfo.Type.Class));
-    const constructor = !constructors.length ? undefined : constructors[0];
-    if(constructor === undefined) {
-        node.carrier = TypeCarrier.createConstant(TypeInfo.createAny());
-        return ;
-    }
+    const constructor = types.find(t => (t.type === TypeInfo.Type.Function || t.type === TypeInfo.Type.Class));
+
     // TODO: pick constructor?
-    if(constructor.type === TypeInfo.Type.Function && constructor.value) {
-        call(node, constructor.value);
-    } else if (constructor.type === TypeInfo.Type.Class && constructor.value) {
-        newClassExpression(node, constructor.value);
+    if(constructor) {
+        if(constructor.type === TypeInfo.Type.Function && constructor.value) {
+            call(node, constructor.value);
+        } else if (constructor.type === TypeInfo.Type.Class && constructor.value) {
+            newClassExpression(node, constructor.value);
+        } 
     }
-    copyThisToNewExpression(constructor.value, node);
+
+    setNewExpressionCarrier(node);
+
 }
 
 /**

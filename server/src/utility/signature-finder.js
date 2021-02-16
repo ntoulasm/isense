@@ -64,7 +64,7 @@ me.computeSignature = function computeSignature(node, binders, typeSeparator = '
 				for(const [,property] of Object.entries(type.properties.getSymbols())) {
 					
 					// If binders are empty the property is not declared yet.
-					const binders = Ast.findActiveTypeBinders(node, property);
+					const binders = Ast.findActiveTypeBindersInLeftSibling(Ast.AdjustObjectPropertyStartingSearchNode(node), property);
 					if(!binders.length) { continue; }
 
 					if(comma) { value += ',\n'; }
