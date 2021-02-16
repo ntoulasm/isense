@@ -100,8 +100,7 @@ me.computeSignature = function computeSignature(node, binders, typeSeparator = '
 	for(const b of binders) {
 		for(const type of TypeCarrier.evaluate(b.carrier)) {
 			if(firstTime) { 
-				const name = symbol.name[0] == "@" ? symbol.name.split('.')[1] : symbol.name;
-				signature += `${name}: `;
+				signature += `${symbol.name}: `;
 				firstTime = false;
 			} else {
 				signature += typeSeparator;

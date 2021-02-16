@@ -46,7 +46,7 @@ Completion.onCompletion = info => {
 			}
 			if(type.type === TypeInfo.Type.Object && type.hasValue) {
 				for(const [,property] of Object.entries(type.properties.getSymbols())) {
-					const propertyName = property.name.split('.')[1];
+					const propertyName = property.name;
 					const propertyBinders = Ast.findActiveTypeBinders(node, property);
 					const typeInfo = [];
 					for(const b of propertyBinders) {
@@ -77,7 +77,7 @@ Completion.onCompletion = info => {
 					for(const type of expressionTypes) {
 						if(type.type === TypeInfo.Type.Object && type.hasValue) {
 							for(const [,property] of Object.entries(type.properties.getSymbols())) {
-								const propertyName = property.name.split('.')[1];
+								const propertyName = property.name;
 								const propertyBinders = Ast.findActiveTypeBinders(node, property);
 								const typeInfo = [];
 								for(const b of propertyBinders) {

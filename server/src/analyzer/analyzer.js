@@ -147,7 +147,6 @@ Analyzer.analyze = ast => {
                             // TODO: move to assign?
                             node.carrier = carrier;
 
-
                         } else {
                             Ast.addAnalyzeDiagnostic(
                                 node.getSourceFile(), 
@@ -264,7 +263,7 @@ Analyzer.analyze = ast => {
                 const name = node.name.getText();
 
                 if(name !== undefined) {
-                    const symbol = Symbol.create(`@${object.type.value}.${name}`, node);
+                    const symbol = Symbol.create(name, node);
                     object.type.properties.insert(symbol);
                     assign(node, symbol, node.initializer, node.name.carrier);
                 }
@@ -307,7 +306,7 @@ Analyzer.analyze = ast => {
                 }
 
                 if(name !== undefined) {
-                    const symbol = Symbol.create(`@${object.type.value}.${name}`, node);
+                    const symbol = Symbol.create(name, node);
                     object.type.properties.insert(symbol);
                     assign(node, symbol, node.initializer, node.initializer.carrier);
                 }
@@ -580,7 +579,7 @@ function getProperty(object, name) {
  */
 function setProperty(node, object, name, rvalue, carrier) {
 
-    const propertyName = `@${object.value}.${name}`;
+    const propertyName = name;
     const property = getProperty(object, propertyName);
     let propertySymbol = property;
 
@@ -602,13 +601,12 @@ function setProperty(node, object, name, rvalue, carrier) {
 function analyzePropertyAccessExpression(node) {
 
     const expressionTypes = TypeCarrier.evaluate(node.expression.carrier);
-    const propertyName = node.name.getText();
+    const name = node.name.getText();
     const info = [];
     let typesContainUndefined = false;
 
     for(const type of expressionTypes) {
         if(type.type === TypeInfo.Type.Object && type.hasValue) {
-            const name = `@${type.value}.${propertyName}`;
             for(const [,property] of Object.entries(type.properties.getSymbols())) {
                 if(property.name === name) {
                     // TODO: fixme
