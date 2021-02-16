@@ -1,4 +1,5 @@
 const TypeInfo = require('../utility/type-info');
+const Ast = require('../ast/ast');
 
 // ----------------------------------------------------------------------------
 
@@ -9,6 +10,12 @@ const vscodeLanguageServer = require('vscode-languageserver');
 const Utility = {};
 
 // ----------------------------------------------------------------------------
+
+Utility.getAst = info => {
+	const document = info.textDocument;
+	const fileName = document.uri;
+	return Ast.asts[fileName];
+};
 
 Utility.createRange = symbol => {
     const declaration = symbol.declaration;

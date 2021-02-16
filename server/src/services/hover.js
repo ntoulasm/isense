@@ -1,5 +1,6 @@
 const SignatureFinder = require('../utility/signature-finder');
 const Ast = require('../ast/ast');
+const { getAst } = require('./utility');
 
 // ----------------------------------------------------------------------------
 
@@ -13,9 +14,7 @@ const Hover = {};
 
 Hover.onHover = info => {
 
-	const document = info.textDocument;
-	const fileName = document.uri;
-	const ast = Ast.asts[fileName];
+	const ast = getAst(info);
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
 	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);

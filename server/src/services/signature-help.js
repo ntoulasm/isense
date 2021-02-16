@@ -1,6 +1,7 @@
 const Ast = require('../ast/ast');
 const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('../utility/type-carrier');
+const { getAst } = require('./utility');
 
 // ----------------------------------------------------------------------------
 
@@ -15,9 +16,7 @@ const SignatureHelp = {};
 
 SignatureHelp.onSignatureHelp = info => {
 
-	const document = info.textDocument;
-	const fileName = document.uri;
-	const ast = Ast.asts[fileName];
+	const ast = getAst(info);
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);

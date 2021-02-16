@@ -5,7 +5,7 @@ const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('../utility/type-carrier');
 const NumberMethods = require('../primitive-type-info/number-methods');
 const SignatureFinder = require('../utility/signature-finder');
-const { getCompletionItemKind } = require('./utility');
+const { getAst, getCompletionItemKind } = require('./utility');
 
 // ----------------------------------------------------------------------------
 
@@ -19,10 +19,8 @@ const Completion = {};
 // ----------------------------------------------------------------------------
 
 Completion.onCompletion = info => {
-    
-	const document = info.textDocument;
-	const fileName = document.uri;
-	const ast = Ast.asts[fileName];
+
+	const ast = getAst(info);
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
 	const completionItems = [];
