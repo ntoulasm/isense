@@ -31,7 +31,7 @@ Completion.onCompletion = info => {
 		Analyzer.analyze(ast);
 		const node = Ast.findInnermostNode(ast, offset - 1, ts.SyntaxKind.PropertyAccessExpression);
 		if(!node) { return ; }
-		const expressionCarrier = node.name.escapedText == "" ? node.expression.carrier : node.carrier;
+		const expressionCarrier = node.expression.carrier;
 
 		for(const type of TypeCarrier.evaluate(expressionCarrier)) {
 			if(type.type === TypeInfo.Type.Number) {
