@@ -26,6 +26,8 @@ Definition.onDefinition = info => {
 	 */
 	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
 
+	if(!node) { return null; }
+
 	switch(node.kind) {
 		case ts.SyntaxKind.Identifier: {
 			const symbol = node.carrier.symbol;
