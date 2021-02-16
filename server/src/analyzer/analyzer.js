@@ -447,46 +447,6 @@ function createCallee(callee) {
 }
 
 /**
- * 
- * @param {ts.Node} callee 
- * @param {ts.Node} call 
- */
-function copyFreeVariablesTypeBindersToCallee(callee, call) {
-    console.assert(callee.hasOwnProperty("freeVariables"), "addFreeVariablesTypeBinders");
-    callee.freeVariables.forEach(fv => {
-        const closestBinder = Ast.findActiveTypeBinders(call, fv)[0]; // TODO: fixme
-        console.assert(closestBinder !== undefined, 'addFreeVariablesTypeBinders: Failed to find type binder for free variable');
-        const carrier = closestBinder.carrier;
-        // Use addTypeBinder instead of assign because this is not a binary expression.
-        Ast.addTypeBinder(callee, closestBinder);
-        copyPropertiesTypeBindersIfObject(call, carrier, callee);
-        for(const t of TypeCarrier.evaluate(closestBinder.carrier)) {
-            if(t.type === TypeInfo.Type.Object && t.hasValue) {
-                for(const [, propertySymbol] of Object.entries(t.properties.getSymbols())) {
-                    callee.freeVariables.add(propertySymbol);
-                }
-            }
-        }
-    });
-}
-
-/**
- * 
- * @param {ts.Node} callee 
- * @param {ts.Node} call 
- */
-function copyFreeVariablesTypeBindersToCaller(callee, call) {
-    const lastStatement = Ast.findLastStatement(callee.body) || callee.body;
-    const callNextStatement = Ast.findNextStatement(call);
-    for(const fv of callee.freeVariables) {
-        const closestBinder = Ast.findActiveTypeBinders(lastStatement, fv)[0];  // TODO: fixme
-        console.assert(closestBinder !== undefined, 'addFreeVariablesTypeBinders: Failed to find type binder for free variable');
-        Ast.addTypeBinderToClosestStatement(callNextStatement, closestBinder);
-        copyPropertiesTypeBindersIfObject(lastStatement, closestBinder.carrier, callNextStatement);
-    }
-}
-
-/**
  * @param {ts.Node} call 
  * @param {ts.Node} callee 
  * @param {Object} thisObject
@@ -499,10 +459,8 @@ function call(call, callee, thisObject = TypeInfo.createObject(true), beforeCall
     callee.call = call;
     defineThis(callee, thisObject);
     copyParameterTypeBindersToCallee(callee, call.arguments || []);
-    // copyFreeVariablesTypeBindersToCallee(callee, call);
     beforeCall(callee);
     Analyzer.analyze(callee.body);
-    // copyFreeVariablesTypeBindersToCaller(callee, call);
     const callInfo = TypeCarrier.evaluate(call.carrier);
     if(!callInfo.length) { callInfo.push(TypeInfo.createUndefined()); }
     callStack.pop();

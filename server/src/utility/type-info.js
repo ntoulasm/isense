@@ -102,7 +102,6 @@ TypeInfo.copy = info => {
         case TypeInfo.Type.Object:
             copy.value = info.value;
             copy.properties = SymbolTable.copy(info.properties);
-            copy.references = [...info.references];
             break;
         default: 
             break;
@@ -150,7 +149,6 @@ TypeInfo.createObject = value => {
     value = !value || ++totalObjects;
     const t = TypeInfo.create(TypeInfo.Type.Object, value);
     t.properties = SymbolTable.create();
-    t.references = [];
     return t;
 };
 
