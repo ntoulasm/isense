@@ -138,25 +138,39 @@
 
 //////////////////////////////////////////////////////
 
-function createPoint(x, y) {
-    const point = { x, y };
-    return point;
-}
+// -----------------------------------------------------------------------
 
-let p = createPoint(1, 2);
+// class poi {
+//     a;
+//     constructor (x, y) {
+//         this.x = x;
+//         this.y = y;
+//     }
+//     magnitude() {
 
-let ref = p;
-p.b = 10;
-ref.a = 2;
+//     }
+// }
 
-// let x = {a: 2};
-// let y = x;
+// const point = new poi(1, 2);
+// point.x;
 
-// x.b = 5;
-// y.b = 10;
+// -----------------------------------------------------------------------
 
-// let aaa = 100;
-// aaa = 200;;
+// let empty1 = {};
+// let empty2 = {};
 
-let x = 2;
-x = x + 5;
+// let isEqual = empty1 == empty1;
+
+// -----------------------------------------------------------------------
+
+// function createPoint2D(x, y) {
+//     return { x, y };
+// }
+
+// function makePoint3D(point) {
+//     point.z = 0;
+// }
+
+// const point = createPoint2D(5, 5);
+// makePoint3D(point);
+
