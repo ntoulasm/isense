@@ -46,6 +46,7 @@ Completion.onCompletion = info => {
 				for(const [,property] of Object.entries(type.properties.getSymbols())) {
 					const propertyName = property.name;
 					const propertyBinders = Ast.findActiveTypeBinders(node, property);
+					if(!propertyBinders.length) { continue; }
 					const typeInfo = [];
 					for(const b of propertyBinders) {
 						typeInfo.push(...TypeCarrier.evaluate(b.carrier));
@@ -77,6 +78,7 @@ Completion.onCompletion = info => {
 							for(const [,property] of Object.entries(type.properties.getSymbols())) {
 								const propertyName = property.name;
 								const propertyBinders = Ast.findActiveTypeBinders(node, property);
+								if(!propertyBinders.length) { continue; }
 								const typeInfo = [];
 								for(const b of propertyBinders) {
 									typeInfo.push(...TypeCarrier.evaluate(b.carrier));
