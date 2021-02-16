@@ -171,8 +171,6 @@ Analyzer.analyze = ast => {
 
                         node.carrier = TypeCarrier.createConstant(info);
 
-                    } else {
-                        console.assert(false, 'left side of assignment is not lvalue');
                     }
 				} else {
                     induceParameterTypeFromBinaryExpression(node);   
