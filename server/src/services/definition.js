@@ -12,19 +12,26 @@ const Definition = {};
 
 // ----------------------------------------------------------------------------
 
+/**
+ * 
+ * @param {vscodeLanguageServer.DefinitionParams} info 
+ */
 Definition.onDefinition = info => {
 
 	const ast = getAst(info);
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
+	/**
+	 * @type {ts.Node}
+	 */
 	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
 
 	switch(node.kind) {
 		case ts.SyntaxKind.Identifier: {
-			// TODO: Handle definition in different files.
 			const symbol = Ast.lookUp(node, node.getText());
 			const range = createRange(symbol);
-			const location = vscodeLanguageServer.Location.create(fileName, range);
+			const uri = node.getSourceFile().fileName;
+			const location = vscodeLanguageServer.Location.create(uri, range);
 			return location;
 		}
 		default: return null;
