@@ -803,7 +803,6 @@ Ast.findLastParameter = node => {
     return Ast.findLastNodeOfArray(node, 'parameters');
 };
 
-// TODO: unused, use or remove
 /**
  * @param {ts.Identifier} id
  */
