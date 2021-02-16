@@ -28,7 +28,7 @@ Definition.onDefinition = info => {
 
 	switch(node.kind) {
 		case ts.SyntaxKind.Identifier: {
-			const symbol = Ast.lookUp(node, node.getText());
+			const symbol = node.carrier.symbol;
 			const range = createRange(symbol);
 			const uri = node.getSourceFile().fileName;
 			const location = vscodeLanguageServer.Location.create(uri, range);
