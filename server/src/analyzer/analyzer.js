@@ -225,14 +225,11 @@ Analyzer.analyze = ast => {
                 
                 const types = TypeCarrier.evaluate(node.expression.carrier);
                 const callees = types.flatMap(t => t.type === TypeInfo.Type.Function ? [t.value] : []);
-                const callee = !callees.length ? undefined : callees[0];
+                const callee = !callees.length ? undefined : callees[0]; // TODO: somehow pick callee
 
-                // TODO: somehow pick callee
-                if(callee === undefined) {
-                    node.carrier = TypeCarrier.createConstant(TypeInfo.createAny());
-                } else if(!callee.body) {
-                    node.carrier = TypeCarrier.createConstant(TypeInfo.createUndefined());
-                } else {
+                node.carrier = TypeCarrier.createCallExpression(node);
+
+                if(callee && callee.body) {
                     call(node, callee);
                 }
 
@@ -315,9 +312,7 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.ReturnStatement: {
                 ts.forEachChild(node, visitDeclarations);
                 if(node.expression && !node.unreachable && !callStack.isEmpty()) {
-                    const returnTypes = TypeCarrier.evaluate(node.expression.carrier) || [TypeInfo.createAny()];
-                    const call = callStack.top();
-                    TypeCarrier.evaluate(call.carrier).push(...returnTypes);
+                    assign(node, Symbol.returnTypesSymbol, node.expression, node.expression.carrier);
                 }
                 if(!node.unreachable) {
                     markUnreachableStatements(Ast.findRightSiblings(node));
@@ -423,7 +418,6 @@ function createCallee(callee) {
  * @param {Object} thisObject
  */
 function call(call, callee, thisObject = TypeInfo.createObject(true), beforeCall = noOp) {
-    call.carrier = TypeCarrier.createConstant([]);
     callStack.push(call);
     Ast.addCallSite(callee, call);
     callee = call.callee = createCallee(callee);
@@ -432,8 +426,6 @@ function call(call, callee, thisObject = TypeInfo.createObject(true), beforeCall
     copyParameterTypeBindersToCallee(callee, call.arguments || []);
     beforeCall(callee);
     Analyzer.analyze(callee.body);
-    const callInfo = TypeCarrier.evaluate(call.carrier);
-    if(!callInfo.length) { callInfo.push(TypeInfo.createUndefined()); }
     callStack.pop();
 }
 
@@ -475,19 +467,6 @@ function newClassExpression(node, classNode, thisObject) {
 }
 
 /**
- * @param {ts.Node} constructor 
- */
-const setNewExpressionCarrier = newExpression => {
-    if(newExpression.callee) {
-        const isBinderForThis = b => b.symbol.name === 'this';
-        const thisBinder = newExpression.callee.binders.find(isBinderForThis);
-        newExpression.carrier = thisBinder.carrier;
-    } else {
-        newExpression.carrier = TypeCarrier.createConstant(TypeInfo.createObject(false));
-    }
-};
-
-/**
  * @param {ts.NewExpression} node 
  */
 function newExpression(node) {
@@ -495,18 +474,21 @@ function newExpression(node) {
     const types = TypeCarrier.evaluate(node.expression.carrier);
     const constructor = types.find(t => (t.type === TypeInfo.Type.Function || t.type === TypeInfo.Type.Class));
 
+    node.carrier = TypeCarrier.createNewExpression(node);
+
     // TODO: pick constructor?
-    if(constructor) {
+    if(constructor && constructor.value) {
         const thisObject = TypeInfo.createObject(true);
-        if(constructor.value) { thisObject.constructorName = constructor.value.name.escapedText; }
-        if(constructor.type === TypeInfo.Type.Function && constructor.value) {
+        assign(constructor.value, Symbol.returnTypesSymbol, null, TypeCarrier.createConstant(thisObject));
+        if(constructor.value.name) { 
+            thisObject.constructorName = constructor.value.name.escapedText; 
+        }
+        if(constructor.type === TypeInfo.Type.Function) {
             call(node, constructor.value, thisObject);
-        } else if (constructor.type === TypeInfo.Type.Class && constructor.value) {
+        } else if (constructor.type === TypeInfo.Type.Class) {
             newClassExpression(node, constructor.value, thisObject);
         } 
     }
-
-    setNewExpressionCarrier(node);
 
 }
 

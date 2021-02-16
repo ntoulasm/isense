@@ -29,4 +29,6 @@ Symbol.isAnonymous = symbol => {
     return first === '(' || first === '<';
 };
 
+Symbol.returnTypesSymbol = Symbol.create('@returnTypes');
+
 module.exports = Symbol;

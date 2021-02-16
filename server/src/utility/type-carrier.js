@@ -3,6 +3,8 @@ const Ast = require('../ast/ast');
 const TypeInfo = require('./type-info');
 
 const ts = require('typescript');
+const Symbol = require('./symbol');
+const { findActiveTypeBindersInLeftSibling } = require('../ast/ast');
 
 //  ----------------------------------------------------------------------------------
 
@@ -15,7 +17,8 @@ TypeCarrier.Kind = {
     PrefixUnaryExpression: 3,
     PostfixUnaryExpression: 4,
     TypeOfExpression: 5,
-
+    CallExpression: 6,
+    NewExpression: 7
 };
 
 //  ----------------------------------------------------------------------------------
@@ -83,6 +86,26 @@ TypeCarrier.createPostfixUnaryExpression = (op, operand) => {
 TypeCarrier.createTypeOfExpression = expression => {
 
     const carrier = TypeCarrier.create(TypeCarrier.Kind.TypeOfExpression);
+
+    carrier.expression = expression;
+
+    return carrier;
+
+};
+
+TypeCarrier.createCallExpression = expression => {
+    
+    const carrier = TypeCarrier.create(TypeCarrier.Kind.CallExpression);
+
+    carrier.expression = expression;
+
+    return carrier;
+
+};
+
+TypeCarrier.createNewExpression = expression => {
+
+    const carrier = TypeCarrier.create(TypeCarrier.Kind.NewExpression);
 
     carrier.expression = expression;
 
@@ -212,6 +235,38 @@ evaluateFunctions[TypeCarrier.Kind.TypeOfExpression] = carrier => {
             }
         }
     });
+};
+
+evaluateFunctions[TypeCarrier.Kind.CallExpression] = carrier => {
+
+    if(!carrier.expression.callee) { return [ TypeInfo.createAny() ]; }
+
+    const binders = Ast.findActiveTypeBindersInLeftSibling(carrier.expression, Symbol.returnTypesSymbol);
+    const typeInfo = [];
+
+    for(const b of binders) {
+        typeInfo.push(...TypeCarrier.evaluate(b.carrier));
+    }
+
+    if(!typeInfo.length) { typeInfo.push(TypeInfo.createUndefined()); }
+
+    return typeInfo;
+
+};
+
+evaluateFunctions[TypeCarrier.Kind.NewExpression] = carrier => {
+
+    const binders = findActiveTypeBindersInLeftSibling(carrier.expression, Symbol.returnTypesSymbol);
+    const typeInfo = [];
+
+    for(const b of binders) {
+        typeInfo.push(...TypeCarrier.evaluate(b.carrier));
+    }
+
+    if(!typeInfo.length) { typeInfo.push(TypeInfo.createObject(false)); }
+
+    return typeInfo;
+
 };
 
 //  ----------------------------------------------------------------------------------

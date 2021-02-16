@@ -152,7 +152,7 @@
 // }
 
 // const point = new poi(1, 2);
-// point.x;
+// point.z = 100;
 
 // -----------------------------------------------------------------------
 
@@ -173,4 +173,3 @@
 
 // const point = createPoint2D(5, 5);
 // makePoint3D(point);
-
