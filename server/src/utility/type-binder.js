@@ -40,15 +40,6 @@ TypeBinder.create = (symbol, carrier) => {
 
 };
 
-/**
- * @param {isense.TypeBinder} binder
- * 
- * @returns {isense.TypeBinder}
- */
-TypeBinder.copy = binder => {
-    const symbol = binder.symbol;
-    const carrier = TypeCarrier.copy(binder.carrier);
-    return TypeBinder.create(symbol, carrier);
-};
+// ----------------------------------------------------------------------------
 
 module.exports = TypeBinder;

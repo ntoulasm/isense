@@ -92,31 +92,6 @@ TypeCarrier.createTypeOfExpression = expression => {
 
 //  ----------------------------------------------------------------------------------
 
-const copyFunctions = TypeCarrier.copyFunctions = [];
-
-TypeCarrier.copy = carrier => {
-    const f = copyFunctions[carrier.kind];
-    if(f) {
-        return f(carrier);
-    } else {
-        console.assert(false, `Trying to copy unknown carrier '${carrier.kind}'`);
-    }
-};
-
-copyFunctions[TypeCarrier.Kind.Constant] = carrier => {
-    return TypeCarrier.createConstant(carrier.info.map(i => TypeInfo.copy(i)));
-};
-
-copyFunctions[TypeCarrier.Kind.Variable] = carrier => {
-    return TypeCarrier.createVariable(carrier.symbol, carrier.node);
-};
-
-// TODO:
-//  Think if I indeed need to copy carriers 
-//  Implement copy functions
-
-//  ----------------------------------------------------------------------------------
-
 const evaluateFunctions = TypeCarrier.evaluateFunctions = {};
 
 /**

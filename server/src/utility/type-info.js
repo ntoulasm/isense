@@ -87,31 +87,6 @@ TypeInfo.create = (type, value) => {
 };
 
 /**
- * @param {isense.TypeInfo} info
- * 
- * @returns {isense.TypeInfo}
- */
-TypeInfo.copy = info => {
-
-    const copy = {};
-    copy.type = info.type;
-    copy.value = info.value;
-    copy.hasValue = info.hasValue;
-
-    switch (info.type) {
-        case TypeInfo.Type.Object:
-            copy.value = info.value;
-            copy.properties = SymbolTable.copy(info.properties);
-            break;
-        default: 
-            break;
-    }
-
-    return copy;
-
-};
-
-/**
  * @param {Number} value
  * 
  * @returns {isense.TypeInfo}
