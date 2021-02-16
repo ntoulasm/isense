@@ -18,7 +18,7 @@ me.computeSpaces = () => {
 me.typeToString = type => {
 	switch(type.type) {
 		case TypeInfo.Type.Object: {
-			return type.hasOwnProperty('constructorName') ? type.constructorName : 'Object';
+			return type.constructorName || 'Object';
 		}
 		default: {
 			return Object.keys(TypeBinder.Type)[type.type];

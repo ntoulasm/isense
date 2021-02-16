@@ -458,10 +458,9 @@ function createEmptyConstructor(classNode) {
  * @param {ts.Node} node 
  * @param {ts.Node} constructor 
  */
-function newClassExpression(node, classNode) {
+function newClassExpression(node, classNode, thisObject) {
 
     const constructor = Ast.findConstructor(classNode) || createEmptyConstructor(classNode);
-    const thisObject = TypeInfo.createObject(true);
     const beforeCall = (constructor) => {
         for(const member of classNode.members) {
             if(member.kind === ts.SyntaxKind.PropertyDeclaration) {
@@ -486,7 +485,7 @@ const setNewExpressionCarrier = newExpression => {
         const thisBinder = newExpression.callee.binders.find(isBinderForThis);
         newExpression.carrier = thisBinder.carrier;
     } else {
-        newExpression.carrier = TypeCarrier.createConstant(TypeInfo.createAny());
+        newExpression.carrier = TypeCarrier.createConstant(TypeInfo.createObject(false));
     }
 };
 
@@ -500,10 +499,12 @@ function newExpression(node) {
 
     // TODO: pick constructor?
     if(constructor) {
+        const thisObject = TypeInfo.createObject(true);
+        if(constructor.value) { thisObject.constructorName = constructor.value.name.escapedText; }
         if(constructor.type === TypeInfo.Type.Function && constructor.value) {
-            call(node, constructor.value);
+            call(node, constructor.value, thisObject);
         } else if (constructor.type === TypeInfo.Type.Class && constructor.value) {
-            newClassExpression(node, constructor.value);
+            newClassExpression(node, constructor.value, thisObject);
         } 
     }
 

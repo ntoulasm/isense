@@ -55,7 +55,7 @@ TypeInfo.typeToString = info => {
             return "array";
         }
         case TypeInfo.Type.Object: {
-            return info.hasOwnProperty("constructorName") ? info.constructorName : "object";
+            return info.constructorName || "object";
         }
         case TypeInfo.Type.Undefined: {
             return "undefined";
