@@ -337,7 +337,6 @@ Analyzer.analyze = ast => {
     Binder.bindFunctionScopedDeclarations(ast);
     if(ast.kind === ts.SyntaxKind.SourceFile) {
         defineThis(ast);
-        
     }
     ts.forEachChild(ast, visitDeclarations);
 
@@ -783,7 +782,6 @@ function induceTypeFromUse (node) {
     return carrier;
 
 };
-
 
 // ----------------------------------------------------------------------------
 

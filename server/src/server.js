@@ -10,6 +10,7 @@ const Hover = require('./services/hover');
 const Completion = require('./services/completion');
 const SignatureHelp = require('./services/signature-help');
 const Definition = require('./services/definition');
+const es5LibAst = require('./utility/es5-lib');
 
 // ----------------------------------------------------------------------------
 
@@ -41,6 +42,8 @@ connection.onInitialize((params) => {
 		capabilities.textDocument.publishDiagnostics &&
 		capabilities.textDocument.publishDiagnostics.relatedInformation
 	);
+
+	Analyzer.analyze(es5LibAst);
 
 	return {
 		capabilities: {

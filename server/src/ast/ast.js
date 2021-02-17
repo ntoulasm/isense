@@ -1,5 +1,6 @@
 const Utility = require('../utility/utility');
 // const TypeInfo = require('../utility/type-info');
+const es5LibAst = require('../utility/es5-lib');
 
 // ----------------------------------------------------------------------------
 
@@ -207,14 +208,20 @@ Ast.lookUp = (node, name) =>
  * @param {Function} callback 
  */
 Ast.visitVisibleSymbols = (node, callback) => {
-    while(node) {
-        if(node.symbols) { 
-            for(const symbol of Object.values(node.symbols.getSymbols())) {
-                if(callback(symbol)) { return symbol; }
+
+    function visitVisibleSymbolsInternal(node) {
+        while(node) {
+            if(node.symbols) { 
+                for(const symbol of Object.values(node.symbols.getSymbols())) {
+                    if(callback(symbol)) { return symbol; }
+                }
             }
+            node = Ast.findLeftSiblingWithoutInnerScope(node) || node.parent;
         }
-        node = Ast.findLeftSiblingWithoutInnerScope(node) || node.parent;
     }
+
+    return visitVisibleSymbolsInternal(node) || visitVisibleSymbolsInternal(es5LibAst);
+
 };
 
 /**
@@ -539,14 +546,14 @@ Ast.findActiveTypeBinders = (node, symbol, stopNode, startNode = node) => {
     if(node === stopNode) { return; }
 
     const parent = node.parent;
-    if(!parent) { return []; }
-
     const leftSibling = Ast.findLeftSibling(node);
+    
     if(leftSibling) {
         return Ast.findActiveTypeBindersInLeftSibling(leftSibling, symbol, undefined, startNode);
-    }
-    if(parent) {
+    } else if(parent) {
         return Ast.findActiveTypeBindersInParent(parent, symbol, startNode);
+    } else if(node !== es5LibAst) {
+        return Ast.findActiveTypeBindersInParent(es5LibAst, symbol, startNode);
     }
 
     return [];
