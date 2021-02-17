@@ -41,7 +41,7 @@ Definition.onDefinition = info => {
 			}
 			if(!symbol) { return ; }
 			const range = createRange(symbol);
-			const uri = node.getSourceFile().fileName;
+			const uri = symbol.declaration.getSourceFile().fileName;
 			const location = vscodeLanguageServer.Location.create(uri, range);
 			return location;
 		}
