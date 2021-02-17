@@ -31,15 +31,7 @@ Definition.onDefinition = info => {
 
 	switch(node.kind) {
 		case ts.SyntaxKind.Identifier: {
-			let symbol;
-			if(Ast.isNameOfPropertyAccessExpression(node)) {
-				const propertyAccessExpression = node.parent;
-				const properties = getPropertySymbols(propertyAccessExpression);
-				const propertyName = propertyAccessExpression.name.escapedText;
-				symbol = properties.find(s => s.name === propertyName);
-			} else {
-				symbol = node.carrier.symbol;
-			}
+			const symbol = getSymbol(node);
 			if(!symbol || !symbol.declaration) { return ; }
 			const sourceFile = symbol.declaration.getSourceFile();
 			if(sourceFile === es5LibAst) { return ; }
@@ -52,6 +44,19 @@ Definition.onDefinition = info => {
 	}
 
 };
+
+// ----------------------------------------------------------------------------
+
+function getSymbol(node) {
+	if(Ast.isNameOfPropertyAccessExpression(node)) {
+		const propertyAccessExpression = node.parent;
+		const properties = getPropertySymbols(propertyAccessExpression);
+		const propertyName = propertyAccessExpression.name.escapedText;
+		return properties.find(s => s.name === propertyName);
+	} else {
+		return node.carrier.symbol;
+	}
+}
 
 // ----------------------------------------------------------------------------
 
