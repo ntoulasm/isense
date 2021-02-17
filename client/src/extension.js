@@ -11,6 +11,8 @@ let client;
  */
 let offsetStatusBarItem;
 
+// ----------------------------------------------------------------------------
+
 /**
  * @param {vscode.ExtensionContext} context 
  */
@@ -154,6 +156,8 @@ function activate(context) {
 
 }
 
+// ----------------------------------------------------------------------------
+
 function deactivate() {
 	return client ? client.stop() : undefined;
 }
@@ -169,6 +173,8 @@ function updateOffsetStatusBarItem() {
 	offsetStatusBarItem.text = `Offset: ${computeOffset()}`;
 	offsetStatusBarItem.show();
 }
+
+// ----------------------------------------------------------------------------
 
 module.exports = {
 	activate,

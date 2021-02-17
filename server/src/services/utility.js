@@ -1,4 +1,5 @@
 const TypeInfo = require('../utility/type-info');
+const TypeCarrier = require('../utility/type-carrier');
 const Ast = require('../ast/ast');
 
 // ----------------------------------------------------------------------------
@@ -42,6 +43,25 @@ Utility.getCompletionItemKind = type => {
         }
     }
 };
+
+// ----------------------------------------------------------------------------
+
+/**
+ * @param {ts.PropertyAccessExpression} node 
+ */
+Utility.getPropertySymbols = node => {
+	const properties = [];
+	const objectTypeInfo = TypeCarrier.evaluate(node.expression.carrier);
+	for(const typeInfo of objectTypeInfo) {
+        switch(typeInfo.type) {
+            case TypeInfo.Type.Object: {
+                if(!typeInfo.hasValue) { break; }
+                properties.push(...Object.values(typeInfo.properties.getSymbols()));
+            }
+        }
+	}
+	return properties;
+}
 
 // ----------------------------------------------------------------------------
 

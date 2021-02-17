@@ -1,7 +1,5 @@
 const Ast = require('../ast/ast');
-const TypeInfo = require('../utility/type-info');
-const TypeCarrier = require('../utility/type-carrier');
-const { getAst, createRange } = require('./utility');
+const { getAst, createRange, getPropertySymbols } = require('./utility');
 
 // ----------------------------------------------------------------------------
 
@@ -51,20 +49,6 @@ Definition.onDefinition = info => {
 	}
 
 };
-
-/**
- * @param {ts.PropertyAccessExpression} node 
- */
-function getPropertySymbols(node) {
-	const properties = [];
-	const objectTypeInfo = TypeCarrier.evaluate(node.expression.carrier);
-	for(const typeInfo of objectTypeInfo) {
-		if(typeInfo.type === TypeInfo.Type.Object) {
-			properties.push(...Object.values(typeInfo.properties.getSymbols()));
-		}
-	}
-	return properties;
-}
 
 // ----------------------------------------------------------------------------
 

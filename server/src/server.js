@@ -169,7 +169,6 @@ connection.onDidOpenTextDocument((params) => {
 	const text = document.text;
 	const ast = asts[fileName] = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
 
-
 	clearDiagnostics(ast);
 	if(Ast.hasParseError(ast)) { 
 		provideParseDiagnostics(ast);
