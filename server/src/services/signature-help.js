@@ -100,11 +100,28 @@ const computeFunctionSignature = (callee, call) => {
 	const parametersSignature = computeParametersSignature(callee);
 	signature += `(${parametersSignature.join(', ')})`;
 	return {
-		documentation: '',
+		documentation: computeDocumentation(callee),
 		label: signature,
 		parameters: parametersSignature.map(p => vscodeLanguageServer.ParameterInformation.create(p, /* parameter documentation */))
 	};
 };
+
+// ----------------------------------------------------------------------------
+
+function computeDocumentation(node) {
+	/**
+	 * @type {ts.Statement}
+	 */
+	const closestStatement = Ast.findStatementAncestor(node);
+	return closestStatement.jsDoc ? computeJSDocDocumentation(closestStatement) : '';
+}
+
+function computeJSDocDocumentation(node) {
+	const jsDoc = node.jsDoc[node.jsDoc.length - 1];
+	return jsDoc.getText().replace(/  +/g, ' ');
+}
+
+// ----------------------------------------------------------------------------
 
 /**
  * @param {ts.Node} call 

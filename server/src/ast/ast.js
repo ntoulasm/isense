@@ -547,7 +547,7 @@ Ast.findActiveTypeBinders = (node, symbol, stopNode, startNode = node) => {
 
     const parent = node.parent;
     const leftSibling = Ast.findLeftSibling(node);
-    
+
     if(leftSibling) {
         return Ast.findActiveTypeBindersInLeftSibling(leftSibling, symbol, undefined, startNode);
     } else if(parent) {
@@ -818,6 +818,22 @@ Ast.isNameOfPropertyAccessExpression = id => {
     const parent = id.parent;
     return parent.kind === ts.SyntaxKind.PropertyAccessExpression && parent.name === id;
 };
+
+/**
+ * @param {ts.Node} node 
+ */
+Ast.isStatement = node =>
+    node.kind >= ts.SyntaxKind.FirstStatement && 
+    node.kind <= ts.SyntaxKind.LastStatement;
+
+Ast.findStatementAncestor = node => {
+    let currentNode = node
+    while(currentNode) {
+        if(Ast.isStatement(currentNode)) { return currentNode; }
+        currentNode = currentNode.parent;
+    }
+    return node;
+}
 
 /**
  * @param {ts.Node} node
