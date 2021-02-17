@@ -1,5 +1,6 @@
 const Ast = require('../ast/ast');
 const { getAst, createRange, getPropertySymbols } = require('./utility');
+const es5LibAst = require('../utility/es5-lib');
 
 // ----------------------------------------------------------------------------
 
@@ -39,9 +40,11 @@ Definition.onDefinition = info => {
 			} else {
 				symbol = node.carrier.symbol;
 			}
-			if(!symbol) { return ; }
+			if(!symbol || !symbol.declaration) { return ; }
+			const sourceFile = symbol.declaration.getSourceFile();
+			if(sourceFile === es5LibAst) { return ; }
+			const uri = sourceFile.fileName;
 			const range = createRange(symbol);
-			const uri = symbol.declaration.getSourceFile().fileName;
 			const location = vscodeLanguageServer.Location.create(uri, range);
 			return location;
 		}
