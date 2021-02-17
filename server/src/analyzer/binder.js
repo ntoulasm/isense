@@ -375,7 +375,13 @@ function declareFunctionScopedVariable(node, block) {
         const symbol = Symbol.create(name, node);
 
         block.symbols.insert(symbol);
-        Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())));
+        if(node.type) {
+            const typeInfo = tsTypeToTypeInfo(node.type);
+            const typeBinder = TypeBinder.create(symbol, TypeCarrier.createConstant([typeInfo]));
+            Ast.addTypeBinder(block, typeBinder)
+        } else {
+            Ast.addTypeBinder(block, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())));
+        }
 
     } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
         bindBindingPatternDeclarations(node.name, (node, name, start, end) => {
@@ -415,6 +421,11 @@ function declareBlockScopedVariable(node, block) {
         const symbol = Symbol.create(name, node);
 
         block.symbols.insert(symbol);
+        if(node.type) {
+            const typeInfo = tsTypeToTypeInfo(node.type);
+            const typeBinder = TypeBinder.create(symbol, TypeCarrier.createConstant([typeInfo]));
+            Ast.addTypeBinder(node, typeBinder)
+        }
 
     } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
         bindBindingPatternDeclarations(node.name, (node, name, start, end) => {
@@ -426,6 +437,24 @@ function declareBlockScopedVariable(node, block) {
         console.assert(false);
     }
 
+}
+
+/**
+ * 
+ * @param {ts.TypeNode} type 
+ */
+function tsTypeToTypeInfo(type) {
+    switch(type.kind) {
+        case ts.SyntaxKind.NumberKeyword:
+            return TypeInfo.createNumber();
+        case ts.SyntaxKind.StringKeyword:
+            return TypeInfo.createString();
+        case ts.SyntaxKind.BooleanKeyword:
+            return TypeInfo.createBoolean();
+        case ts.SyntaxKind.ObjectKeyword:
+            return TypeInfo.createObject();
+        default: return TypeInfo.createAny();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -482,6 +511,13 @@ function declareParameters(func) {
             const name = node.name.text;
             const symbol = Symbol.create(name, node);
             node.symbols.insert(symbol);
+            if(node.type) {
+                const typeInfo = tsTypeToTypeInfo(node.type);
+                const typeCarrier = TypeCarrier.createConstant([typeInfo]);
+                const typeBinder = TypeBinder.create(symbol, typeCarrier);
+                typeCarrier.induced = true;
+                Ast.addTypeBinder(node, typeBinder)
+            }
         } else if(node.name.kind === ts.SyntaxKind.ArrayBindingPattern || node.name.kind === ts.SyntaxKind.ObjectBindingPattern) {
             // visitDestructuringDeclerations(node.name, (name, start, end) => {
             //     const symbol = Symbol.create(name, start, end);
