@@ -70,7 +70,7 @@ function activate(context) {
 					});
 				});
 			}		
-			updateOffsetStatusBarItem(offsetStatusBarItem, )
+			updateOffsetStatusBarItem();
 		}
 	});
 
@@ -105,6 +105,7 @@ function activate(context) {
 		if(!textEditor) { return ; }
 		const text = textEditor.document.getText();
 		const end = text.length;
+
 		vscode.window.showInputBox({
 			valueSelection: [0, end],
 			placeHolder: 'Type offset to go',
@@ -116,9 +117,9 @@ function activate(context) {
 			}
 		}).then((text) => {
 			const position = textEditor.document.positionAt(text);
-			textEditor.selections = [
-				new vscode.Selection(position.line, position.character, position.line, position.character)
-			];
+			textEditor.selection = new vscode.Selection(position, position);
+			textEditor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
+			vscode.window.showTextDocument(vscode.window.activeTextEditor.document)
 		});
 
 	});
