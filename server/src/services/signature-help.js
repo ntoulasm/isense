@@ -7,6 +7,7 @@ const { getAst } = require('./utility');
 
 const ts = require('typescript');
 const vscodeLanguageServer = require('vscode-languageserver');
+const Analyzer = require('../analyzer/analyzer');
 
 // ----------------------------------------------------------------------------
 
@@ -14,6 +15,10 @@ const SignatureHelp = {};
 
 // ----------------------------------------------------------------------------
 
+/**
+ * 
+ * @param {vscodeLanguageServer.SignatureHelpParams} info 
+ */
 SignatureHelp.onSignatureHelp = info => {
 
 	const ast = getAst(info);
@@ -21,7 +26,8 @@ SignatureHelp.onSignatureHelp = info => {
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
 
-	if(call === undefined) { return ; }
+	if(!call) { return ; }
+	if(!call.expression.carrier) { Analyzer.analyze(ast); }
 	let callees = TypeCarrier.evaluate(call.expression.carrier).filter(t => t.type === TypeInfo.Type.Function && t.value);
 	if(!callees.length) { return ; }
 	callees = callees.map(t => t.value);
