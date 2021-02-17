@@ -21,8 +21,8 @@ const SignatureHelp = {};
  */
 SignatureHelp.onSignatureHelp = info => {
 
+	const { position, context } = info;
 	const ast = getAst(info);
-	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
 	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
 
@@ -32,11 +32,12 @@ SignatureHelp.onSignatureHelp = info => {
 	if(!callees.length) { return ; }
 	callees = callees.map(t => t.value);
 	const activeParameter = computeActiveParameter(call, offset);
+	const activeSignature = context.activeSignatureHelp ? context.activeSignatureHelp.activeSignature : 0;
 	const signatures = callees.map(callee => computeFunctionSignature(callee, call))
 
 	return {
 		activeParameter,
-		activeSignature: 0,
+		activeSignature,
 		signatures
 	};
 

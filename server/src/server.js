@@ -52,6 +52,7 @@ connection.onInitialize((params) => {
 			documentSymbolProvider: true,
 			definitionProvider: true,
 			signatureHelpProvider: {
+				contextSupport: true,
 				triggerCharacters: ['(', ',']
 			},
 			completionProvider: {
