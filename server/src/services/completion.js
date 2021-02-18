@@ -101,7 +101,7 @@ function computePropertyCompletions(node) {
 	
 	for(const property of propertySymbols) {
 		const propertyName = property.name;
-		const propertyBinders = Ast.findActiveTypeBinders(node, property);
+		const propertyBinders = Ast.findActiveTypeBindersInLeftSibling(node, property);
 		if(!propertyBinders.length) { continue; }
 		const typeInfo = [];
 		for(const b of propertyBinders) {

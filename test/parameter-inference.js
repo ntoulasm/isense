@@ -26,18 +26,15 @@ function inferFromAssignments(a) {
     }
 }
 
-function foo(a) {
-    function foo2(b) {
-        return b + 2;
-    }
-    return foo2(a);
-}
+// function foo(a) {
+//     function foo2(b) {
+//         return b + 2;
+//     }
+//     return foo2(a);
+// }
 
 function f(a, b) {
 	let x = b;
 	a = x;
 	return a + b;
 }
-
-let x = a;
-x;
