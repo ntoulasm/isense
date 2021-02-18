@@ -1,6 +1,6 @@
 const SignatureFinder = require('../utility/signature-finder');
 const Ast = require('../ast/ast');
-const { getAst } = require('./utility');
+const { getAst, getPropertySymbols } = require('./utility');
 
 // ----------------------------------------------------------------------------
 
@@ -32,15 +32,7 @@ Hover.onHover = info => {
 			};
 		}
 		case ts.SyntaxKind.Identifier: {
-			if(node.parent.kind === ts.SyntaxKind.PropertyAccessExpression && node.parent.name === node) {
-				return { 
-					contents: {
-						language: 'typescript',
-						value: `property ${node.text}`
-					}
-				};
-			}
-			const symbol = Ast.lookUp(node, node.text);
+			const symbol = getSymbolOfIdentifier(node);
 			if(symbol === undefined || !symbol.binders.length) { 
 				return { 
 					contents: {
@@ -63,12 +55,26 @@ Hover.onHover = info => {
 			}
 			return { contents };
 		}
-		default: {
+		default:
 			return { contents: [] };
-		}
 	}
 	
 };
+
+// ----------------------------------------------------------------------------
+
+/**
+ * @param {ts.Identifier} node 
+ */
+function getSymbolOfIdentifier(node) {
+	if(Ast.isNameOfPropertyAccessExpression(node)) {
+		const propertyName = node.getText();
+		const properties = getPropertySymbols(node.parent);
+		return properties.find(p => p.name === propertyName);
+	} else {
+		return Ast.lookUp(node, node.text);
+	}
+}
 
 // ----------------------------------------------------------------------------
 
