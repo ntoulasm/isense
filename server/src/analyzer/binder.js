@@ -277,11 +277,11 @@ function findClassName(node) {
 function findAnonymousName(node, incrementTotalAnonymous) {
     const parent = node.parent;
     if(isDeclarationInitializer(node)) { // let x = () => {};
-        return `<${parent.name.text}> anonymous`;
+        return `<${parent.name.text}> anonymous ${incrementTotalAnonymous()}`;
     } else if(isAssignmentRightValue(node)) { // x = () => {};
-        return `<${parent.left.getText()}> anonymous`;
+        return `<${parent.left.getText()}> anonymous ${incrementTotalAnonymous()}`;
     } else if(ts.isCallOrNewExpression(parent)) {
-        return `<${parent.expression.text}(...)> anonymous callback`;
+        return `<${parent.expression.text}(...)> anonymous ${incrementTotalAnonymous()} callback`;
     } else {
         return `<${incrementTotalAnonymous()}> anonymous`;
     }
@@ -439,24 +439,6 @@ function declareBlockScopedVariable(node, block) {
 
 }
 
-/**
- * 
- * @param {ts.TypeNode} type 
- */
-function tsTypeToTypeInfo(type) {
-    switch(type.kind) {
-        case ts.SyntaxKind.NumberKeyword:
-            return TypeInfo.createNumber();
-        case ts.SyntaxKind.StringKeyword:
-            return TypeInfo.createString();
-        case ts.SyntaxKind.BooleanKeyword:
-            return TypeInfo.createBoolean();
-        case ts.SyntaxKind.ObjectKeyword:
-            return TypeInfo.createObject();
-        default: return TypeInfo.createAny();
-    }
-}
-
 //-----------------------------------------------------------------------------
 
 /**
@@ -529,6 +511,26 @@ function declareParameters(func) {
         }
     }
 
+}
+
+//-----------------------------------------------------------------------------
+
+/**
+ * 
+ * @param {ts.TypeNode} type 
+ */
+function tsTypeToTypeInfo(type) {
+    switch(type.kind) {
+        case ts.SyntaxKind.NumberKeyword:
+            return TypeInfo.createNumber();
+        case ts.SyntaxKind.StringKeyword:
+            return TypeInfo.createString();
+        case ts.SyntaxKind.BooleanKeyword:
+            return TypeInfo.createBoolean();
+        case ts.SyntaxKind.ObjectKeyword:
+            return TypeInfo.createObject();
+        default: return TypeInfo.createAny();
+    }
 }
 
 //-----------------------------------------------------------------------------
