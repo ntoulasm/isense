@@ -237,20 +237,22 @@ evaluateFunctions[TypeCarrier.Kind.TypeOfExpression] = carrier => {
     });
 };
 
+const defaultCallTypeInfo = [ TypeInfo.createUndefined() ];
+
 evaluateFunctions[TypeCarrier.Kind.CallExpression] = carrier => {
 
     if(!carrier.expression.callee) { return [ TypeInfo.createAny() ]; }
 
-    const binders = Ast.findActiveTypeBindersInLeftSibling(carrier.expression, Symbol.returnTypesSymbol);
-    const typeInfo = [];
-
-    for(const b of binders) {
-        typeInfo.push(...TypeCarrier.evaluate(b.carrier));
+    const callee = carrier.expression.callee;
+    if(callee.body) {
+        const calleeLastStatement = Ast.findLastStatement(callee.body) || callee.body;
+        const binders = Ast.findActiveTypeBinders(calleeLastStatement, Symbol.returnTypesSymbol, callee.body);
+        if(binders) {
+            return binders.flatMap(b => TypeCarrier.evaluate(b.carrier));
+        }
     }
 
-    if(!typeInfo.length) { typeInfo.push(TypeInfo.createUndefined()); }
-
-    return typeInfo;
+    return defaultCallTypeInfo;
 
 };
 

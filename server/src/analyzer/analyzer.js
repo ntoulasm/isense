@@ -229,7 +229,7 @@ Analyzer.analyze = ast => {
 
                 node.carrier = TypeCarrier.createCallExpression(node);
 
-                if(callee && callee.body) {
+                if(callee) {
                     call(node, callee);
                 }
 
@@ -424,7 +424,7 @@ function call(call, callee, thisObject = TypeInfo.createObject(true), beforeCall
     defineThis(callee, thisObject);
     copyParameterTypeBindersToCallee(callee, call.arguments || []);
     beforeCall(callee);
-    Analyzer.analyze(callee.body);
+    callee.body && Analyzer.analyze(callee.body);
     callStack.pop();
 }
 
