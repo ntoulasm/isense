@@ -116,6 +116,9 @@ function computeDocumentation(node) {
 	return closestStatement.jsDoc ? computeJSDocDocumentation(closestStatement) : '';
 }
 
+/**
+ * @param {ts.Statement} node
+ */
 function computeJSDocDocumentation(node) {
 	const jsDoc = node.jsDoc[node.jsDoc.length - 1];
 	return jsDoc.getText().replace(/  +/g, ' ');

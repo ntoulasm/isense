@@ -17,7 +17,7 @@ const Completion = {};
 // ----------------------------------------------------------------------------
 
 Completion.onCompletion = info => {
-	
+
 	const ast = getAst(info);
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
@@ -72,7 +72,6 @@ Completion.onCompletion = info => {
 	}
 
 	return completionItems;
-
 
 };
 

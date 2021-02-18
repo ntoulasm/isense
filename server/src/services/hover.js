@@ -41,7 +41,7 @@ Hover.onHover = info => {
 				};
 			}
 			const symbol = Ast.lookUp(node, node.text);
-			if(symbol === undefined) { 
+			if(symbol === undefined || !symbol.binders.length) { 
 				return { 
 					contents: {
 						language: 'typescript',
@@ -50,14 +50,6 @@ Hover.onHover = info => {
 				}; 
 			}
 			const contents = [];
-			if(!symbol.binders.length) {
-				return {
-					contents: {
-						language: 'typescript',
-						value: node.text + ': any'
-					}
-				};
-			}
 			const closestBinders = Ast.findActiveTypeBinders(node, symbol);
 			for(const b of symbol.binders) {
 				const line = ts.getLineAndCharacterOfPosition(ast, b.parent.getStart()).line + 1;
