@@ -173,3 +173,21 @@
 
 // const point = createPoint2D(5, 5);
 // makePoint3D(point);
+
+let foo;
+
+if(a) {
+    /**
+     * @param {number} a
+     * @param {number} b
+
+     * @returns {number}
+     */
+    foo = (a, b) => {
+
+    };
+} else {
+    foo = (a, b, c) => {
+
+    };
+}

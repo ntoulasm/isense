@@ -1,5 +1,5 @@
 const Ast = require('../ast/ast');
-const { getAst, createRange, getPropertySymbols } = require('./utility');
+const { getAst, createRange, getSymbolOfIdentifier } = require('./utility');
 const es5LibAst = require('../utility/es5-lib');
 
 // ----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ Definition.onDefinition = info => {
 
 	switch(node.kind) {
 		case ts.SyntaxKind.Identifier: {
-			const symbol = getSymbol(node);
+			const symbol = getSymbolOfIdentifier(node);
 			if(!symbol || !symbol.declaration) { return ; }
 			const sourceFile = symbol.declaration.getSourceFile();
 			if(sourceFile === es5LibAst) { return ; }
@@ -44,19 +44,6 @@ Definition.onDefinition = info => {
 	}
 
 };
-
-// ----------------------------------------------------------------------------
-
-function getSymbol(node) {
-	if(Ast.isNameOfPropertyAccessExpression(node)) {
-		const propertyAccessExpression = node.parent;
-		const properties = getPropertySymbols(propertyAccessExpression);
-		const propertyName = propertyAccessExpression.name.escapedText;
-		return properties.find(s => s.name === propertyName);
-	} else {
-		return node.carrier.symbol;
-	}
-}
 
 // ----------------------------------------------------------------------------
 

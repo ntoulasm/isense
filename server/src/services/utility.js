@@ -65,4 +65,19 @@ Utility.getPropertySymbols = node => {
 
 // ----------------------------------------------------------------------------
 
+/**
+ * @param {ts.Identifier} node 
+ */
+Utility.getSymbolOfIdentifier = node => {
+	if(Ast.isNameOfPropertyAccessExpression(node)) {
+		const propertyName = node.getText();
+		const properties = Utility.getPropertySymbols(node.parent);
+		return properties.find(p => p.name === propertyName);
+	} else {
+		return Ast.lookUp(node, node.text);
+	}
+}
+
+// ----------------------------------------------------------------------------
+
 module.exports = Utility;

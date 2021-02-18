@@ -1,6 +1,6 @@
 const SignatureFinder = require('../utility/signature-finder');
 const Ast = require('../ast/ast');
-const { getAst, getPropertySymbols } = require('./utility');
+const { getAst, getSymbolOfIdentifier } = require('./utility');
 
 // ----------------------------------------------------------------------------
 
@@ -60,21 +60,6 @@ Hover.onHover = info => {
 	}
 	
 };
-
-// ----------------------------------------------------------------------------
-
-/**
- * @param {ts.Identifier} node 
- */
-function getSymbolOfIdentifier(node) {
-	if(Ast.isNameOfPropertyAccessExpression(node)) {
-		const propertyName = node.getText();
-		const properties = getPropertySymbols(node.parent);
-		return properties.find(p => p.name === propertyName);
-	} else {
-		return Ast.lookUp(node, node.text);
-	}
-}
 
 // ----------------------------------------------------------------------------
 
