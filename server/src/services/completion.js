@@ -21,57 +21,17 @@ Completion.onCompletion = info => {
 	const ast = getAst(info);
 	const position = info.position;
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
-	const completionItems = [];
 	const triggerCharacter = info.context.triggerCharacter;
 
-	if(triggerCharacter === '.') {
+	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
+	if(!node || node.kind !== ts.SyntaxKind.Identifier || Ast.isDeclarationName(node)) { return; }
 
-		Analyzer.analyze(ast);
-		const node = Ast.findInnermostNode(ast, offset - 1, ts.SyntaxKind.PropertyAccessExpression);
-		if(!node) { return ; }
-		completionItems.push(...computePropertyCompletions(node));
-
+	if(Ast.isNameOfPropertyAccessExpression(node)) {
+		if(triggerCharacter === '.') { Analyzer.analyze(ast); } // TODO: Do not analyze here
+		return computePropertyCompletions(node.parent);
 	} else {
-		const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
-		switch(node.kind) {
-			case ts.SyntaxKind.Identifier: {
-				if(Ast.isDeclarationName(node)) { return ; }
-				if(node.parent.kind === ts.SyntaxKind.PropertyAccessExpression) {
-					completionItems.push(...computePropertyCompletions(node.parent));
-				} else {
-					Ast.findVisibleSymbols(node)
-					.forEach(symbol => {
-						if(Symbol.isAnonymous(symbol)) { return; }
-						if(completionItems.find(c => c.label === symbol.name)) { return; }
-						const binders = Ast.findActiveTypeBinders(node, symbol);
-						if(!binders.length) { 
-							completionItems.push({
-								label: symbol.name,
-								kind: vscodeLanguageServer.CompletionItemKind.Variable,
-								signature: `${symbol.name}: any`
-							});
-							return ;
-						}
-						const typeInfo = [];
-						for(const b of binders) {
-							typeInfo.push(...TypeCarrier.evaluate(b.carrier));
-						}
-						const kind = typeInfo.length === 0 ?
-							getCompletionItemKind(typeInfo[0].type) : 
-							vscodeLanguageServer.CompletionItemKind.Variable;
-						const signature = SignatureFinder.computeSignature(node, binders);
-						completionItems.push({
-							label: symbol.name, 
-							kind,
-							data: { signature }
-						});
-					});
-				}
-			}
-		}
+		return computeIdentifierCompletions(node);
 	}
-
-	return completionItems;
 
 };
 
@@ -83,6 +43,38 @@ Completion.onCompletionResolve = item => {
 };
 
 // ----------------------------------------------------------------------------
+
+function computeIdentifierCompletions(node) {
+	const completions = [];
+	Ast.findVisibleSymbols(node)
+	.forEach(symbol => {
+		if(Symbol.isAnonymous(symbol)) { return; }
+		if(completions.find(c => c.label === symbol.name)) { return; }
+		const binders = Ast.findActiveTypeBinders(node, symbol);
+		if(!binders.length) { 
+			completions.push({
+				label: symbol.name,
+				kind: vscodeLanguageServer.CompletionItemKind.Variable,
+				signature: `${symbol.name}: any`
+			});
+			return ;
+		}
+		const typeInfo = [];
+		for(const b of binders) {
+			typeInfo.push(...TypeCarrier.evaluate(b.carrier));
+		}
+		const kind = typeInfo.length === 0 ?
+			getCompletionItemKind(typeInfo[0].type) : 
+			vscodeLanguageServer.CompletionItemKind.Variable;
+		const signature = SignatureFinder.computeSignature(node, binders);
+		completions.push({
+			label: symbol.name, 
+			kind,
+			data: { signature }
+		});
+	});
+	return completions;
+}
 
 function computePropertyCompletions(node) {
 
