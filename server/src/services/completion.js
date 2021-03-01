@@ -1,6 +1,7 @@
 const Analyzer = require('../analyzer/analyzer');
 const Ast = require('../ast/ast');
 const Symbol = require('../utility/symbol');
+const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('../utility/type-carrier');
 const SignatureFinder = require('../utility/signature-finder');
 const { getAst, getCompletionItemKind, getPropertySymbols } = require('./utility');
@@ -9,7 +10,6 @@ const { getAst, getCompletionItemKind, getPropertySymbols } = require('./utility
 
 const ts = require('typescript');
 const vscodeLanguageServer = require('vscode-languageserver');
-const TypeInfo = require('../utility/type-info');
 
 // ----------------------------------------------------------------------------
 
@@ -91,11 +91,11 @@ function computePropertyCompletions(node) {
 }
 
 function computeCompletion(node, symbol, binders) {
-	const typeInfo = binders.flatMap(b => TypeCarrier.evaluate(b.carrier));
-	const kind = TypeInfo.hasUniqueType(typeInfo) ?
-		getCompletionItemKind(typeInfo[0].type) : 
+	const plausibleTypes = binders.flatMap(b => TypeCarrier.evaluate(b.carrier));
+	const kind = TypeInfo.hasUniqueType(plausibleTypes) ?
+		getCompletionItemKind(plausibleTypes[0].type) : 
 		vscodeLanguageServer.CompletionItemKind.Variable;
-	const signature = SignatureFinder.computeSignature(node, binders);
+	const signature = SignatureFinder.computeSignature(node, symbol, plausibleTypes);
 	return {
 		label: symbol.name, 
 		kind,

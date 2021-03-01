@@ -32,9 +32,8 @@ function isConstant(symbol) {
 	return declaration && declaration.kind === ts.SyntaxKind.VariableDeclaration && Ast.isConstDeclaration(declaration.parent);
 }
 
-me.computeSignature = function computeSignature(node, binders, typeSeparator = ' || ', computeValues = true) {
+me.computeSignature = function computeSignature(node, symbol, typeInfo, typeSeparator = ' || ', computeValues = true) {
 
-	const symbol = binders[0].symbol;
 	let firstTime = true;
 	let signature = isConstant(symbol) ? 'const ' : '';
 
@@ -72,7 +71,7 @@ me.computeSignature = function computeSignature(node, binders, typeSeparator = '
 					
 					for(const b of binders) {
 						value += me.computeSpaces();
-						value += computeSignature(node, [b]);
+						value += computeSignature(node, property, TypeCarrier.evaluate(b.carrier));
 					}
 
 				}
@@ -97,18 +96,15 @@ me.computeSignature = function computeSignature(node, binders, typeSeparator = '
 		}
 	}
 
-	for(const b of binders) {
-		for(const type of TypeCarrier.evaluate(b.carrier)) {
-			if(firstTime) { 
-				signature += `${symbol.name}: `;
-				firstTime = false;
-			} else {
-				signature += typeSeparator;
-			}
-			signature += `${TypeInfo.typeToString(type)}`;
-			computeValues && (signature += computeSignatureValue(type));
+	for(const type of typeInfo) {
+		if(firstTime) { 
+			signature += `${symbol.name}: `;
+			firstTime = false;
+		} else {
+			signature += typeSeparator;
 		}
-	
+		signature += `${TypeInfo.typeToString(type)}`;
+		computeValues && (signature += computeSignatureValue(type));
 	}
 	
     return signature;

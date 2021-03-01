@@ -5,6 +5,7 @@ const Ast = require('./ast');
 
 const ts = require('typescript');
 const fs = require('fs');
+const TypeCarrier = require('../utility/type-carrier');
 
 // ----------------------------------------------------------------------------
 
@@ -77,7 +78,7 @@ me.generate = (root, outputFileName) => {
         
         if(node.hasOwnProperty('binders') && node.binders.length) {
             append(`node${dotId}[shape = "record", label = "{ TYPEBINDERS | `);
-            append(node.binders.map(b => SignatureFinder.computeSignature(node, [b], ' or ', false)).join(' | '));
+            append(node.binders.map(b => SignatureFinder.computeSignature(node, b.symbol, TypeCarrier.evaluate(b.carrier), ' or ', false)).join(' | '));
             append(`}"]\n`);
             append(`node${node.dotId} -> node${dotId}\n`);
             ++dotId;
