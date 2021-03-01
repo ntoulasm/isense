@@ -229,7 +229,6 @@ function bindFunction(node, body) {
     const name = findFunctionName(node);
     declareFunction(name, node, body);
     node._original = node;
-    node.freeVariables = new Set();
     declareParameters(node);
     Binder.bindFunctionScopedDeclarations(node.body);
 }

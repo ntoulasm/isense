@@ -99,7 +99,6 @@ Analyzer.analyze = ast => {
                     node.carrier = TypeCarrier.createConstant(TypeInfo.createAny()); 
                     break;
                 }
-                updateFreeVariables(node, symbol);
                 node.carrier = TypeCarrier.createVariable(symbol, node);
                 break;
             }
@@ -312,6 +311,7 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.ReturnStatement: {
                 ts.forEachChild(node, visitDeclarations);
                 if(node.expression && !node.unreachable && !callStack.isEmpty()) {
+
                     assign(node, Symbol.returnTypesSymbol, node.expression, node.expression.carrier);
                 }
                 if(!node.unreachable) {
@@ -406,7 +406,6 @@ const callReplicationOptions = {
 function createCallee(callee) {
     callee = Replicator.replicate(callee, callReplicationOptions);
     callee.parent = callee._original.parent;
-    callee.freeVariables = new Set(callee._original.freeVariables);
     callee.symbols = SymbolTable.create();
     return callee;
 }
@@ -605,18 +604,6 @@ function analyzeElementAccessExpression(node) {
 }
 
 // ----------------------------------------------------------------------------
-
-/**
- * @param {ts.Node} node
- * @param {isense.symbol} symbol
- */
-function updateFreeVariables(node, symbol) {
-    if(functionStack.isEmpty()) { return ; }
-    const func = functionStack.top();
-    if(!Ast.isDeclaredInFunction(node, symbol, func)) {
-        func.freeVariables.add(symbol);
-    }
-}
 
 /**
  * @param {Array<ts.Node>} stmts
