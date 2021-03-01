@@ -312,7 +312,8 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.ReturnStatement: {
                 ts.forEachChild(node, visitDeclarations);
                 if(node.expression && !node.unreachable && !callStack.isEmpty()) {
-                    assign(node, Symbol.returnTypesSymbol, node.expression, node.expression.carrier);
+                    const call = callStack.top();
+                    call.callee.returnTypeCarriers.push(node.expression.carrier);
                 }
                 if(!node.unreachable) {
                     markUnreachableStatements(Ast.findRightSiblings(node));
@@ -408,6 +409,7 @@ function createCallee(callee) {
     callee.parent = callee._original.parent;
     callee.freeVariables = new Set(callee._original.freeVariables);
     callee.symbols = SymbolTable.create();
+    callee.returnTypeCarriers = [];
     return callee;
 }
 
@@ -478,7 +480,6 @@ function newExpression(node) {
     // TODO: pick constructor?
     if(constructor && constructor.value) {
         const thisObject = TypeInfo.createObject(true);
-        assign(constructor.value, Symbol.returnTypesSymbol, null, TypeCarrier.createConstant(thisObject));
         if(constructor.value.name) { 
             thisObject.constructorName = constructor.value.name.escapedText; 
         }
@@ -486,7 +487,10 @@ function newExpression(node) {
             call(node, constructor.value, thisObject);
         } else if (constructor.type === TypeInfo.Type.Class) {
             newClassExpression(node, constructor.value, thisObject);
-        } 
+        }
+        if(!constructor.returnTypeCarriers.length) {
+            constructor.returnTypeCarriers.push(TypeCarrier.createConstant(thisObject));
+        }
     }
 
 }
