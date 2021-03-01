@@ -24,8 +24,8 @@ Completion.onCompletion = info => {
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
 	const triggerCharacter = info.context.triggerCharacter;
 
-	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
-	if(!node || node.kind !== ts.SyntaxKind.Identifier || Ast.isDeclarationName(node)) { return; }
+	const node = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.Identifier);
+	if(!node || Ast.isDeclarationName(node)) { return; }
 
 	if(Ast.isNameOfPropertyAccessExpression(node)) {
 		if(triggerCharacter === '.') { Analyzer.analyze(ast); } // TODO: Do not analyze here
