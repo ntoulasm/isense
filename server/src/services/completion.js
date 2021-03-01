@@ -9,6 +9,7 @@ const { getAst, getCompletionItemKind, getPropertySymbols } = require('./utility
 
 const ts = require('typescript');
 const vscodeLanguageServer = require('vscode-languageserver');
+const TypeInfo = require('../utility/type-info');
 
 // ----------------------------------------------------------------------------
 
@@ -59,19 +60,7 @@ function computeIdentifierCompletions(node) {
 			});
 			return ;
 		}
-		const typeInfo = [];
-		for(const b of binders) {
-			typeInfo.push(...TypeCarrier.evaluate(b.carrier));
-		}
-		const kind = typeInfo.length === 0 ?
-			getCompletionItemKind(typeInfo[0].type) : 
-			vscodeLanguageServer.CompletionItemKind.Variable;
-		const signature = SignatureFinder.computeSignature(node, binders);
-		completions.push({
-			label: symbol.name, 
-			kind,
-			data: { signature }
-		});
+		completions.push(computeCompletion(node, symbol, binders));
 	});
 	return completions;
 }
@@ -92,26 +81,26 @@ function computePropertyCompletions(node) {
 	// 	}
 	
 	for(const property of propertySymbols) {
-		const propertyName = property.name;
 		const propertyBinders = Ast.findActiveTypeBindersInLeftSibling(node, property);
 		if(!propertyBinders.length) { continue; }
-		const typeInfo = [];
-		for(const b of propertyBinders) {
-			typeInfo.push(...TypeCarrier.evaluate(b.carrier));
-		}
-		const kind = typeInfo.length === 1 ?
-			getCompletionItemKind(typeInfo[0].type) :
-			vscodeLanguageServer.CompletionItemKind.Variable;
-		const signature = SignatureFinder.computeSignature(node, propertyBinders);
-		completionItems.push({
-			label: propertyName,
-			kind,
-			data: { signature }
-		});
+		completionItems.push(computeCompletion(node, property, propertyBinders));
 	}
 
 	return completionItems;
 
+}
+
+function computeCompletion(node, symbol, binders) {
+	const typeInfo = binders.flatMap(b => TypeCarrier.evaluate(b.carrier));
+	const kind = TypeInfo.hasUniqueType(typeInfo) ?
+		getCompletionItemKind(typeInfo[0].type) : 
+		vscodeLanguageServer.CompletionItemKind.Variable;
+	const signature = SignatureFinder.computeSignature(node, binders);
+	return {
+		label: symbol.name, 
+		kind,
+		data: { signature }
+	};
 }
 
 // ----------------------------------------------------------------------------

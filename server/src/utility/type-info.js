@@ -296,4 +296,10 @@ TypeInfo.isStringLike = info => {
         info.type === TypeInfo.Type.Class;
 };
 
+TypeInfo.hasUniqueType = typeInfo => {
+    console.assert(typeInfo.length, 'hasUniqueType');
+	const firstType = typeInfo[0].type;
+	return !typeInfo.find(t => t.type !== firstType);
+};
+
 module.exports = TypeInfo;
