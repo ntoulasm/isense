@@ -24,7 +24,7 @@ Hover.onHover = info => {
 	
 	switch(node.kind) {
 		case ts.SyntaxKind.Constructor: {
-			const parentName = node.parent.name ? node.parent.name.getText() : '';
+			const parentName = node.parent.name ? node.parent.name.getText(ast) : '';
 			return {
 				contents: {
 					language: "typescript",
