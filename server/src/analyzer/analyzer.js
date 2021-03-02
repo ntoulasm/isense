@@ -160,8 +160,6 @@ Analyzer.analyze = ast => {
                         const propertyName = lvalue.name.text;
                         const rightTypes = TypeCarrier.evaluate(node.right.carrier);
 
-                        // if(leftTypes === undefined) { break; } // TODO: maybe change?
-
                         for(const type of leftTypes) {
                             if(type.type === TypeInfo.Type.Object && type.hasValue) {
                                 setProperty(node, type, propertyName, node.right, node.right.carrier);

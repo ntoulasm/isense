@@ -148,23 +148,6 @@ Ast.findRightSiblings = node => {
  * 
  * @returns {ts.Node}
  */
-Ast.findNode = (ast, offset, kind) => {
-    function findNode(node) {
-        if(node.getStart() <= offset && node.end >= offset) {
-            if(node.kind === kind) { return node; }
-            return ts.forEachChild(node, findNode);
-        }
-    }
-    return ts.forEachChild(ast, findNode);
-};
-
-/**
- * @param {ts.SourceFile} ast
- * @param {number} offset
- * @param {number} kind
- * 
- * @returns {ts.Node}
- */
 Ast.findInnermostNode = (ast, offset, kind) => {
     function findInnermostNode(node) {
         if(node.getFullStart() <= offset && node.end >= offset) {
