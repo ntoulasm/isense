@@ -3,8 +3,6 @@ const Ast = require('../ast/ast');
 const TypeInfo = require('./type-info');
 
 const ts = require('typescript');
-const Symbol = require('./symbol');
-const { findActiveTypeBindersInLeftSibling } = require('../ast/ast');
 
 //  ----------------------------------------------------------------------------------
 
