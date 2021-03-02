@@ -488,8 +488,8 @@ function newExpression(node) {
         } else if (constructor.type === TypeInfo.Type.Class) {
             newClassExpression(node, constructor.value, thisObject);
         }
-        if(!constructor.returnTypeCarriers.length) {
-            constructor.returnTypeCarriers.push(TypeCarrier.createConstant(thisObject));
+        if(!node.callee.returnTypeCarriers.length) {
+            node.callee.returnTypeCarriers.push(TypeCarrier.createConstant(thisObject));
         }
     }
 
