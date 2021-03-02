@@ -92,21 +92,21 @@ Ast.findLeftSibling = node => {
     return nodeIndex === 0 ? undefined : siblings[nodeIndex - 1];
 };
 
+const nodesWithInnerScope = [
+    ts.SyntaxKind.Block,
+    ts.SyntaxKind.ClassDeclaration,
+    ts.SyntaxKind.ClassExpression,
+    ts.SyntaxKind.ForStatement,
+    ts.SyntaxKind.ForOfStatement,
+    ts.SyntaxKind.ForInStatement,
+];
+
 /**
  * @param {ts.Node} node
  * 
  * @returns {ts.Node}
  */
 Ast.findLeftSiblingWithoutInnerScope = node => {
-
-    let nodesWithInnerScope = [
-        ts.SyntaxKind.Block,
-        ts.SyntaxKind.ClassDeclaration,
-        ts.SyntaxKind.ClassExpression,
-        ts.SyntaxKind.ForStatement,
-        ts.SyntaxKind.ForOfStatement,
-        ts.SyntaxKind.ForInStatement,
-    ];
 
     while(node = Ast.findLeftSibling(node)) {
         if(nodesWithInnerScope.indexOf(node.kind) == -1) {
@@ -347,39 +347,14 @@ Ast.findActiveTypeBindersInStatement = (node, symbol, startNode, stopNode) => {
             return findActiveTypeBindersInBlock(node, symbol, startNode);
         case ts.SyntaxKind.IfStatement:
             return findActiveTypeBindersInIfStatement(node, symbol, startNode);
-        case ts.SyntaxKind.SwitchStatement: {
-
-            const clauses = node.caseBlock.clauses;
-            const binders = clauses.flatMap(c => findActiveTypeBindersInBlock(c, symbol, startNode) || [])
-            
-            if(!hasDefaultClause(node) || !binders.length) {
-                binders.push(
-                    ...Ast.findActiveTypeBinders(node, symbol, startNode)
-                );
-            }
-
-            return binders;
-
-        }
+        case ts.SyntaxKind.SwitchStatement: 
+            return findActiveTypeBindersInSwitchStatement(node, symbol, startNode);
         case ts.SyntaxKind.ForStatement:
         case ts.SyntaxKind.ForInStatement:
-        case ts.SyntaxKind.ForOfStatement: {
-
-            const statement = node.statement;
-            const binders = new Set();
-
-            Ast.findActiveTypeBindersInStatement(statement, symbol, startNode)
-                .forEach(b => binders.add(b));
-
-            Ast.findActiveTypeBinders(statement, symbol, startNode)
-                .forEach(b => binders.add(b));
-
-            return Array.from(binders);
-
-        }
+        case ts.SyntaxKind.ForOfStatement:
+            return findActiveTypeBindersInForStatement(node, symbol, startNode);
         default: {
             const rightMostDescendant = Ast.findRightMostDescendant(node);
-            if(node === rightMostDescendant) { return ; }
             return Ast.findActiveTypeBinders(rightMostDescendant, symbol, startNode, stopNode || node);
         }
     }
@@ -439,15 +414,35 @@ function hasElse(node) {
     return hasElse(node.elseStatement);
 }
 
-function findActiveTypeBindersInSwitchStatement() {
+/**
+ * @param {ts.Node} node 
+ * @param {isense.symbol} symbol 
+ * @param {ts.Node} startNode
+ */
+function findActiveTypeBindersInSwitchStatement(node, symbol, startNode) {
+
+    const clauses = node.caseBlock.clauses;
+    const binders = clauses.flatMap(c => findActiveTypeBindersInBlock(c, symbol, startNode) || [])
+    // TODO: Could this be more accurate?
+    // It is more complicated than if-statements, because case clauses might fall-through.
+    binders.push(
+        ...Ast.findActiveTypeBinders(node, symbol, startNode)
+    );
+
+    return binders;
     
 }
 
 /**
- * @param {ts.CaseClause} node 
+ * @param {ts.Node} node 
+ * @param {isense.symbol} symbol 
+ * @param {ts.Node} startNode
  */
-function hasDefaultClause(node) {
-    return node.caseBlock.clauses.find(c => c.kind === ts.SyntaxKind.DefaultClause);
+function findActiveTypeBindersInForStatement(node, symbol, startNode) {
+    const statement = node.statement;
+    const binders = Ast.findActiveTypeBindersInStatement(statement, symbol, startNode) || [];
+    binders.push(...Ast.findActiveTypeBinders(statement, symbol, startNode));
+    return binders;
 }
 
 /**
