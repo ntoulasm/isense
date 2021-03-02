@@ -65,7 +65,9 @@ Ast.isVarDeclaration = function(variableDeclarationList) {
 Ast.findChildren = node => {
     const children = [];
     ts.forEachChild(node, child => {
-        children.push(child);
+        if(Ast.isNodeOfInterest(child)) {
+            children.push(child);
+        }
     });
     return children;
 };
@@ -91,6 +93,13 @@ Ast.findLeftSibling = node => {
     const nodeIndex = siblings.indexOf(node);
     return nodeIndex === 0 ? undefined : siblings[nodeIndex - 1];
 };
+
+/**
+ * @param {ts.Node} node 
+ */
+Ast.isNodeOfInterest = node =>
+    node.kind > ts.SyntaxKind.LastToken ||
+    node.kind === ts.SyntaxKind.Identifier;
 
 const nodesWithInnerScope = [
     ts.SyntaxKind.Block,
@@ -171,7 +180,7 @@ Ast.findInnermostNodeOfAnyKind = (ast, offset) => {
     function findInnermostNodeOfAnyKind(node) {
         if(node.getStart(ast) <= offset && node.end >= offset) {
             const innermostNode = ts.forEachChild(node, findInnermostNodeOfAnyKind);
-            return (innermostNode) ? innermostNode : node; 
+            return innermostNode || node; 
         }
     }
     return ts.forEachChild(ast, findInnermostNodeOfAnyKind);

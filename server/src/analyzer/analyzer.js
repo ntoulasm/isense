@@ -44,7 +44,7 @@ Analyzer.analyze = ast => {
             node.unreachable = true;
         }
 
-        if(node.kind < ts.SyntaxKind.LastToken && node.kind !== ts.SyntaxKind.Identifier && !ts.isLiteralExpression(node)) { return ; }
+        if(!isNodeOfInterest(node)) { return ; }
 
 		switch(node.kind) {
 			case ts.SyntaxKind.ImportDeclaration: {
@@ -796,6 +796,15 @@ function addInducedBinderIfCarrier(node, symbol, carrier) {
     if(!carrier) { return ; }
     const binder = TypeBinder.create(symbol, carrier);
     Ast.addTypeBinder(node, binder);
+}
+
+// ----------------------------------------------------------------------------
+
+function isNodeOfInterest(node) {
+    return Ast.isNodeOfInterest(node) || 
+        ts.isLiteralExpression(node) ||
+        node.kind === ts.SyntaxKind.TrueKeyword ||
+        node.kind === ts.SyntaxKind.FalseKeyword;
 }
 
 // ----------------------------------------------------------------------------
