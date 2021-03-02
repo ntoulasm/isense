@@ -77,7 +77,7 @@ Ast.findChildren = node => {
  */
 Ast.findSiblings = function(node) {
     const parent = node.parent;
-    if(parent === undefined) { return [node]; }
+    if(parent === undefined) { return [ node ]; }
     return Ast.findChildren(parent);
 };
 
@@ -227,37 +227,10 @@ Ast.findVisibleSymbols = node => {
 
 /**
  * @param {ts.Node} node
- */
-Ast.findAllSymbols = node => {
-
-    const symbols = [];
-
-    function findAllSymbols(node) {
-        if(node.symbols) {
-            for(const [, symbol] of Object.entries(node.symbols.getSymbols())) {
-                symbols.push(symbol);
-            }
-        }
-        ts.forEachChild(node, findAllSymbols);
-    };
-    findAllSymbols(node);
-
-    return symbols;
-
-};
-
-/**
- * @param {ts.Node} node
  * @param {isense.TypeBinder} binder
  */
 Ast.addTypeBinder = (node, binder) => {
     binder.setParentNode(node);
-    for(const b of node.binders) {
-        if(b.symbol === binder.symbol) {
-            b.carrier = binder.carrier;
-            return;
-        }
-    }
     node.binders.push(binder);
 };
 
