@@ -42,6 +42,8 @@ Analyzer.analyze = ast => {
             node.unreachable = true;
         }
 
+        if(node.kind < ts.SyntaxKind.LastToken && node.kind !== ts.SyntaxKind.Identifier && !ts.isLiteralExpression(node)) { return ; }
+
 		switch(node.kind) {
 			case ts.SyntaxKind.ImportDeclaration: {
                 break;
