@@ -474,6 +474,13 @@ Ast.isLeftPartOfAssignmentLike = node => {
  */
 Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
 
+    const parent = node.parent;
+
+    if(parent && parent.kind === ts.SyntaxKind.IfStatement) {
+        const ifStatement = Ast.findTopLevelIfStatement(parent);
+        return Ast.findActiveTypeBinders(ifStatement, symbol, startNode, stopNode);
+    }
+
     if(ts.isCallLikeExpression(node) && node.callee && node.callee.body) {
         const callee = node.callee;
         const binders = Ast.findActiveTypeBindersInStatement(
@@ -506,9 +513,9 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
     //      evaluate(x + 3) -> evaluate(x) -> evaluate(x + 3) -> evaluate(x) -> ...
     if(Ast.isRightPartOfAssignment(node)) {
         const startNodeOffset = startNode.getStart();
-        if(node.parent.getStart() <= startNodeOffset && startNodeOffset <= node.parent.getEnd()) {
+        if(parent.getStart() <= startNodeOffset && startNodeOffset <= parent.getEnd()) {
             return Ast.findActiveTypeBinders(
-                Ast.findLeftSibling(node.parent) || node.parent.parent,
+                Ast.findLeftSibling(parent) || parent.parent,
                 symbol,
                 startNode,
                 stopNode
