@@ -53,7 +53,7 @@ Analyzer.analyze = ast => {
                 if(node.name.kind === ts.SyntaxKind.Identifier) {
                     const name = node.name.text;
                     const symbol = Ast.lookUp(node, name);
-                    const carrier = node.initializer !== undefined ? node.initializer.carrier : TypeCarrier.createConstant(TypeInfo.createUndefined());
+                    const carrier = node.initializer ? node.initializer.carrier : TypeCarrier.createConstant(TypeInfo.createUndefined());
                     assign(node, symbol, node.initializer, carrier);
                 }
                 
@@ -111,6 +111,7 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.PostfixUnaryExpression: {
                 ts.forEachChild(node, visitDeclarations);
+                induceParameterTypeFromPostfixUnaryExpression(node);
                 node.carrier = TypeCarrier.createPostfixUnaryExpression(node.operator, node.operand.carrier);
                 break;
             }
@@ -686,11 +687,29 @@ function induceParameterTypeFromPrefixUnaryExpression(node) {
     const parameterSymbol = getParameterSymbol(node.operand);
     
     if(parameterSymbol) {
-        const carrier = induceTypeFromUse(node);
-        const binder = TypeBinder.create(parameterSymbol, carrier);
-        Ast.addTypeBinder(node, binder);
+        const carrier = createInducedCarrierFromPrefixUnaryExpression(node);
+        if(carrier) { 
+            const binder = TypeBinder.create(parameterSymbol, carrier);
+            Ast.addTypeBinder(node, binder);
+        }
     }
 
+}
+
+function induceParameterTypeFromPostfixUnaryExpression(node) {
+
+    if(!isInOriginalFunction(node)) { return ; }
+
+    const parameterSymbol = getParameterSymbol(node.operand);
+    
+    if(parameterSymbol) {
+        const carrier = createInducedCarrierFromPostfixUnaryExpression(node);
+        if(carrier) { 
+            const binder = TypeBinder.create(parameterSymbol, carrier);
+            Ast.addTypeBinder(node, binder);
+        }
+    }
+    
 }
 
 /**
@@ -705,85 +724,82 @@ function induceParameterTypeFromBinaryExpression(node) {
     const rightParameterSymbol = getParameterSymbol(node.right);
     
     if(leftParameterSymbol) {
-        const carrier = induceTypeFromUse(node);
-        const binder = TypeBinder.create(leftParameterSymbol, carrier);
-        Ast.addTypeBinder(node, binder);
+        const carrier = createInducedCarrierFromBinaryExpression(node);
+        addInducedBinderIfCarrier(node, leftParameterSymbol, carrier);
     }
 
     if(rightParameterSymbol && rightParameterSymbol !== leftParameterSymbol) {
-        const carrier = induceTypeFromUse(node);
-        const binder = TypeBinder.create(rightParameterSymbol, carrier);
-        Ast.addTypeBinder(node, binder);
+        const carrier = createInducedCarrierFromBinaryExpression(node);
+        addInducedBinderIfCarrier(node, rightParameterSymbol, carrier);
     }
 
-};
+}
 
-/**
- * @param {ts.Node} node
- */
-function induceTypeFromUse (node) {
+function createInducedCarrierFromPrefixUnaryExpression(node) {
+    switch(node.operator) {
+        case ts.SyntaxKind.PlusToken:
+        case ts.SyntaxKind.MinusToken:
+        case ts.SyntaxKind.PlusPlusToken:
+        case ts.SyntaxKind.MinusMinusToken:
+            const carrier = TypeCarrier.createConstant([
+                TypeInfo.createNumber()
+            ]);
+            carrier.induced = true;  
+            return carrier;
+    }
+}
 
-    if(node.kind === ts.SyntaxKind.PrefixUnaryExpression) {
-        switch(node.operator) {
-            case ts.SyntaxKind.PlusToken:
-            case ts.SyntaxKind.MinusToken:
-            case ts.SyntaxKind.PlusPlusToken:
-            case ts.SyntaxKind.MinusMinusToken:
-                var carrier = TypeCarrier.createConstant([
-                    TypeInfo.createNumber()
-                ]);
-                break;
+function createInducedCarrierFromPostfixUnaryExpression(node) {
+    switch(node.operator) {
+        case ts.SyntaxKind.PlusPlusToken:
+        case ts.SyntaxKind.MinusMinusToken:
+            const carrier = TypeCarrier.createConstant([
+                TypeInfo.createNumber()
+            ]);
+            carrier.induced = true;
+            return carrier;
+    }
+}
+
+function createInducedCarrierFromBinaryExpression(node) {
+    switch(node.operatorToken.kind) {
+        case ts.SyntaxKind.PlusToken: {
+            const carrier = TypeCarrier.createConstant([
+                TypeInfo.create(TypeInfo.Type.Number),
+                TypeInfo.create(TypeInfo.Type.String)
+            ]);
+            carrier.induced = true;
+            return carrier;
+        }
+        case ts.SyntaxKind.MinusToken:
+        case ts.SyntaxKind.AsteriskToken:
+        case ts.SyntaxKind.SlashToken:
+        case ts.SyntaxKind.PercentToken:
+        case ts.SyntaxKind.AsteriskAsteriskToken:
+        case ts.SyntaxKind.LessThanToken:
+        case ts.SyntaxKind.LessThanEqualsToken:
+        case ts.SyntaxKind.GreaterThanToken:
+        case ts.SyntaxKind.GreaterThanEqualsToken:
+        case ts.SyntaxKind.AmpersandToken:
+        case ts.SyntaxKind.BarToken:
+        case ts.SyntaxKind.CaretToken:
+        case ts.SyntaxKind.LessThanLessThanToken:
+        case ts.SyntaxKind.GreaterThanGreaterThanToken:
+        case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken: {
+            const carrier = TypeCarrier.createConstant([
+                TypeInfo.create(TypeInfo.Type.Number),
+            ]);
+            carrier.induced = true;
+            return carrier;
         }
     }
+}
 
-    if(node.kind === ts.SyntaxKind.PostfixUnaryExpression) {
-        switch(node.operator) {
-            case ts.SyntaxKind.PlusPlusToken:
-            case ts.SyntaxKind.MinusMinusToken:
-                var carrier = TypeCarrier.createConstant([
-                    TypeInfo.createNumber()
-                ]);
-                break;
-        }
-    }
-
-    if(node.kind === ts.SyntaxKind.BinaryExpression) {
-        switch(node.operatorToken.kind) {
-            case ts.SyntaxKind.PlusToken:
-                var carrier = TypeCarrier.createConstant([
-                    TypeInfo.create(TypeInfo.Type.Number),
-                    TypeInfo.create(TypeInfo.Type.String)
-                ]);
-                break;
-            case ts.SyntaxKind.MinusToken:
-            case ts.SyntaxKind.AsteriskToken:
-            case ts.SyntaxKind.SlashToken:
-            case ts.SyntaxKind.PercentToken:
-            case ts.SyntaxKind.AsteriskAsteriskToken:
-            case ts.SyntaxKind.LessThanToken:
-            case ts.SyntaxKind.LessThanEqualsToken:
-            case ts.SyntaxKind.GreaterThanToken:
-            case ts.SyntaxKind.GreaterThanEqualsToken:
-            case ts.SyntaxKind.AmpersandToken:
-            case ts.SyntaxKind.BarToken:
-            case ts.SyntaxKind.CaretToken:
-            case ts.SyntaxKind.LessThanLessThanToken:
-            case ts.SyntaxKind.GreaterThanGreaterThanToken:
-            case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
-                var carrier = TypeCarrier.createConstant([
-                    TypeInfo.create(TypeInfo.Type.Number),
-                ]);
-                break;
-            default:
-                console.assert(false, "Induce from use");
-                break;
-        }
-    }
-
-    carrier.induced = true;
-    return carrier;
-
-};
+function addInducedBinderIfCarrier(node, symbol, carrier) {
+    if(!carrier) { return ; }
+    const binder = TypeBinder.create(symbol, carrier);
+    Ast.addTypeBinder(node, binder);
+}
 
 // ----------------------------------------------------------------------------
 
