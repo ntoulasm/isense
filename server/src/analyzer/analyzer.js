@@ -38,6 +38,8 @@ Analyzer.analyze = ast => {
 	 */
 	function visitDeclarations(node) {
 
+        if(!node.binders) { node.binders = []; }
+
         if(node.parent && node.parent.unreachable) {
             node.unreachable = true;
         }
@@ -327,13 +329,6 @@ Analyzer.analyze = ast => {
 			}
 		}
     }
-
-    ast.binders = [];
-    function initializeTypeBinders(node) {
-        node.binders = [];
-        ts.forEachChild(node, initializeTypeBinders);
-    };
-    initializeTypeBinders(ast);
 
     Binder.reset();
     Binder.bindFunctionScopedDeclarations(ast);

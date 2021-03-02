@@ -34,6 +34,7 @@ Binder.bindFunctionScopedDeclarations = body => {
 
     if(!body) { return ; }
 
+    body.binders = [];
     body.symbols = SymbolTable.create();
 
     const bindFunctionScopedDeclarationsInternal = node => {
@@ -58,6 +59,7 @@ Binder.bindFunctionScopedDeclarations = body => {
 Binder.bindBlockScopedDeclarations = block => {
 
     block.symbols = SymbolTable.create();
+    block.binders = [];
 
     const bindBlockScopedDeclarationsInternal = node => {
         if(bindBlockScopedDeclarationsFunctions.hasOwnProperty(node.kind)) {
@@ -129,6 +131,7 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ImportClause] = (node, bod
  * @param {ts.Block} body
  */
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (node, body) => {
+    node.binders = [];
     if(Ast.isVarDeclaration(node.parent)) {
         declareFunctionScopedVariable(node, body);
     } else if(!isBoundByBindBlockScopedDeclarations(node, body)) {
@@ -192,6 +195,7 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ForInStatement] = (node, b
  * @param {ts.Block} block
  */
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (node, block) => {
+    node.binders = [];
     if(Ast.isVarDeclaration(node.parent)) { return ; }
     declareBlockScopedVariable(node, block);
 };
@@ -488,6 +492,7 @@ function declareParameters(func) {
     console.assert(func.parameters);
 
     for(const node of func.parameters) {
+        node.binders = [];
         node.symbols = SymbolTable.create();
         if(node.name.kind === ts.SyntaxKind.Identifier) {
             const name = node.name.text;
