@@ -169,7 +169,7 @@ Ast.findInnermostNode = (ast, offset, kind) => {
  */
 Ast.findInnermostNodeOfAnyKind = (ast, offset) => {
     function findInnermostNodeOfAnyKind(node) {
-        if(node.getStart() <= offset && node.end >= offset) {
+        if(node.getStart(ast) <= offset && node.end >= offset) {
             const innermostNode = ts.forEachChild(node, findInnermostNodeOfAnyKind);
             return (innermostNode) ? innermostNode : node; 
         }

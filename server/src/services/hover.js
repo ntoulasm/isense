@@ -45,7 +45,7 @@ Hover.onHover = info => {
 			const contents = [];
 			const closestBinders = Ast.findActiveTypeBinders(node, symbol);
 			for(const b of symbol.binders) {
-				const line = ts.getLineAndCharacterOfPosition(ast, b.parent.getStart()).line + 1;
+				const line = ts.getLineAndCharacterOfPosition(ast, b.parent.getStart(ast)).line + 1;
 				const isActive = closestBinders.indexOf(b) !== -1;
 				const binderLineInfo = `at line ${line}`;
 				const postfix = isActive ? '(up to here)' : '';

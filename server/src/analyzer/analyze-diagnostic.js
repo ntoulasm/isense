@@ -18,7 +18,7 @@ AnalyzeDiagnostic.Tag = vscodeLanguageServer.DiagnosticTag;
 AnalyzeDiagnostic.create = (node, config, messageParameters = []) => {
 
     const ast = node.getSourceFile();
-    const startPosition = ast.getLineAndCharacterOfPosition(node.getStart());
+    const startPosition = ast.getLineAndCharacterOfPosition(node.getStart(ast));
     const endPosition = ast.getLineAndCharacterOfPosition(node.end);
     const range = vscodeLanguageServer.Range.create(
         vscodeLanguageServer.Position.create(startPosition.line, startPosition.character),

@@ -22,7 +22,7 @@ Utility.createRange = symbol => {
     const declaration = symbol.declaration;
 	console.assert(declaration);
 	const ast = declaration.getSourceFile();
-	const startPosition = ast.getLineAndCharacterOfPosition(declaration.getStart());
+	const startPosition = ast.getLineAndCharacterOfPosition(declaration.getStart(ast));
 	const endPosition = ast.getLineAndCharacterOfPosition(declaration.end);
 	const range = vscodeLanguageServer.Range.create(startPosition, endPosition);
 	return range;
