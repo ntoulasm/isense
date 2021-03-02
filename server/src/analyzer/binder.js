@@ -285,7 +285,7 @@ function findAnonymousName(node, incrementTotalAnonymous) {
     } else if(isAssignmentRightValue(node)) { // x = () => {};
         return `<${parent.left.getText()}> anonymous ${incrementTotalAnonymous()}`;
     } else if(ts.isCallOrNewExpression(parent)) {
-        return `<${parent.expression.text}(...)> anonymous ${incrementTotalAnonymous()} callback`;
+        return `<${parent.expression.getText()}(...)> anonymous ${incrementTotalAnonymous()} callback`;
     } else {
         return `<${incrementTotalAnonymous()}> anonymous`;
     }
