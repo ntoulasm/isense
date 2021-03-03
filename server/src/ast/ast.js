@@ -31,7 +31,8 @@ const conditionalNodes = [
     ts.SyntaxKind.DefaultClause,
     ts.SyntaxKind.ForStatement,
     ts.SyntaxKind.ForOfStatement,
-    ts.SyntaxKind.ForInStatement
+    ts.SyntaxKind.ForInStatement,
+    ts.SyntaxKind.WhileStatement
 ];
 
 // ----------------------------------------------------------------------------
@@ -328,7 +329,8 @@ Ast.findActiveTypeBindersInStatement = (node, symbol, startNode, stopNode) => {
         case ts.SyntaxKind.ForStatement:
         case ts.SyntaxKind.ForInStatement:
         case ts.SyntaxKind.ForOfStatement:
-            return findActiveTypeBindersInForStatement(node, symbol, startNode);
+        case ts.SyntaxKind.WhileStatement:
+            return findActiveTypeBindersInLoop(node, symbol, startNode);
         default: {
             const rightMostDescendant = Ast.findRightMostDescendant(node);
             return Ast.findActiveTypeBinders(rightMostDescendant, symbol, startNode, stopNode || node);
@@ -441,7 +443,7 @@ function findActiveTypeBindersInSwitchStatement(node, symbol, startNode) {
  * @param {isense.symbol} symbol 
  * @param {ts.Node} startNode
  */
-function findActiveTypeBindersInForStatement(node, symbol, startNode) {
+function findActiveTypeBindersInLoop(node, symbol, startNode) {
     const statement = node.statement;
     const binders = Ast.findActiveTypeBindersInStatement(statement, symbol, startNode) || [];
     binders.push(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
