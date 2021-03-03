@@ -804,7 +804,8 @@ function isNodeOfInterest(node) {
     return Ast.isNodeOfInterest(node) || 
         ts.isLiteralExpression(node) ||
         node.kind === ts.SyntaxKind.TrueKeyword ||
-        node.kind === ts.SyntaxKind.FalseKeyword;
+        node.kind === ts.SyntaxKind.FalseKeyword ||
+        node.kind === ts.SyntaxKind.ThisKeyword;
 }
 
 // ----------------------------------------------------------------------------
