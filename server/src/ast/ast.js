@@ -16,6 +16,26 @@ Ast.asts = {};
 
 // ----------------------------------------------------------------------------
 
+const nodesWithInnerScope = [
+    ts.SyntaxKind.Block,
+    ts.SyntaxKind.ClassDeclaration,
+    ts.SyntaxKind.ClassExpression,
+    ts.SyntaxKind.ForStatement,
+    ts.SyntaxKind.ForOfStatement,
+    ts.SyntaxKind.ForInStatement,
+];
+
+const conditionalNodes = [
+    ts.SyntaxKind.IfStatement,
+    ts.SyntaxKind.CaseClause,
+    ts.SyntaxKind.DefaultClause,
+    ts.SyntaxKind.ForStatement,
+    ts.SyntaxKind.ForOfStatement,
+    ts.SyntaxKind.ForInStatement
+];
+
+// ----------------------------------------------------------------------------
+
 /**
  * @param {ts.SourceFile} ast
  * 
@@ -100,15 +120,6 @@ Ast.findLeftSibling = node => {
 Ast.isNodeOfInterest = node =>
     node.kind > ts.SyntaxKind.LastToken ||
     node.kind === ts.SyntaxKind.Identifier;
-
-const nodesWithInnerScope = [
-    ts.SyntaxKind.Block,
-    ts.SyntaxKind.ClassDeclaration,
-    ts.SyntaxKind.ClassExpression,
-    ts.SyntaxKind.ForStatement,
-    ts.SyntaxKind.ForOfStatement,
-    ts.SyntaxKind.ForInStatement,
-];
 
 /**
  * @param {ts.Node} node
@@ -361,13 +372,42 @@ function findActiveTypeBindersInIfStatement(node, symbol, startNode) {
     }
 
     if(!hasElse(node) || !binders.length || !hasEveryStatementABinder) {
-        binders.push(
-            ...Ast.findActiveTypeBinders(node, symbol, startNode)
-        );
+        let outerBinders = findActiveTypeBindersOutOfConditional(node, symbol, startNode);
+        binders.push(...outerBinders);
     }
 
     return binders;
 
+}
+
+/**
+ * When the search reaches a conditional node which is nested to another one, 
+ * and the search began out of them, we stop the search when the outer node is reached.
+ * The outer conditional will search in these nodes and we would end up searching the
+ * same binders multiple times.
+ * 
+ * let x = 0;
+ * if(a) {
+ *     if(b) {
+ *         x = 5;
+ *     }
+ * }
+ * // Search active binders of x
+ * 
+ * @param {ts.Node} node 
+ * @param {isense.symbol} symbol 
+ * @param {ts.Node} startNode 
+ */
+function findActiveTypeBindersOutOfConditional(node, symbol, startNode) {
+    const stopNode = findStopNodeOutOfConditional(node, startNode);
+    return Ast.findActiveTypeBinders(node, symbol, startNode, stopNode) || [];
+}
+
+function findStopNodeOutOfConditional(node, startNode) {
+    const parentConditionalStatement = Ast.findAncestor(node.parent, conditionalNodes);
+    if(parentConditionalStatement && !Ast.isInner(parentConditionalStatement, startNode)) {
+        return parentConditionalStatement;
+    } 
 }
 
 /**
@@ -390,9 +430,7 @@ function findActiveTypeBindersInSwitchStatement(node, symbol, startNode) {
     const binders = clauses.flatMap(c => findActiveTypeBindersInBlock(c, symbol, startNode) || [])
     // TODO: Could this be more accurate?
     // It is more complicated than if-statements, because case clauses might fall-through.
-    binders.push(
-        ...Ast.findActiveTypeBinders(node, symbol, startNode)
-    );
+    binders.push(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
 
     return binders;
     
@@ -406,7 +444,7 @@ function findActiveTypeBindersInSwitchStatement(node, symbol, startNode) {
 function findActiveTypeBindersInForStatement(node, symbol, startNode) {
     const statement = node.statement;
     const binders = Ast.findActiveTypeBindersInStatement(statement, symbol, startNode) || [];
-    binders.push(...Ast.findActiveTypeBinders(statement, symbol, startNode));
+    binders.push(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
     return binders;
 }
 
@@ -458,10 +496,10 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
 
     const parent = node.parent;
 
-    if(parent && parent.kind === ts.SyntaxKind.IfStatement) {
-        const ifStatement = Ast.findTopLevelIfStatement(parent);
-        return Ast.findActiveTypeBinders(ifStatement, symbol, startNode, stopNode);
-    }
+    // if(parent && parent.kind === ts.SyntaxKind.IfStatement) {
+    //     const ifStatement = Ast.findTopLevelIfStatement(parent);
+    //     return Ast.findActiveTypeBinders(ifStatement, symbol, startNode, stopNode);
+    // }
 
     if(ts.isCallLikeExpression(node) && node.callee && node.callee.body) {
         const callee = node.callee;
@@ -509,7 +547,8 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
 
 };
 
-Ast.isClassMember = node => node.kind === ts.SyntaxKind.MethodDeclaration ||
+Ast.isClassMember = node => 
+    node.kind === ts.SyntaxKind.MethodDeclaration ||
     node.kind === ts.SyntaxKind.Constructor ||
     node.kind === ts.SyntaxKind.GetAccessor ||
     node.kind === ts.SyntaxKind.SetAccessor;
