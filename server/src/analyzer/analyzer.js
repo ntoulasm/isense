@@ -558,8 +558,11 @@ function analyzePropertyAccessExpression(node) {
         if(type.type === TypeInfo.Type.Object && type.hasValue) {
             for(const [,property] of Object.entries(type.properties.getSymbols())) {
                 if(property.name === name) {
-                    // TODO: fixme
-                    info.push(...TypeCarrier.evaluate(Ast.findActiveTypeBinders(node, property)[0].carrier));
+                    // TODO: Fixme
+                    const activeBinders = Ast.findActiveTypeBinders(node, property);
+                    if(activeBinders.length) {
+                        info.push(...TypeCarrier.evaluate(activeBinders[0].carrier));
+                    }
                 } 
             }
         }
