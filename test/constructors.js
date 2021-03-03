@@ -4,7 +4,7 @@ const Person = (firstName, lastName, age) => {
   this.lastName = lastName;
   this.age = age;
 
-  this.getFullName = () => {this.firstName + this.lastName};
+  this.getFullName = () => { this.firstName + this.lastName };
 
 };
 

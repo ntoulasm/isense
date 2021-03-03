@@ -15,11 +15,13 @@ if(true) {
 } else if (true) {
 
   x = 50;
-
+  
 } else if(true) {
   x = 2;
 } else if(false) {
   y = "";
 } else y = {a: 2};
 y;
-x;
+x;  // 5 || 10 || 50 || 2 || 2
+
+
