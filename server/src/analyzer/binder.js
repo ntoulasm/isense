@@ -161,6 +161,7 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.GetAccessor] = (node, body
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = 
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] = (node, body) => {
     if(isBoundByBindBlockScopedDeclarations(node, body)) { return; }
+    node.binders = [];
     bindClass(node, body);
 };
 
@@ -206,6 +207,7 @@ bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.VariableDeclaration] = (node,
  */
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassDeclaration] = 
 bindBlockScopedDeclarationsFunctions[ts.SyntaxKind.ClassExpression] = (node, block) => {
+    node.binders = [];
     bindClass(node, block);
 };
 
