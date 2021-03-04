@@ -286,10 +286,13 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
 
     const parent = node.parent;
 
-    // TODO: Handle all conditional statements
     if(parent && parent.kind === ts.SyntaxKind.IfStatement) {
         const ifStatement = Ast.findTopLevelIfStatement(parent);
         return Ast.findActiveTypeBinders(ifStatement, symbol, startNode, stopNode);
+    }
+
+    if(parent && Ast.isCaseClause(parent)) {
+        return Ast.findActiveTypeBinders(parent.parent, symbol, startNode, stopNode);
     }
 
     if(ts.isCallLikeExpression(node) && node.callee && node.callee.body) {
@@ -961,6 +964,12 @@ Ast.isRightPartOfAssignment = node =>
     Ast.isAssignment(node.parent) && 
     node.parent.left !== node;
 
+// ----------------------------------------------------------------------------
+
+Ast.isCaseClause = node =>
+    node.kind === ts.SyntaxKind.CaseClause || 
+    node.kind === ts.SyntaxKind.DefaultClause;
+    
 // ----------------------------------------------------------------------------
 
 module.exports = Ast;
