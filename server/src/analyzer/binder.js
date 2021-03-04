@@ -437,7 +437,6 @@ function declareBlockScopedVariable(node, block) {
         bindBindingPatternDeclarations(node.name, (node, name, start, end) => {
             const symbol = Symbol.create(name, node);
             block.symbols.insert(symbol);
-            Ast.addTypeBinder(node, TypeBinder.create(symbol, TypeCarrier.createConstant(TypeInfo.createUndefined())))
         });
     } else {
         console.assert(false);
