@@ -286,52 +286,27 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
 
     const parent = node.parent;
 
-    if(parent && parent.kind === ts.SyntaxKind.IfStatement) {
-        const ifStatement = Ast.findTopLevelIfStatement(parent);
-        return Ast.findActiveTypeBinders(ifStatement, symbol, startNode, stopNode);
-    }
-
-    if(parent && Ast.isCaseClause(parent)) {
-        return Ast.findActiveTypeBinders(parent.parent, symbol, startNode, stopNode);
-    }
-
     if(ts.isCallLikeExpression(node) && node.callee && node.callee.body) {
-        const callee = node.callee;
-        const binders = Ast.findActiveTypeBindersInStatement(
-            callee.body,
-            symbol,
-            startNode,
-            stopNode
-        );
-        if(binders) { return binders; }
-    }
-
-    if(ts.isFunctionLike(node) && node.call) {
-        if(Ast.isClassMember(node)) {
-            const classNode = node.parent;
-            const binders = Ast.findActiveTypeBinders(node, symbol, startNode, classNode);
-            if(binders && binders.length) { return binders; }
-        } else {
-            const binders = Ast.findActiveTypeBinders(node, symbol, startNode, node);
-            if(binders) { return binders; }
+        return findActiveTypeBindersInCallExpression(node, symbol, startNode, stopNode);
+    } else if(ts.isFunctionLike(node) && node.call) {
+       return findActiveTypeBindersInCallSite(node, symbol, startNode, stopNode);
+    } else if(Ast.isRightPartOfAssignment(node) && Ast.isInner(parent, startNode)) {
+        // if the starting node of the search is child of assign expression, 
+        // ignore the binder of the assign expression. 
+        // e.g  let x = 2;
+        //      x = x + 3;
+        //      x on x + 3 needs to evaluate to 2.
+        // Otherwise it is stack overflow
+        //      evaluate(x + 3) -> evaluate(x) -> evaluate(x + 3) -> evaluate(x) -> ...
+        const previous = Ast.findLeftSibling(parent) || parent.parent;
+        return Ast.findActiveTypeBinders(previous, symbol, startNode, stopNode);
+    } else if(parent) {
+        if(parent.kind === ts.SyntaxKind.IfStatement) {
+            const ifStatement = Ast.findTopLevelIfStatement(parent);
+            return Ast.findActiveTypeBinders(ifStatement, symbol, startNode, stopNode);
+        } else if(Ast.isCaseClause(parent) && parent != stopNode) {
+            return Ast.findActiveTypeBinders(parent.parent, symbol, startNode, stopNode);
         }
-        return Ast.findActiveTypeBinders(node.call, symbol, startNode, stopNode);
-    }
-
-    // if the starting node of the search is child of assign expression, 
-    // ignore the binder of the assign expression. 
-    // e.g  let x = 2;
-    //      x = x + 3;
-    //      x on x + 3 needs to evaluate to 2.
-    // Otherwise it is stack overflow
-    //      evaluate(x + 3) -> evaluate(x) -> evaluate(x + 3) -> evaluate(x) -> ...
-    if(Ast.isRightPartOfAssignment(node) && Ast.isInner(parent, startNode)) {
-        return Ast.findActiveTypeBinders(
-            Ast.findLeftSibling(parent) || parent.parent,
-            symbol,
-            startNode,
-            stopNode
-        );
     }
 
     return Ast.findActiveTypeBinders(node, symbol, startNode, stopNode);
@@ -473,6 +448,17 @@ function findStopNodeOutOfConditional(node, startNode) {
     if(parentConditionalStatement && !Ast.isInner(parentConditionalStatement, startNode)) {
         return parentConditionalStatement;
     } 
+}
+
+function findActiveTypeBindersInCallExpression(node, symbol, startNode, stopNode) {
+    return Ast.findActiveTypeBindersInStatement(node.callee.body, symbol, startNode, stopNode) ||
+        Ast.findActiveTypeBinders(node, symbol, startNode, stopNode);
+}
+
+function findActiveTypeBindersInCallSite(node, symbol, startNode, stopNode) {
+    const localStopNode = Ast.isClassMember(node) ? node.parent : node;
+    return Ast.findActiveTypeBinders(node, symbol, startNode, localStopNode) ||
+        Ast.findActiveTypeBinders(node.call, symbol, startNode, stopNode);
 }
 
 // ----------------------------------------------------------------------------
