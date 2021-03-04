@@ -19,17 +19,19 @@ const ts = require('typescript');
 
 const Analyzer = {};
 
+// ----------------------------------------------------------------------------
+
 const callStack = Stack.create();
 const functionStack = Stack.create();
 const noOp = () => {};
+
+// ----------------------------------------------------------------------------
 
 /**
  * @param {ts.SourceFile} ast 
  */
 Analyzer.analyze = ast => {
 
-    const objectStack = Stack.create();
-    const classStack = Stack.create();
 
     ast.analyzeDiagnostics = [];
 
@@ -203,9 +205,7 @@ Analyzer.analyze = ast => {
 			case ts.SyntaxKind.ClassDeclaration:
             case ts.SyntaxKind.ClassExpression: {
                 node.carrier = TypeCarrier.createConstant(TypeInfo.createClass(node));
-                classStack.push(node);
                 ts.forEachChild(node, analyzeInternal);
-                classStack.pop();
 				break;
             }
             case ts.SyntaxKind.FunctionDeclaration:
@@ -245,10 +245,8 @@ Analyzer.analyze = ast => {
                 break;
             }
             case ts.SyntaxKind.ObjectLiteralExpression: {
-                objectStack.push(node);
                 node.type = TypeInfo.createObject(true);
                 ts.forEachChild(node, analyzeInternal);
-                objectStack.pop();
                 node.carrier = TypeCarrier.createConstant(node.type);
                 delete node.type;
                 break;
@@ -257,12 +255,11 @@ Analyzer.analyze = ast => {
                 
                 ts.forEachChild(node, analyzeInternal);
 
-                const object = objectStack.top();
                 const name = node.name.getText();
 
                 if(name !== undefined) {
                     const symbol = Symbol.create(name, node);
-                    object.type.properties.insert(symbol);
+                    node.parent.type.properties.insert(symbol);
                     assign(node, symbol, node.initializer, node.name.carrier);
                 }
 
@@ -287,7 +284,6 @@ Analyzer.analyze = ast => {
 
                 ts.forEachChild(node, analyzeInternal);
 
-                const object = objectStack.top();
                 let name;
                 
                 switch(node.name.kind) {
@@ -305,7 +301,7 @@ Analyzer.analyze = ast => {
 
                 if(name !== undefined) {
                     const symbol = Symbol.create(name, node);
-                    object.type.properties.insert(symbol);
+                    node.parent.type.properties.insert(symbol);
                     assign(node, symbol, node.initializer, node.initializer.carrier);
                 }
 
