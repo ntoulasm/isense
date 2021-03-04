@@ -236,6 +236,7 @@ function bindFunction(node, body) {
     declareFunction(name, node, body);
     node._original = node;
     node.freeVariables = new Set();
+    node.callSites = [];
     declareParameters(node);
     Binder.bindFunctionScopedDeclarations(node.body);
 }
