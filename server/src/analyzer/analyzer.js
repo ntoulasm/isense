@@ -23,6 +23,7 @@ const callStack = Stack.create();
 const functionStack = Stack.create();
 const noOp = () => {};
 
+let performanceNo = 0;
 /**
  * @param {ts.SourceFile} ast 
  */
@@ -808,6 +809,7 @@ function isNodeOfInterest(node) {
         ts.isLiteralExpression(node) ||
         node.kind === ts.SyntaxKind.TrueKeyword ||
         node.kind === ts.SyntaxKind.FalseKeyword ||
+        node.kind === ts.SyntaxKind.NullKeyword ||
         node.kind === ts.SyntaxKind.ThisKeyword;
 }
 
