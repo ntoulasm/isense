@@ -23,7 +23,6 @@ const callStack = Stack.create();
 const functionStack = Stack.create();
 const noOp = () => {};
 
-let performanceNo = 0;
 /**
  * @param {ts.SourceFile} ast 
  */
@@ -37,7 +36,7 @@ Analyzer.analyze = ast => {
 	/**
 	 * @param {ts.SourceFile} node 
 	 */
-	function visitDeclarations(node) {
+	function analyzeInternal(node) {
 
         if(!node.binders) { node.binders = []; }
 
@@ -53,7 +52,7 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.VariableDeclaration: {
 
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 
                 if(node.name.kind === ts.SyntaxKind.Identifier) {
                     const name = node.name.text;
@@ -109,24 +108,24 @@ Analyzer.analyze = ast => {
                 break;
             }
             case ts.SyntaxKind.PrefixUnaryExpression: {
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 induceParameterTypeFromPrefixUnaryExpression(node);
                 node.carrier = TypeCarrier.createPrefixUnaryExpression(node.operator, node.operand.carrier);
                 break;
             }
             case ts.SyntaxKind.PostfixUnaryExpression: {
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 induceParameterTypeFromPostfixUnaryExpression(node);
                 node.carrier = TypeCarrier.createPostfixUnaryExpression(node.operator, node.operand.carrier);
                 break;
             }
             case ts.SyntaxKind.VoidExpression: {
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 node.carrier = TypeCarrier.createConstant(TypeInfo.createUndefined());
                 break;
             }
             case ts.SyntaxKind.TypeOfExpression: {
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 node.carrier = TypeCarrier.createTypeOfExpression(node.expression.carrier);
                 break;
             }
@@ -139,7 +138,7 @@ Analyzer.analyze = ast => {
             }
 			case ts.SyntaxKind.BinaryExpression: {	// x = ...
 
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 
 				if(node.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
                     const lvalue = Ast.stripOutParenthesizedExpressions(node.left);
@@ -185,16 +184,16 @@ Analyzer.analyze = ast => {
 
             }
             case ts.SyntaxKind.PropertyAccessExpression: {
-                visitDeclarations(node.expression);
+                analyzeInternal(node.expression);
                 analyzePropertyAccessExpression(node);
                 break;
             }
             case ts.SyntaxKind.ElementAccessExpression: {
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 analyzeElementAccessExpression(node);
             }
             case ts.SyntaxKind.ParenthesizedExpression: {
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 node.carrier = node.expression.carrier;
                 break;
             }
@@ -205,7 +204,7 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.ClassExpression: {
                 node.carrier = TypeCarrier.createConstant(TypeInfo.createClass(node));
                 classStack.push(node);
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 classStack.pop();
 				break;
             }
@@ -219,13 +218,13 @@ Analyzer.analyze = ast => {
                 if(!node.body) { break; }
                 node.carrier = TypeCarrier.createConstant(TypeInfo.createFunction(node));
                 functionStack.push(node);
-                ts.forEachChild(node.body, visitDeclarations);
+                ts.forEachChild(node.body, analyzeInternal);
                 functionStack.pop(node);
                 break;
             }
             case ts.SyntaxKind.CallExpression: {
 
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 
                 const types = TypeCarrier.evaluate(node.expression.carrier);
                 const callees = types.flatMap(t => t.type === TypeInfo.Type.Function ? [t.value] : []);
@@ -241,14 +240,14 @@ Analyzer.analyze = ast => {
 
             }
             case ts.SyntaxKind.NewExpression: {
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 newExpression(node);
                 break;
             }
             case ts.SyntaxKind.ObjectLiteralExpression: {
                 objectStack.push(node);
                 node.type = TypeInfo.createObject(true);
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 objectStack.pop();
                 node.carrier = TypeCarrier.createConstant(node.type);
                 delete node.type;
@@ -256,7 +255,7 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.ShorthandPropertyAssignment: {
                 
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
 
                 const object = objectStack.top();
                 const name = node.name.getText();
@@ -271,7 +270,7 @@ Analyzer.analyze = ast => {
 
             }
             case ts.SyntaxKind.IfStatement: {
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 const conditionInfo = TypeCarrier.evaluate(node.expression.carrier);
                 node.conditionBoolean = TypeInfo.createBoolean();
                 if(conditionInfo.length === 1 && conditionInfo[0].hasValue) {
@@ -286,7 +285,7 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.PropertyAssignment: {
 
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
 
                 const object = objectStack.top();
                 let name;
@@ -314,7 +313,7 @@ Analyzer.analyze = ast => {
             
             }
             case ts.SyntaxKind.ReturnStatement: {
-                ts.forEachChild(node, visitDeclarations);
+                ts.forEachChild(node, analyzeInternal);
                 if(node.expression && !node.unreachable && !callStack.isEmpty()) {
                     const call = callStack.top();
                     call.callee.returnTypeCarriers.push(node.expression.carrier);
@@ -325,7 +324,7 @@ Analyzer.analyze = ast => {
                 break;
             }
 			default: {
-				ts.forEachChild(node, visitDeclarations);
+				ts.forEachChild(node, analyzeInternal);
 				break;
 			}
 		}
@@ -336,7 +335,7 @@ Analyzer.analyze = ast => {
     if(ast.kind === ts.SyntaxKind.SourceFile) {
         defineThis(ast);
     }
-    ts.forEachChild(ast, visitDeclarations);
+    ts.forEachChild(ast, analyzeInternal);
 
 }
 
