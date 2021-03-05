@@ -34,7 +34,8 @@ Binder.bindFunctionScopedDeclarations = body => {
 
     if(!body) { return ; }
 
-    body.binders = [];
+    // Binders of Classes are already initialized
+    body.binders = body.binders || [];
     body.symbols = SymbolTable.create();
 
     const bindFunctionScopedDeclarationsInternal = node => {
