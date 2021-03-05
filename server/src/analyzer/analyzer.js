@@ -434,6 +434,7 @@ function createEmptyConstructor(classNode) {
     });
     emptyConstructor.parent = classNode;
     emptyConstructor._original = emptyConstructor;
+    emptyConstructor.callSites = [];
     return emptyConstructor;
 }
 
