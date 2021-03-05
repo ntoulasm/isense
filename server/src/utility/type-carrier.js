@@ -147,19 +147,9 @@ evaluateFunctions[TypeCarrier.Kind.Constant] = carrier => {
  * 
  * @returns {Array<isense.TypeInfo>}
  */
-evaluateFunctions[TypeCarrier.Kind.Variable] = carrier => {
-
-    console.assert(carrier.node);
-    const binders = Ast.findActiveTypeBinders(carrier.node, carrier.symbol);
-    const typeInfo = [];
-
-    for(const b of binders) {
-        typeInfo.push(...TypeCarrier.evaluate(b.carrier));
-    }
-
-    return typeInfo;
-
-};
+evaluateFunctions[TypeCarrier.Kind.Variable] = carrier =>
+    Ast.findActiveTypeBinders(carrier.node, carrier.symbol)
+        .flatMap(b => TypeCarrier.evaluate(b.carrier));
 
 const evaluateBinaryExpressionFunctions = TypeCarrier.evaluateBinaryExpressionFunctions = [];
 
