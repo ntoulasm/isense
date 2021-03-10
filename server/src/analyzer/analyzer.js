@@ -427,8 +427,10 @@ function call(call, callee, thisObject = TypeInfo.createObject(true), beforeCall
  */
 function createEmptyConstructor(classNode) {
     const emptyConstructor = ts.createConstructor(undefined, undefined, [], ts.createBlock());
+    emptyConstructor.pos = classNode.pos;
     emptyConstructor.end = classNode.end;
     ts.forEachChild(emptyConstructor, function setEnd(n) {
+        n.pos = classNode.pos;
         n.end = classNode.end;
         ts.forEachChild(n, setEnd);
     });
