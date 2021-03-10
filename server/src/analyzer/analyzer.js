@@ -526,8 +526,7 @@ function setProperty(node, object, name, rvalue, carrier) {
         object.properties.insert(propertySymbol);
     }
     
-    const binder = assign(node, propertySymbol, rvalue, carrier);
-    Ast.addTypeBinder(node, binder);
+    assign(node, propertySymbol, rvalue, carrier);
 
 }
 
