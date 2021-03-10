@@ -34,8 +34,7 @@ Binder.bindFunctionScopedDeclarations = body => {
 
     if(!body) { return ; }
 
-    // Binders of Classes are already initialized
-    body.binders = body.binders || [];
+    body.binders = ts.isClassLike(body) ? body.binders : [];
     body.symbols = SymbolTable.create();
 
     const bindFunctionScopedDeclarationsInternal = node => {
@@ -180,7 +179,8 @@ bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.Block] = (node, body) => {
  * @param {ts.Node} body
  */
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.PropertyDeclaration] = (node, body) => {
-    declareFunctionScopedVariable(node, body);
+    node.binders = [];
+    declareBlockScopedVariable(node, body);
 };
 
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ForStatement] =
