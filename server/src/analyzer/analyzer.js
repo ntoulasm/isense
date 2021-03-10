@@ -495,17 +495,9 @@ function newExpression(node) {
  * @param {*} carrier
  */
 function assign(node, symbol, rvalue, carrier) {
-
-    // Same symbols? Ignore.
-    if(rvalue && rvalue.carrier.kind === TypeCarrier.Kind.Variable && symbol === rvalue.carrier.symbol) {
-        return ;
-    }
-
     const binder = TypeBinder.create(symbol, carrier);
     Ast.addTypeBinder(node, binder);
-
     return binder;
-
 }
 
 /**

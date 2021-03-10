@@ -290,16 +290,8 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
         return findActiveTypeBindersInCallExpression(node, symbol, startNode, stopNode);
     } else if(ts.isFunctionLike(node) && node.call) {
        return findActiveTypeBindersInCallSite(node, symbol, startNode, stopNode);
-    } else if(Ast.isRightPartOfAssignment(node) && Ast.isInner(parent, startNode)) {
-        // if the starting node of the search is child of assign expression, 
-        // ignore the binder of the assign expression. 
-        // e.g  let x = 2;
-        //      x = x + 3;
-        //      x on x + 3 needs to evaluate to 2.
-        // Otherwise it is stack overflow
-        //      evaluate(x + 3) -> evaluate(x) -> evaluate(x + 3) -> evaluate(x) -> ...
-        const previous = Ast.findLeftSibling(parent) || parent.parent;
-        return Ast.findActiveTypeBinders(previous, symbol, startNode, stopNode);
+    } else if(Ast.isInRightPartOfAssignmentLike(node, startNode)) {
+        return findActiveTypeBindersInAssignmentLike(parent, symbol, startNode, stopNode);
     } else if(parent) {
         if(parent.kind === ts.SyntaxKind.IfStatement) {
             const ifStatement = Ast.findTopLevelIfStatement(parent);
@@ -310,7 +302,7 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
     }
 
     return Ast.findActiveTypeBinders(node, symbol, startNode, stopNode);
-
+    
 };
 
 /**
@@ -461,6 +453,23 @@ function findActiveTypeBindersInCallSite(node, symbol, startNode, stopNode) {
         Ast.findActiveTypeBinders(node.call, symbol, startNode, stopNode);
 }
 
+/**
+ * Note: if the starting node of the search is child of assign expression, 
+ * ignore the binder of the assign expression. 
+ * e.g  let x = 2;
+ * x = x + 3;
+ * x on x + 3 should evaluate to 2.
+ * Otherwise it is stack overflow
+ * evaluate(x + 3) -> evaluate(x) -> evaluate(x + 3) -> evaluate(x) -> ...
+ */
+function findActiveTypeBindersInAssignmentLike(node, symbol, startNode, stopNode) {
+    const leftSibling = Ast.findLeftSibling(node);
+    if(leftSibling) {
+        return Ast.findActiveTypeBindersInLeftSibling(leftSibling, symbol, startNode, stopNode);
+    }
+    return Ast.findActiveTypeBindersInParent(node.parent, symbol, startNode, stopNode);
+}
+
 // ----------------------------------------------------------------------------
 
 /**
@@ -528,6 +537,16 @@ Ast.AdjustObjectPropertyStartingSearchNode = node => {
 
 Ast.isInner = (outer, inner) => 
     outer.pos <= inner.pos && inner.end <= outer.end;
+
+Ast.isInRightPartOfAssignmentLike = (node, checkNode) => {
+    switch(node.kind) {
+        case ts.SyntaxKind.VariableDeclaration:
+            return node.initializer && Ast.isInner(node.initializer, checkNode);
+        case ts.SyntaxKind.BinaryExpression:
+            return node.operatorToken.kind === ts.SyntaxKind.EqualsToken && 
+                node.right && Ast.isInner(node.right, checkNode);
+    }
+}
 
 Ast.isLeftPartOfAssignmentLike = node => {
     let currentNode = node;
@@ -944,13 +963,6 @@ Ast.isClassMember = node =>
 Ast.isAssignment = node =>
     node.kind === ts.SyntaxKind.BinaryExpression && 
     node.operatorToken.kind === ts.SyntaxKind.EqualsToken;
-
-Ast.isRightPartOfAssignment = node => 
-    node.parent && 
-    Ast.isAssignment(node.parent) && 
-    node.parent.left !== node;
-
-// ----------------------------------------------------------------------------
 
 Ast.isCaseClause = node =>
     node.kind === ts.SyntaxKind.CaseClause || 
