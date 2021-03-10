@@ -234,7 +234,7 @@ evaluateFunctions[TypeCarrier.Kind.CallExpression] = carrier => {
 
     if(!callee) { 
         return unknownCalleeTypeInfo; 
-    } else if(callee.returnTypeCarriers) {
+    } else if(callee.returnTypeCarriers.length) {
         return callee.returnTypeCarriers.flatMap(c => TypeCarrier.evaluate(c));   
     } else {
         return defaultCallTypeInfo;
