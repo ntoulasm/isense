@@ -292,12 +292,12 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
        return findActiveTypeBindersInCallSite(node, symbol, startNode, stopNode);
     } else if(Ast.isInRightPartOfAssignmentLike(node, startNode)) {
         return findActiveTypeBindersInAssignmentLike(parent, symbol, startNode, stopNode);
-    } else if(parent) {
-        if(parent.kind === ts.SyntaxKind.IfStatement) {
-            const ifStatement = Ast.findTopLevelIfStatement(parent);
+    } else if(node) {
+        if(node.kind === ts.SyntaxKind.IfStatement) {
+            const ifStatement = Ast.findTopLevelIfStatement(node);
             return Ast.findActiveTypeBinders(ifStatement, symbol, startNode, stopNode);
-        } else if(Ast.isCaseClause(parent) && parent != stopNode) {
-            return Ast.findActiveTypeBinders(parent.parent, symbol, startNode, stopNode);
+        } else if(Ast.isCaseClause(node) && node != stopNode) {
+            return Ast.findActiveTypeBinders(node.parent, symbol, startNode, stopNode);
         }
     }
 
@@ -360,7 +360,7 @@ function findActiveTypeBindersInIfStatement(node, symbol, startNode) {
     let hasEveryStatementABinder = true;
     
     for(const statement of statements) {
-        const statementBinders = Ast.findActiveTypeBindersInStatement(statement, symbol, startNode);
+        const statementBinders = Ast.findActiveTypeBindersInLeftSibling(statement, symbol, startNode, node.parent);
         if(statementBinders) {
             binders.push(...statementBinders);
         } else {
@@ -385,7 +385,10 @@ function findActiveTypeBindersInIfStatement(node, symbol, startNode) {
 function findActiveTypeBindersInSwitchStatement(node, symbol, startNode) {
 
     const clauses = node.caseBlock.clauses;
-    const binders = clauses.flatMap(c => findActiveTypeBindersInBlock(c, symbol, startNode) || [])
+    const binders = clauses.flatMap(c => 
+        Ast.findActiveTypeBindersInLeftSibling(c, symbol, startNode, c.parent.parent) || 
+        []
+    );
     // TODO: Could this be more accurate?
     // It is more complicated than if-statements, because case clauses might fall-through.
     binders.unshift(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
