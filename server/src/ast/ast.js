@@ -444,7 +444,15 @@ function findStopNodeOutOfConditional(node, startNode) {
 
 function findActiveTypeBindersInCallExpression(node, symbol, startNode, stopNode) {
     return Ast.findActiveTypeBindersInStatement(node.callee.body, symbol, startNode, stopNode) ||
+        ts.isClassLike(node.callee.parent) && findActiveTypeBindersInMembers(node.callee.parent, symbol) ||
         Ast.findActiveTypeBinders(node, symbol, startNode, stopNode);
+}
+
+function findActiveTypeBindersInMembers(classNode, symbol) {
+    for(const m of classNode.members) {
+        const binder = getBinder(m, symbol);
+        if(binder) { return [ binder ]; }
+    }
 }
 
 function findActiveTypeBindersInCallSite(node, symbol, startNode, stopNode) {
@@ -950,15 +958,8 @@ Ast.isStatement = node =>
     node.kind >= ts.SyntaxKind.FirstStatement && 
     node.kind <= ts.SyntaxKind.LastStatement;
 
-// ----------------------------------------------------------------------------
-
 Ast.isClassMember = node => 
-    node.kind === ts.SyntaxKind.MethodDeclaration ||
-    node.kind === ts.SyntaxKind.Constructor ||
-    node.kind === ts.SyntaxKind.GetAccessor ||
-    node.kind === ts.SyntaxKind.SetAccessor;
-
-// ----------------------------------------------------------------------------
+    node.parent && ts.isClassLike(node.parent);
 
 Ast.isAssignment = node =>
     node.kind === ts.SyntaxKind.BinaryExpression && 

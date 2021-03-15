@@ -66,6 +66,14 @@ Analyzer.analyze = ast => {
                 break;
 
             }
+            case ts.SyntaxKind.PropertyDeclaration: {
+                ts.forEachChild(node, analyzeInternal);
+                const name = node.name.text;
+                const symbol = Ast.lookUp(node, name);
+                const carrier = node.initializer && node.initializer.carrier;
+                assign(node, symbol, node.initializer, carrier);
+                break;
+            }
             case ts.SyntaxKind.NumericLiteral: {
                 node.carrier = TypeCarrier.createConstant(TypeInfo.createNumber(Number(node.getText())));
                 break;
@@ -451,9 +459,9 @@ function newClassExpression(node, classNode, thisObject) {
         for(const member of classNode.members) {
             if(member.kind === ts.SyntaxKind.PropertyDeclaration) {
                 const carrier = member.initializer ? member.initializer.carrier : TypeCarrier.createConstant([TypeInfo.createUndefined()]);
-                setProperty(constructor, thisObject, member.name.getText(), member.initializer, carrier);
+                setProperty(member, thisObject, member.name.getText(), member.initializer, carrier);
             } else if(member.kind === ts.SyntaxKind.MethodDeclaration) {
-                setProperty(constructor, thisObject, member.name.getText(), undefined, member.carrier);
+                setProperty(member, thisObject, member.name.getText(), undefined, member.carrier);
             }
         }
     };
