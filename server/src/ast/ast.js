@@ -292,12 +292,10 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
        return findActiveTypeBindersInCallSite(node, symbol, startNode, stopNode);
     } else if(Ast.isInRightPartOfAssignmentLike(node, startNode)) {
         return findActiveTypeBindersInAssignmentLike(parent, symbol, startNode, stopNode);
-    } else if(parent && parent != stopNode) {
-        if(parent.kind === ts.SyntaxKind.IfStatement) {
-            return findActiveTypeBindersOutOfIfStatement([ parent.expression ], symbol, startNode, stopNode);
-        } else if(Ast.isCaseClause(node)) {
-            return Ast.findActiveTypeBinders(node.parent, symbol, startNode, stopNode);
-        }
+    } else if(Ast.isCaseClause(node)) {
+        return Ast.findActiveTypeBinders(node.parent, symbol, startNode, stopNode);
+    } else if(parent && parent.kind === ts.SyntaxKind.IfStatement && parent != stopNode) {
+        return findActiveTypeBindersOutOfIfStatement([ parent.expression ], symbol, startNode, stopNode);
     }
 
     return Ast.findActiveTypeBinders(node, symbol, startNode, stopNode);
