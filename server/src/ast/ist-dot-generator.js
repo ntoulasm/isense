@@ -1,4 +1,4 @@
-const SignatureFinder = require('../utility/signature-finder');
+const Signature = require('../utility/signature');
 const Ast = require('./ast');
 
 // ----------------------------------------------------------------------------
@@ -78,7 +78,7 @@ me.generate = (root, outputFileName) => {
         
         if(node.hasOwnProperty('binders') && node.binders.length) {
             append(`node${dotId}[shape = "record", label = "{ TYPEBINDERS | `);
-            append(node.binders.map(b => SignatureFinder.computeSignature(node, b.symbol, TypeCarrier.evaluate(b.carrier), ' or ', false)).join(' | '));
+            append(node.binders.map(b => Signature.compute(node, b.symbol, TypeCarrier.evaluate(b.carrier), ' or ', false)).join(' | '));
             append(`}"]\n`);
             append(`node${node.dotId} -> node${dotId}\n`);
             ++dotId;

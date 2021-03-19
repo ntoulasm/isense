@@ -1,4 +1,4 @@
-const SignatureFinder = require('../utility/signature-finder');
+const Signature= require('../utility/signature');
 const Ast = require('../ast/ast');
 const TypeCarrier = require('../utility/type-carrier');
 const { getAst, getSymbolOfIdentifier } = require('./utility');
@@ -52,7 +52,7 @@ Hover.onHover = info => {
 				const plausibleTypes = TypeCarrier.evaluate(b.carrier);
 				contents.push({
 					language: 'typescript',
-					value: `${SignatureFinder.computeSignature(node, symbol, plausibleTypes)} ${binderLineInfo} ${postfix}`
+					value: `${Signature.compute(node, symbol, plausibleTypes)} ${binderLineInfo} ${postfix}`
 				});
 			}
 			return { contents };

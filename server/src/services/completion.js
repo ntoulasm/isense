@@ -3,7 +3,7 @@ const Ast = require('../ast/ast');
 const Symbol = require('../utility/symbol');
 const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('../utility/type-carrier');
-const SignatureFinder = require('../utility/signature-finder');
+const Signature = require('../utility/signature');
 const { getAst, getCompletionItemKind, getPropertySymbols } = require('./utility');
 
 // ----------------------------------------------------------------------------
@@ -95,7 +95,7 @@ function computeCompletion(node, symbol, binders) {
 	const kind = TypeInfo.hasUniqueType(plausibleTypes) ?
 		getCompletionItemKind(plausibleTypes[0].type) : 
 		vscodeLanguageServer.CompletionItemKind.Variable;
-	const signature = SignatureFinder.computeSignature(node, symbol, plausibleTypes);
+	const signature = Signature.compute(node, symbol, plausibleTypes);
 	return {
 		label: symbol.name, 
 		kind,
