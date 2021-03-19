@@ -292,12 +292,11 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
        return findActiveTypeBindersInCallSite(node, symbol, startNode, stopNode);
     } else if(Ast.isInRightPartOfAssignmentLike(node, startNode)) {
         return findActiveTypeBindersInAssignmentLike(parent, symbol, startNode, stopNode);
-    } else if(parent) {
+    } else if(parent && parent != stopNode) {
         if(parent.kind === ts.SyntaxKind.IfStatement) {
-            const ifStatement = Ast.findTopLevelIfStatement(parent);
-            return Ast.findActiveTypeBinders(ifStatement, symbol, startNode, stopNode);
-        } else if(Ast.isCaseClause(parent) && parent != stopNode) {
-            return Ast.findActiveTypeBinders(parent.parent, symbol, startNode, stopNode);
+            return findActiveTypeBindersOutOfIfStatement([ parent.expression ], symbol, startNode, stopNode);
+        } else if(Ast.isCaseClause(node)) {
+            return Ast.findActiveTypeBinders(node.parent, symbol, startNode, stopNode);
         }
     }
 
@@ -357,24 +356,80 @@ function findActiveTypeBindersInIfStatement(node, symbol, startNode) {
 
     const binders = [];
     const statements = Ast.findThenElseStatements(node);
-    let hasEveryStatementABinder = true;
+    const conditionsToSearch = new Set();
     
     for(const statement of statements) {
         const statementBinders = Ast.findActiveTypeBindersInStatement(statement, symbol, startNode);
         if(statementBinders) {
             binders.push(...statementBinders);
         } else {
-            hasEveryStatementABinder = false;
+            conditionsToSearch.add(statement.parent.expression)
         }
     }
 
-    if(!hasElse(node) || !binders.length || !hasEveryStatementABinder) {
-        let outerBinders = findActiveTypeBindersOutOfConditional(node, symbol, startNode);
+    if(!hasElse(node)) {
+        conditionsToSearch.add(statements[statements.length - 1].parent.expression);
+    }
+
+    if(conditionsToSearch.size) {
+        const outerBinders = findActiveTypeBindersOutOfIfStatement(
+            [ ...conditionsToSearch ], symbol, startNode
+        );
         binders.unshift(...outerBinders);
     }
 
     return binders;
 
+}
+
+/**
+ * 
+ * @param {Array} conditions 
+ * @param {*} symbol 
+ * @param {*} startNode 
+ * @param {*} stopNode 
+ * @returns 
+ */
+function findActiveTypeBindersOutOfIfStatement(conditions, symbol, startNode) {
+
+    let condition = conditions[conditions.length - 1];
+    let binders = [];
+    
+    while(condition) {
+        const conditionBinders = Ast.findActiveTypeBindersInLeftSibling(condition, symbol, startNode, condition.parent);
+        if(conditionBinders) {
+            binders.push(...conditionBinders);
+            condition = findNextConditionToSearch(condition, conditions);
+        } else {
+            condition = findPreviousCondition(condition);
+        }
+    }
+
+    if(conditions.length) {
+        const ifStatement = Ast.findAncestor(conditions[0], ts.SyntaxKind.IfStatement);
+        binders.push(...findActiveTypeBindersOutOfConditional(ifStatement, symbol, startNode));
+    }
+
+    return binders;
+
+}
+
+function isPrior(node1, node2) {
+    return node2 && node1.end <= node2.end;
+}
+
+function findPreviousCondition(node) {
+    const ifStatement = node.parent;
+    if(ifStatement.parent.kind === ts.SyntaxKind.IfStatement) {
+        return ifStatement.parent.expression;
+    }
+}
+
+function findNextConditionToSearch(current, conditions) {
+    while(isPrior(current, conditions[conditions.length - 1])) { 
+        conditions.splice(conditions.length - 1, 1);
+    }
+    return conditions[conditions.length - 1];
 }
 
 /**
