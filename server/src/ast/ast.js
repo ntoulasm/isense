@@ -298,6 +298,8 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
         return findActiveTypeBindersOutOfIfStatement([ parent.expression ], symbol, startNode);
     } else if(parent && parent.kind === ts.SyntaxKind.ForStatement && node === parent.statement) {
         return findActiveTypeBindersOutOfForStatement(parent, symbol, startNode);
+    } else if(parent && parent.kind === ts.SyntaxKind.DoStatement && node === parent.statement) {
+        return findActiveTypeBindersOutOfDoStatement(parent, symbol, startNode);
     }
 
     return Ast.findActiveTypeBinders(node, symbol, startNode, stopNode);
@@ -326,6 +328,8 @@ Ast.findActiveTypeBindersInStatement = (node, symbol, startNode, stopNode) => {
         case ts.SyntaxKind.ForOfStatement:
         case ts.SyntaxKind.WhileStatement:
             return findActiveTypeBindersInLoop(node, symbol, startNode);
+        case ts.SyntaxKind.DoStatement:
+            return findActiveTypeBindersInDoStatement(node, symbol, startNode);
         default: {
             const rightMostDescendant = Ast.findRightMostDescendant(node);
             return Ast.findActiveTypeBinders(rightMostDescendant, symbol, startNode, stopNode || node);
@@ -519,6 +523,22 @@ function findActiveTypeBindersOutOfLoop(node, symbol, startNode) {
 
     return findActiveTypeBindersOutOfConditional(node, symbol, startNode);
 
+}
+
+function findActiveTypeBindersInDoStatement(node, symbol, startNode) {
+    const statement = node.statement;
+    const binders = Ast.findActiveTypeBindersInStatement(statement, symbol, startNode) || [];
+    binders.push(...findActiveTypeBindersOutOfDoStatement(node, symbol, startNode));
+    return binders;
+}
+
+function findActiveTypeBindersOutOfDoStatement(node, symbol, startNode) {
+    let conditionBinders;
+    const condition = node.expression;
+    if(condition && (conditionBinders = Ast.findActiveTypeBindersInLeftSibling(condition, symbol, startNode, node.statement))) {
+        return conditionBinders;
+    }
+    return findActiveTypeBindersOutOfConditional(node, symbol, startNode);
 }
 
 function getBinder(node, symbol) {
