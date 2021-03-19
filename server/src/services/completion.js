@@ -91,7 +91,7 @@ function computePropertyCompletions(node) {
 }
 
 function computeCompletion(node, symbol, binders) {
-	const plausibleTypes = binders.flatMap(b => TypeCarrier.evaluate(b.carrier));
+	const plausibleTypes = binders.sort(compareBinders).flatMap(b => TypeCarrier.evaluate(b.carrier));
 	const kind = TypeInfo.hasUniqueType(plausibleTypes) ?
 		getCompletionItemKind(plausibleTypes[0].type) : 
 		vscodeLanguageServer.CompletionItemKind.Variable;
@@ -101,6 +101,12 @@ function computeCompletion(node, symbol, binders) {
 		kind,
 		data: { signature }
 	};
+}
+
+// ----------------------------------------------------------------------------
+
+function compareBinders(b1, b2) {
+	return b1.parent.end - b2.parent.end;
 }
 
 // ----------------------------------------------------------------------------

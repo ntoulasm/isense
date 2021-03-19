@@ -373,7 +373,7 @@ function findActiveTypeBindersInIfStatement(node, symbol, startNode) {
         const outerBinders = findActiveTypeBindersOutOfIfStatement(
             [ ...conditionsToSearch ], symbol, startNode
         );
-        binders.unshift(...outerBinders);
+        binders.push(...outerBinders);
     }
 
     return binders;
@@ -441,7 +441,7 @@ function findActiveTypeBindersInSwitchStatement(node, symbol, startNode) {
     const binders = clauses.flatMap(c => findActiveTypeBindersInBlock(c, symbol, startNode) || [])
     // TODO: Could this be more accurate?
     // It is more complicated than if-statements, because case clauses might fall-through.
-    binders.unshift(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
+    binders.push(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
 
     return binders;
     
@@ -455,7 +455,7 @@ function findActiveTypeBindersInSwitchStatement(node, symbol, startNode) {
 function findActiveTypeBindersInLoop(node, symbol, startNode) {
     const statement = node.statement;
     const binders = Ast.findActiveTypeBindersInStatement(statement, symbol, startNode) || [];
-    binders.unshift(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
+    binders.push(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
     return binders;
 }
 
