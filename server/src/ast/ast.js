@@ -481,7 +481,8 @@ function findActiveTypeBindersOutOfForStatement(node, symbol, startNode) {
     if(condition && (conditionBinders = Ast.findActiveTypeBindersInLeftSibling(condition, symbol, startNode, node))) {
         binders.push(...conditionBinders);
     } else {
-        binders.push(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
+        const nodeToSearch = node.initializer ? Ast.findRightMostDescendant(node.initializer) : node;
+        binders.push(...findActiveTypeBindersOutOfConditional(nodeToSearch, symbol, startNode));
     }
 
     return binders;
@@ -496,8 +497,23 @@ function findActiveTypeBindersOutOfForStatement(node, symbol, startNode) {
 function findActiveTypeBindersInLoop(node, symbol, startNode) {
     const statement = node.statement;
     const binders = Ast.findActiveTypeBindersInStatement(statement, symbol, startNode) || [];
-    binders.push(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
+    binders.push(...findActiveTypeBindersOutOfLoop(node, symbol, startNode));
     return binders;
+}
+
+function findActiveTypeBindersOutOfLoop(node, symbol, startNode) {
+
+    let conditionBinders;
+    const condition = node.expression;
+    const initializer = node.initializer;
+
+    if(condition && (conditionBinders = Ast.findActiveTypeBindersInLeftSibling(condition, symbol, startNode, node))) {
+        return conditionBinders;
+    } else {
+        const nodeToSearch = initializer ? Ast.findRightMostDescendant(initializer) : node;
+        return findActiveTypeBindersOutOfConditional(nodeToSearch, symbol, startNode);
+    }
+
 }
 
 function getBinder(node, symbol) {
