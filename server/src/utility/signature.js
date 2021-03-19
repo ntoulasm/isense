@@ -13,6 +13,7 @@ const Signature = {};
 // ----------------------------------------------------------------------------
 
 let objectNesting = 0;
+const seen = new WeakSet();
 
 // ----------------------------------------------------------------------------
 
@@ -68,6 +69,9 @@ function stringifyValue(node, typeInfo) {
 
 function stringifyObject(node, typeInfo) {
 
+	if(seen.has(typeInfo)) { return '[Circural Reference]'; }
+	else { seen.add(typeInfo); }
+
 	if(typeInfo.properties.getSymbols().length === 0) { return ''; }
 
 	++objectNesting;
@@ -95,6 +99,8 @@ function stringifyObject(node, typeInfo) {
 
 	--objectNesting;
 	text += `\n${computeSpaces()}}`;
+	seen.delete(typeInfo);
+	
 	return text;
 
 }
