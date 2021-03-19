@@ -295,7 +295,9 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
     } else if(Ast.isCaseClause(node)) {
         return Ast.findActiveTypeBinders(node.parent, symbol, startNode, stopNode);
     } else if(parent && parent.kind === ts.SyntaxKind.IfStatement && parent != stopNode) {
-        return findActiveTypeBindersOutOfIfStatement([ parent.expression ], symbol, startNode, stopNode);
+        return findActiveTypeBindersOutOfIfStatement([ parent.expression ], symbol, startNode);
+    } else if(parent && parent.kind === ts.SyntaxKind.ForStatement && node === parent.statement) {
+        return findActiveTypeBindersOutOfForStatement(parent, symbol, startNode);
     }
 
     return Ast.findActiveTypeBinders(node, symbol, startNode, stopNode);
@@ -319,6 +321,7 @@ Ast.findActiveTypeBindersInStatement = (node, symbol, startNode, stopNode) => {
         case ts.SyntaxKind.SwitchStatement: 
             return findActiveTypeBindersInSwitchStatement(node, symbol, startNode);
         case ts.SyntaxKind.ForStatement:
+            return findActiveTypeBindersInForStatement(node, symbol, startNode);
         case ts.SyntaxKind.ForInStatement:
         case ts.SyntaxKind.ForOfStatement:
         case ts.SyntaxKind.WhileStatement:
@@ -445,6 +448,44 @@ function findActiveTypeBindersInSwitchStatement(node, symbol, startNode) {
 
     return binders;
     
+}
+
+/**
+ * 
+ * @param {ts.ForStatement} node 
+ * @param {*} symbol 
+ * @param {ts.Node} startNode 
+ * @returns 
+ */
+function findActiveTypeBindersInForStatement(node, symbol, startNode) {
+    const statement = node.statement;
+    const statementBinders = Ast.findActiveTypeBindersInStatement(statement, symbol, startNode) || [];
+    const outerBinders = findActiveTypeBindersOutOfForStatement(node, symbol, startNode);
+    return [ ...statementBinders, ...outerBinders ];
+}
+
+function findActiveTypeBindersOutOfForStatement(node, symbol, startNode) {
+
+    let conditionBinders;
+    const condition = node.condition;
+    const incrementor = node.incrementor;
+    const binders = [];
+
+    if(incrementor) {
+        const incrementorBinders = Ast.findActiveTypeBindersInLeftSibling(
+            incrementor, symbol, startNode, condition || node
+        ) || [];
+        binders.push(...incrementorBinders);
+    }
+
+    if(condition && (conditionBinders = Ast.findActiveTypeBindersInLeftSibling(condition, symbol, startNode, node))) {
+        binders.push(...conditionBinders);
+    } else {
+        binders.push(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
+    }
+
+    return binders;
+
 }
 
 /**
