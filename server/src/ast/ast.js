@@ -466,7 +466,9 @@ function findActiveTypeBindersInForStatement(node, symbol, startNode) {
 
 function findActiveTypeBindersOutOfForStatement(node, symbol, startNode) {
 
+    let initializerBinders;
     let conditionBinders;
+    const initializer = node.initializer;
     const condition = node.condition;
     const incrementor = node.incrementor;
     const binders = [];
@@ -480,9 +482,10 @@ function findActiveTypeBindersOutOfForStatement(node, symbol, startNode) {
 
     if(condition && (conditionBinders = Ast.findActiveTypeBindersInLeftSibling(condition, symbol, startNode, node))) {
         binders.push(...conditionBinders);
+    } else if(initializer && (initializerBinders = Ast.findActiveTypeBindersInLeftSibling(initializer, symbol, startNode, node))) {
+        binders.push(...initializerBinders);
     } else {
-        const nodeToSearch = node.initializer ? Ast.findRightMostDescendant(node.initializer) : node;
-        binders.push(...findActiveTypeBindersOutOfConditional(nodeToSearch, symbol, startNode));
+        binders.push(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
     }
 
     return binders;
@@ -504,15 +507,17 @@ function findActiveTypeBindersInLoop(node, symbol, startNode) {
 function findActiveTypeBindersOutOfLoop(node, symbol, startNode) {
 
     let conditionBinders;
+    let initializerBinders;
     const condition = node.expression;
     const initializer = node.initializer;
 
     if(condition && (conditionBinders = Ast.findActiveTypeBindersInLeftSibling(condition, symbol, startNode, node))) {
         return conditionBinders;
-    } else {
-        const nodeToSearch = initializer ? Ast.findRightMostDescendant(initializer) : node;
-        return findActiveTypeBindersOutOfConditional(nodeToSearch, symbol, startNode);
+    } else if(initializer && (initializerBinders = Ast.findActiveTypeBindersInLeftSibling(initializer, symbol, startNode, node))) {
+        return initializerBinders
     }
+
+    return findActiveTypeBindersOutOfConditional(node, symbol, startNode);
 
 }
 
