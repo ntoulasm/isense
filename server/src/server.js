@@ -11,6 +11,7 @@ const Completion = require('./services/completion');
 const SignatureHelp = require('./services/signature-help');
 const Definition = require('./services/definition');
 const es5LibAst = require('./utility/es5-lib');
+const Call = require('./analyzer/call');
 
 // ----------------------------------------------------------------------------
 
@@ -208,6 +209,7 @@ connection.onDidChangeTextDocument((params) => {
 		ast.binders = previousAst.binders;
 		ast.analyzeDiagnostics = previousAst.analyzeDiagnostics;
 		text = newText;
+		Call.updateMetadata(ast, change);
 	}
 
 	clearDiagnostics(ast);

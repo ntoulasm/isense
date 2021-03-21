@@ -8,6 +8,7 @@ const { getAst } = require('./utility');
 const ts = require('typescript');
 const vscodeLanguageServer = require('vscode-languageserver');
 const Analyzer = require('../analyzer/analyzer');
+const { setMetadata } = require('../analyzer/call');
 
 // ----------------------------------------------------------------------------
 
@@ -33,6 +34,7 @@ SignatureHelp.onSignatureHelp = info => {
 	callees = callees.map(t => t.value);
 	const activeParameter = computeActiveParameter(call, offset);
 	const activeSignature = context.activeSignatureHelp ? context.activeSignatureHelp.activeSignature : 0;
+	setMetadata(ast, call, callees[activeSignature]);
 	const signatures = callees.map(callee => computeFunctionSignature(callee, call))
 
 	return {

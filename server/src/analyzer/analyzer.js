@@ -9,6 +9,7 @@ const TypeBinder = require('../utility/type-binder');
 const AnalyzeDiagnostic = require('./analyze-diagnostic');
 const Binder = require('./binder');
 const DiagnosticMessages = require('./diagnostic-messages');
+const { getMetaData } = require('./call');
 
 // ----------------------------------------------------------------------------
 
@@ -236,8 +237,8 @@ Analyzer.analyze = ast => {
                 
                 const types = TypeCarrier.evaluate(node.expression.carrier);
                 const callees = types.flatMap(t => t.type === TypeInfo.Type.Function ? [t.value] : []);
-                const callee = !callees.length ? undefined : callees[0]; // TODO: somehow pick callee
-
+                const callee = pickCallee(node, callees);
+                
                 node.carrier = TypeCarrier.createCallExpression(node);
 
                 if(callee) {
@@ -808,6 +809,20 @@ function isNodeOfInterest(node) {
         node.kind === ts.SyntaxKind.FalseKeyword ||
         node.kind === ts.SyntaxKind.NullKeyword ||
         node.kind === ts.SyntaxKind.ThisKeyword;
+}
+
+// ----------------------------------------------------------------------------
+
+function pickCallee(call, callees) {
+    if(!callees.length) { return ; }
+    if(callees.length == 1) { return callees[0]; }
+    const ast = call.getSourceFile();
+    const calleeInfo = getMetaData(ast, call);
+    if(!calleeInfo) { return ; }
+    const callee = Ast.findInnerMostNodeWithPredicate(
+        ast, calleeInfo.start, ts.isFunctionLike
+    );
+    if(callee) { return callee; }
 }
 
 // ----------------------------------------------------------------------------
