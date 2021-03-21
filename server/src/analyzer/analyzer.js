@@ -275,20 +275,6 @@ Analyzer.analyze = ast => {
                 break;
 
             }
-            case ts.SyntaxKind.IfStatement: {
-                ts.forEachChild(node, analyzeInternal);
-                const conditionInfo = TypeCarrier.evaluate(node.expression.carrier);
-                node.conditionBoolean = TypeInfo.createBoolean();
-                if(conditionInfo.length === 1 && conditionInfo[0].hasValue) {
-                    node.conditionBoolean = TypeInfo.toBoolean(conditionInfo[0]);
-                    if(node.conditionBoolean.value) {
-                        markUnreachableStatements(Ast.findRightSiblings(node.thenStatement));
-                    } else {
-                        markUnreachableStatements([node.thenStatement]);
-                    }
-                }
-                break;
-            }
             case ts.SyntaxKind.PropertyAssignment: {
 
                 ts.forEachChild(node, analyzeInternal);
