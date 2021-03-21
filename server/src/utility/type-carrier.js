@@ -127,7 +127,7 @@ TypeCarrier.evaluate = carrier => {
         if(!infos.length) {
             infos.push(TypeInfo.createAny());
         }
-        return removeDuplicates(infos);
+        return TypeCarrier.removeDuplicates(infos);
     } else {
         console.assert(false, `Trying to evaluate unknown carrier '${carrier.kind}'`);
     }
@@ -584,7 +584,7 @@ evalutePrefixUnaryExpressionFunctions[ts.SyntaxKind.TildeToken] = carrier => {
  * @param {*} typeInfo 
  * @returns 
  */
-function removeDuplicates(typeInfo) {
+TypeCarrier.removeDuplicates = typeInfo => {
     const info = [];
     for(const t of typeInfo) {
         if(t.hasValue || !info.find(nt => !nt.hasValue && nt.type === t.type)) { 

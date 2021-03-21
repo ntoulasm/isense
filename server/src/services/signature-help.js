@@ -58,12 +58,11 @@ const computeParametersSignature = (callee) => {
 			Ast.findLastParameter(callee),
 			parameterName
 		);
-		
-		// We need to filter similar types because on call new carriers for the parameter will be added.
-		// TODO: Should i change this?
+
 		const inducedBinders = symbol && symbol.binders.filter(b => b.carrier.induced);
-		let inducedTypeInfos = [];
-		inducedBinders.forEach(b => inducedTypeInfos.push(...TypeCarrier.evaluate(b.carrier)));
+		const inducedTypeInfos = TypeCarrier.removeDuplicates(
+			inducedBinders.flatMap(b => TypeCarrier.evaluate(b.carrier))
+		);
 
 		let signature = parameterName;
 		let firstTime = true;
@@ -107,10 +106,11 @@ const computeFunctionSignature = (callee, call) => {
 };
 
 function computeReturnInfo(callee) {
-	return callee.returnTypeCarriers
-		.flatMap(c => TypeCarrier.evaluate(c))
+	const typeInfo = callee.returnTypeCarriers
+		.flatMap(c => TypeCarrier.evaluate(c));
+	return TypeCarrier.removeDuplicates(typeInfo)
 		.map(t => TypeInfo.typeToString(t))
-		.join('||');
+		.join(' || ');
 }
 
 // ----------------------------------------------------------------------------
