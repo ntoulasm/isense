@@ -300,7 +300,14 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
 
     const parent = node.parent;
 
-    if(ts.isCallLikeExpression(node) && node.callee && node.callee.body) {
+    // If parent is call expression and the search started in the call,
+    // do not search in callee. 
+    // let x = 2;
+    // function f() { x = 5; }
+    // f(x);
+    // When the developer hovers over x in f(x);, x should be 2.
+    // But if we search inside f we would find 5.
+    if(ts.isCallLikeExpression(node) && node.callee && node.callee.body && !Ast.isInner(node, startNode)) {
         return findActiveTypeBindersInCallExpression(node, symbol, startNode, stopNode);
     } else if(ts.isFunctionLike(node) && node.call) {
        return findActiveTypeBindersInCallSite(node, symbol, startNode, stopNode);
