@@ -300,14 +300,14 @@ Ast.findActiveTypeBindersInParent = (node, symbol, startNode, stopNode) => {
 
     const parent = node.parent;
 
-    // If parent is call expression and the search started in the call,
-    // do not search in callee. 
-    // let x = 2;
-    // function f() { x = 5; }
-    // f(x);
-    // When the developer hovers over x in f(x);, x should be 2.
-    // But if we search inside f we would find 5.
     if(ts.isCallLikeExpression(node) && node.callee && node.callee.body && !Ast.isInner(node, startNode)) {
+        // If parent is call expression and the search started in the call,
+        // do not search in callee. 
+        // let x = 2;
+        // function f() { x = 5; }
+        // f(x);
+        // When the developer hovers over x in f(x);, x should be 2.
+        // But if we search inside f we would find 5.
         return findActiveTypeBindersInCallExpression(node, symbol, startNode, stopNode);
     } else if(ts.isFunctionLike(node) && node.call) {
        return findActiveTypeBindersInCallSite(node, symbol, startNode, stopNode);
@@ -582,6 +582,26 @@ function getBinder(node, symbol) {
  * }
  * // Search active binders of x
  * 
+ * But when a function is in between of the two conditionals, 
+ * and the search started out of them, we came there from a call,
+ * and not from the outer conditional.
+ * 
+ * let x = 0;
+ * let f;
+ * 
+ * if(a) {
+ *     x = 1;
+ *     f = () => {
+ *        if(b) {
+ *            x = 2;
+ *        }
+ *     }
+ * }
+ * 
+ * f();
+ * // Search for active type binders of 'x' starting here.
+ * // x: number = 1 || number = 2
+ * 
  * @param {ts.Node} node 
  * @param {isense.symbol} symbol 
  * @param {ts.Node} startNode 
@@ -593,9 +613,20 @@ function findActiveTypeBindersOutOfConditional(node, symbol, startNode) {
 
 function findStopNodeOutOfConditional(node, startNode) {
     const parentConditionalStatement = Ast.findAncestor(node.parent, conditionalNodes);
-    if(parentConditionalStatement && !Ast.isInner(parentConditionalStatement, startNode)) {
+    if(parentConditionalStatement && !Ast.isInner(parentConditionalStatement, startNode) && !isFunctionBetween(node, parentConditionalStatement)) {
         return parentConditionalStatement;
     } 
+}
+
+function isFunctionBetween(inner, outer) {
+    let current = inner;
+    while(current != outer) {
+        if(ts.isFunctionLike(current)) {
+            return true;
+        }
+        current = current.parent;
+    }
+    return false;
 }
 
 function findActiveTypeBindersInCallExpression(node, symbol, startNode, stopNode) {
