@@ -1,6 +1,10 @@
 const SymbolTable = require('./symbol-table');
 
+// ----------------------------------------------------------------------------
+
 const TypeInfo = {};
+
+// ----------------------------------------------------------------------------
 
 /**
  * @typedef {Number} isense.TypeInfo.Type
@@ -12,6 +16,8 @@ const TypeInfo = {};
  * @property {*} value
  * @property {Boolean} hasValue
  */
+
+// ----------------------------------------------------------------------------
 
 TypeInfo.Type = {
     Class: 0,
@@ -28,6 +34,8 @@ TypeInfo.Type = {
 
 TypeInfo.typeTextMap = Object.keys(TypeInfo.Type);
 TypeInfo.typeTextMapLowerCase = TypeInfo.typeTextMap.map(t => t.toLowerCase());
+
+// ----------------------------------------------------------------------------
 
 /**
  * @param {isense.TypeInfo} info
@@ -72,6 +80,8 @@ TypeInfo.typeToString = info => {
     }
 };
 
+// ----------------------------------------------------------------------------
+
 /**
  * @param {isense.TypeInfo.Type} type
  * @param {*} value
@@ -85,6 +95,8 @@ TypeInfo.create = (type, value) => {
         hasValue: value !== undefined
     };
 };
+
+// ----------------------------------------------------------------------------
 
 /**
  * @param {Number} value
@@ -155,6 +167,8 @@ TypeInfo.createNull = value => TypeInfo.create(TypeInfo.Type.Null, value);
  * @returns {isense.TypeInfo}
  */
 TypeInfo.createAny = value => TypeInfo.create(TypeInfo.Type.Any, value);
+
+// ----------------------------------------------------------------------------
 
 /**
  * @param {isense.TypeInfo} info
@@ -288,6 +302,8 @@ TypeInfo.toBoolean = info => {
 
 };
 
+// ----------------------------------------------------------------------------
+
 TypeInfo.isStringLike = info => {
     return info.type === TypeInfo.Type.String || 
         info.type === TypeInfo.Type.Array || 
@@ -301,5 +317,7 @@ TypeInfo.hasUniqueType = typeInfo => {
 	const firstType = typeInfo[0].type;
 	return !typeInfo.find(t => t.type !== firstType);
 };
+
+// ----------------------------------------------------------------------------
 
 module.exports = TypeInfo;

@@ -119,10 +119,11 @@ Ast.findRightSiblings = node => {
 };
 
 /**
+ * 
  * @param {ts.Node} node 
  */
 Ast.findRightMostDescendant = node => {
-    const children = Ast.findChildren(node);
+    const children = Ast.findChildren(node).filter(n => !ts.isFunctionLike(n));
     const total = children.length;
     return total ? Ast.findRightMostDescendant(children[total - 1]) : node;
 };
