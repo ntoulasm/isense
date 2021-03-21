@@ -425,7 +425,7 @@ function findActiveTypeBindersOutOfIfStatement(conditions, symbol, startNode) {
     }
 
     if(conditions.length) {
-        const ifStatement = Ast.findAncestor(conditions[0], ts.SyntaxKind.IfStatement);
+        const ifStatement = Ast.findTopLevelIfStatement(conditions[0].parent);
         binders.push(...findActiveTypeBindersOutOfConditional(ifStatement, symbol, startNode));
     }
 
