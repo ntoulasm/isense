@@ -127,7 +127,7 @@ TypeCarrier.evaluate = carrier => {
         if(!infos.length) {
             infos.push(TypeInfo.createAny());
         }
-        return infos;
+        return removeDuplicates(infos);
     } else {
         console.assert(false, `Trying to evaluate unknown carrier '${carrier.kind}'`);
     }
@@ -301,7 +301,6 @@ evaluateBinaryExpressionFunctions[ts.SyntaxKind.PlusToken] = carrier => {
 
     for(const l of leftInfo) {
         for(const r of rightInfo) {
-            // TODO: Check if similar carrier already exists
             info.push(...plus(l, r));
         }
     }
@@ -337,7 +336,6 @@ evaluateBinaryExpressionFunctions[ts.SyntaxKind.GreaterThanGreaterThanGreaterTha
 
     for(const l of leftInfo) {
         for(const r of rightInfo) {
-            // TODO: Check if similar carrier already exists
             if(l.hasValue && r.hasValue) {
                 const leftNumber = TypeInfo.toNumber(l);
                 const rightNumber = TypeInfo.toNumber(r);
@@ -576,6 +574,25 @@ evalutePrefixUnaryExpressionFunctions[ts.SyntaxKind.TildeToken] = carrier => {
         return number;
     });
 };
+
+//  ----------------------------------------------------------------------------------
+
+/**
+ * TODO: Remove this function.
+ * We need to have a set-like structure for typeInfos.
+ * 
+ * @param {*} typeInfo 
+ * @returns 
+ */
+function removeDuplicates(typeInfo) {
+    const info = [];
+    for(const t of typeInfo) {
+        if(t.hasValue || !info.find(nt => !nt.hasValue && nt.type === t.type)) { 
+            info.push(t);
+        }
+    }
+    return info;
+}
 
 //  ----------------------------------------------------------------------------------
 
