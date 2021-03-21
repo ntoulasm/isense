@@ -94,19 +94,24 @@ const computeFunctionSignature = (callee, call) => {
 	if(callee.name !== undefined) {
 		signature += callee.name.getText();
 	} else {
-		// TODO: check if this is fine
-		// refinement: it probably is 
-		//		eg: x()() -> x()()
 		signature += call.expression.getText();
 	}
 	const parametersSignature = computeParametersSignature(callee);
 	signature += `(${parametersSignature.join(', ')})`;
+	signature += `: ${computeReturnInfo(callee)}`;
 	return {
 		documentation: computeDocumentation(callee),
 		label: signature,
 		parameters: parametersSignature.map(p => vscodeLanguageServer.ParameterInformation.create(p, /* parameter documentation */))
 	};
 };
+
+function computeReturnInfo(callee) {
+	return callee.returnTypeCarriers
+		.flatMap(c => TypeCarrier.evaluate(c))
+		.map(t => TypeInfo.typeToString(t))
+		.join('||');
+}
 
 // ----------------------------------------------------------------------------
 

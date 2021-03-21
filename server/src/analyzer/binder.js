@@ -238,6 +238,7 @@ function bindFunction(node, body) {
     node._original = node;
     node.freeVariables = new Set();
     node.callSites = [];
+    node.returnTypeCarriers = [];
     declareParameters(node);
     Binder.bindFunctionScopedDeclarations(node.body);
 }

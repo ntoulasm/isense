@@ -319,12 +319,12 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.ReturnStatement: {
                 ts.forEachChild(node, analyzeInternal);
-                if(node.expression && !node.unreachable && !callStack.isEmpty()) {
-                    const call = callStack.top();
-                    call.callee.returnTypeCarriers.push(node.expression.carrier);
-                }
                 if(!node.unreachable) {
                     markUnreachableStatements(Ast.findRightSiblings(node));
+                    const func = node._original ? callStack.top().callee : Ast.findAncestorFunction(node);
+                    if(node.expression) {
+                        func.returnTypeCarriers.push(node.expression.carrier);
+                    }
                 }
                 break;
             }
