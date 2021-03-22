@@ -365,7 +365,7 @@ function findActiveTypeBindersInIfStatement(node, symbol, startNode) {
     const conditionsToSearch = new Set();
     
     for(const statement of statements) {
-        const statementBinders = Ast.findActiveTypeBindersInLeftSibling(statement, symbol, startNode, node.parent);
+        const statementBinders = Ast.findActiveTypeBindersInStatement(statement, symbol, startNode);
         if(statementBinders) {
             binders.push(...statementBinders);
         } else {
@@ -446,10 +446,7 @@ function findNextConditionToSearch(current, conditions) {
 function findActiveTypeBindersInSwitchStatement(node, symbol, startNode) {
 
     const clauses = node.caseBlock.clauses;
-    const binders = clauses.flatMap(c => 
-        Ast.findActiveTypeBindersInLeftSibling(c, symbol, startNode, c.parent.parent) || 
-        []
-    );
+    const binders = clauses.flatMap(c => findActiveTypeBindersInBlock(c, symbol, startNode) || [])
     // TODO: Could this be more accurate?
     // It is more complicated than if-statements, because case clauses might fall-through.
     binders.push(...findActiveTypeBindersOutOfConditional(node, symbol, startNode));
