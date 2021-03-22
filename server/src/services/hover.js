@@ -62,15 +62,14 @@ function createIdentifierInfo(ast, node) {
 	const closestBinders = Ast.findActiveTypeBinders(node, symbol);
 
 	for(const b of symbol.binders) {
-		const line = ts.getLineAndCharacterOfPosition(ast, b.parent.getStart(ast)).line + 1;
 		const isActive = closestBinders.indexOf(b) !== -1;
-		const binderLineInfo = `at line ${line}`;
+		const lineInfo = `at line ${getLine(ast, b)}`;
 		const postfix = isActive ? '(up to here)' : '';
 		const plausibleTypes = TypeCarrier.evaluate(b.carrier);
-		contents.push({
-			language: 'typescript',
-			value: `${Signature.compute(node, symbol, plausibleTypes)} ${binderLineInfo} ${postfix}`
-		});
+		const signature = Signature.compute(node, symbol, plausibleTypes);
+		contents.push(
+			createQuickInfo(`${signature} ${lineInfo} ${postfix}`)
+		);
 	}
 
 	return { contents };
@@ -79,13 +78,23 @@ function createIdentifierInfo(ast, node) {
 
 // ----------------------------------------------------------------------------
 
+function getLine(ast, binder) {
+	return ts.getLineAndCharacterOfPosition(ast, binder.parent.getStart(ast)).line + 1;
+}
+
+// ----------------------------------------------------------------------------
+
+function createQuickInfo(info) {
+	return {
+		language: 'typescript',
+		value: info
+	};
+}
+
 function createAnyInfo(node) {
 	return { 
-		contents: {
-			language: 'typescript',
-			value: node.text + ': any'
-		}
-	} 
+		contents: createQuickInfo(node.text + ': any')
+	};
 }
 
 // ----------------------------------------------------------------------------

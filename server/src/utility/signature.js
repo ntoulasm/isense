@@ -24,7 +24,7 @@ Signature.compute = (node, symbol, typeInfo, typeSeparator = ' || ', computeValu
 		TypeInfo.typeToString(t) + ' = ' + stringifyValue(node, t) :
 		TypeInfo.typeToString(t);
 
-	return signature + typeInfo.map(typeInfoToText).join(typeSeparator);
+	return signature + symbol.name + ': ' + typeInfo.map(typeInfoToText).join(typeSeparator);
 	
 }
 
