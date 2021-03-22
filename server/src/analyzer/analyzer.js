@@ -69,9 +69,10 @@ Analyzer.analyze = ast => {
             }
             case ts.SyntaxKind.PropertyDeclaration: {
                 ts.forEachChild(node, analyzeInternal);
+                if(!node.initializer) { break; }
                 const name = node.name.text;
                 const symbol = Ast.lookUp(node, name);
-                const carrier = node.initializer && node.initializer.carrier;
+                const carrier = node.initializer.carrier;
                 assign(node, symbol, node.initializer, carrier);
                 break;
             }
