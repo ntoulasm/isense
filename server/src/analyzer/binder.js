@@ -257,7 +257,7 @@ function findFunctionName(node) {
         case ts.SyntaxKind.ArrowFunction:
             break;
         case ts.SyntaxKind.Constructor:
-            return `(constructor) ${node.parent.name.text}`;
+            return `(constructor) ${findConstructorName(node)}`;
         case ts.SyntaxKind.SetAccessor:
             return `(set) ${node.name.text}`;
         case ts.SyntaxKind.GetAccessor:
@@ -281,6 +281,10 @@ function findClassName(node) {
     } else {
         return findAnonymousName(node, () => Binder.totalAnonymousClasses++);
     }
+}
+
+function findConstructorName(node) {
+    return node.parent.binders[0].symbol.name;
 }
 
 function findAnonymousName(node, incrementTotalAnonymous) {
