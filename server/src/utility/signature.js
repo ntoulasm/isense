@@ -71,7 +71,8 @@ function stringifyObject(node, typeInfo) {
 		// If binders are empty the property is not declared yet.
 		const binders = Ast.findActiveTypeBindersInLeftSibling(
 			Ast.AdjustObjectPropertyStartingSearchNode(node), 
-			property
+			property,
+			node
 		);
 		if(!binders.length) { continue; }
 
