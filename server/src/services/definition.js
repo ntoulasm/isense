@@ -1,5 +1,4 @@
-const Ast = require('../ast/ast');
-const { getAst, createRange, getSymbolOfIdentifier } = require('./utility');
+const { getAst, createRange, getSymbolOfIdentifier, findFocusedNode } = require('./utility');
 const es5LibAst = require('../utility/es5-lib');
 
 // ----------------------------------------------------------------------------
@@ -20,12 +19,7 @@ const Definition = {};
 Definition.onDefinition = info => {
 
 	const ast = getAst(info);
-	const position = info.position;
-	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
-	/**
-	 * @type {ts.Node}
-	 */
-	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
+	const node = findFocusedNode(ast, info.position);
 
 	if(!node) { return null; }
 

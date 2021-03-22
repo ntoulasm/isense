@@ -4,11 +4,10 @@ const Symbol = require('../utility/symbol');
 const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('../utility/type-carrier');
 const Signature = require('../utility/signature');
-const { getAst, getCompletionItemKind, getPropertySymbols } = require('./utility');
+const { getAst, getCompletionItemKind, getPropertySymbols, findFocusedNode } = require('./utility');
 
 // ----------------------------------------------------------------------------
 
-const ts = require('typescript');
 const vscodeLanguageServer = require('vscode-languageserver');
 
 // ----------------------------------------------------------------------------
@@ -20,11 +19,9 @@ const Completion = {};
 Completion.onCompletion = info => {
 
 	const ast = getAst(info);
-	const position = info.position;
-	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
+	const node = findFocusedNode(ast, info.position);
 	const triggerCharacter = info.context.triggerCharacter;
 
-	const node = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.Identifier);
 	if(!node || Ast.isDeclarationName(node)) { return; }
 
 	if(Ast.isNameOfPropertyAccessExpression(node)) {

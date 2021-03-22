@@ -80,4 +80,11 @@ Utility.getSymbolOfIdentifier = node => {
 
 // ----------------------------------------------------------------------------
 
+Utility.findFocusedNode = (ast, position) => {
+	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
+	return Ast.findInnermostNodeOfAnyKind(ast, offset);
+};
+
+// ----------------------------------------------------------------------------
+
 module.exports = Utility;

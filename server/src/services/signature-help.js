@@ -25,7 +25,7 @@ SignatureHelp.onSignatureHelp = info => {
 	const { position, context } = info;
 	const ast = getAst(info);
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character) - 1;
-	const call = Ast.findInnermostNode(ast, offset, ts.SyntaxKind.CallExpression);
+	const call = Ast.findInnerMostNode(ast, offset, ts.isCallLikeExpression);
 
 	if(!call) { return ; }
 	if(!call.expression.carrier) { Analyzer.analyze(ast); }
@@ -64,18 +64,13 @@ const computeParametersSignature = (callee) => {
 			inducedBinders.flatMap(b => TypeCarrier.evaluate(b.carrier))
 		);
 
-		let signature = parameterName;
-		let firstTime = true;
+		let signature = `${parameterName}: `;
 
-		for(const type of inducedTypeInfos) {
-			if(firstTime) { 
-				signature += ':';
-				firstTime = false; 
-			} else { 
-				signature += ' ||' 
-			}
-			signature += ` ${TypeInfo.typeToString(type)}`;
-		}
+		if(!inducedTypeInfos.length) { return signature + 'any'; }
+		
+		signature += inducedTypeInfos
+		.map(t => TypeInfo.typeToString(t))
+		.join(' || ');
 
 		return signature;
 	}
@@ -108,6 +103,7 @@ const computeFunctionSignature = (callee, call) => {
 function computeReturnInfo(callee) {
 	const typeInfo = callee.returnTypeCarriers
 		.flatMap(c => TypeCarrier.evaluate(c));
+	if(!typeInfo.length) { return [ 'any' ]; }
 	return TypeCarrier.removeDuplicates(typeInfo)
 		.map(t => TypeInfo.typeToString(t))
 		.join(' || ');

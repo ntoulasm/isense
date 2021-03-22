@@ -130,30 +130,10 @@ Ast.findRightMostDescendant = node => {
 
 // ----------------------------------------------------------------------------
 
-Ast.findInnerMostNodeWithPredicate = (ast, offset, predicate) => {
+Ast.findInnerMostNode = (ast, offset, predicate) => {
     function findInnermostNodeInternal(node) {
         if(node.getFullStart(ast) <= offset && node.end >= offset) {
             if(predicate(node)) {
-                const innermostNode = ts.forEachChild(node, findInnermostNodeInternal);
-                return innermostNode || node;
-            }
-            return ts.forEachChild(node, findInnermostNodeInternal);
-        }
-    }
-    return ts.forEachChild(ast, findInnermostNodeInternal);
-};
-
-/**
- * @param {ts.SourceFile} ast
- * @param {number} offset
- * @param {number} kind
- * 
- * @returns {ts.Node}
- */
-Ast.findInnermostNode = (ast, offset, kind) => {
-    function findInnermostNodeInternal(node) {
-        if(node.getFullStart(ast) <= offset && node.end >= offset) {
-            if(node.kind === kind) {
                 const innermostNode = ts.forEachChild(node, findInnermostNodeInternal);
                 return innermostNode || node;
             }

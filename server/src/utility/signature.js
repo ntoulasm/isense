@@ -19,24 +19,12 @@ const seen = new WeakSet();
 
 Signature.compute = (node, symbol, typeInfo, typeSeparator = ' || ', computeValues = true) => {
 
-	let firstTime = true;
 	let signature = isConstant(symbol) ? 'const ' : '';
+	const typeInfoToText = t => (computeValues && t.hasValue) ?
+		TypeInfo.typeToString(t) + ' = ' + stringifyValue(node, t) :
+		TypeInfo.typeToString(t);
 
-	for(const t of typeInfo) {
-		if(firstTime) { 
-			signature += `${symbol.name}: `;
-			firstTime = false;
-		} else {
-			signature += typeSeparator;
-		}
-		signature += `${TypeInfo.typeToString(t)}`;
-		if(computeValues && t.hasValue) {
-			signature += (' = ' + stringifyValue(node, t));
-		}
-
-	}
-	
-    return signature;
+	return signature + typeInfo.map(typeInfoToText).join(typeSeparator);
 	
 }
 
