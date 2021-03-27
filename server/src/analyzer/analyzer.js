@@ -125,6 +125,11 @@ Analyzer.analyze = ast => {
                 node.carrier = TypeCarrier.createPrefixUnaryExpression(node.operator, node.operand.carrier);
                 break;
             }
+            case ts.SyntaxKind.BreakStatement:
+            case ts.SyntaxKind.ContinueStatement: {
+                markUnreachableStatements(Ast.findRightSiblings(node));
+                break;
+            }
             case ts.SyntaxKind.PostfixUnaryExpression: {
                 ts.forEachChild(node, analyzeInternal);
                 induceParameterTypeFromPostfixUnaryExpression(node);
