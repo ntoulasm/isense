@@ -33,6 +33,7 @@ SignatureHelp.onSignatureHelp = info => {
 	if(!callees.length) { return ; }
 	callees = callees.map(t => t.value);
 	const activeParameter = computeActiveParameter(call, offset);
+	if(activeParameter === null) { return ; }
 	const activeSignature = context.activeSignatureHelp ? context.activeSignatureHelp.activeSignature : 0;
 	setMetadata(ast, call, callees[activeSignature]);
 	const signatures = callees.map(callee => computeFunctionSignature(callee, call))
@@ -136,7 +137,8 @@ function computeJSDocDocumentation(node) {
 const computeActiveParameter = (call, offset) => {
 
 	const callChildren = call.getChildren();
-	const leftParenthesisToken = callChildren[1];
+	const leftParenthesisToken = callChildren.find(c => c.kind === ts.SyntaxKind.OpenParenToken);
+	if(!leftParenthesisToken) { return null; }
 	const leftParenthesisOffset = leftParenthesisToken.end - 1;
 	const cursorOffset = offset - leftParenthesisOffset;
 	const ast = call.getSourceFile();
