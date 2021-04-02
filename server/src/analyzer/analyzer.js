@@ -811,7 +811,7 @@ function pickCallee(call, callees) {
     const ast = call.getSourceFile();
     const calleeInfo = getMetaData(ast, call);
     if(!calleeInfo) { return ; }
-    const callee = Ast.findInnerMostNodeWithPredicate(
+    const callee = Ast.findInnerMostNode(
         ast, calleeInfo.start, ts.isFunctionLike
     );
     if(callee) { return callee; }
