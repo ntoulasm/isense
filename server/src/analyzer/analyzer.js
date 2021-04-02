@@ -313,7 +313,7 @@ Analyzer.analyze = ast => {
                 ts.forEachChild(node, analyzeInternal);
                 if(!node.unreachable) {
                     markUnreachableStatements(Ast.findRightSiblings(node));
-                    const func = node._original ? callStack.top().callee : Ast.findAncestorFunction(node);
+                    const func = Ast.findAncestorFunction(node);
                     if(node.expression) {
                         func.returnTypeCarriers.push(node.expression.carrier);
                     }
