@@ -8,6 +8,7 @@ const { getAst, getCompletionItemKind, getPropertySymbols, findFocusedNode } = r
 
 // ----------------------------------------------------------------------------
 
+const ts = require('typescript');
 const vscodeLanguageServer = require('vscode-languageserver');
 
 // ----------------------------------------------------------------------------
@@ -24,13 +25,20 @@ Completion.onCompletion = info => {
 
 	if(!node || Ast.isDeclarationName(node)) { return; }
 
-	if(Ast.isNameOfPropertyAccessExpression(node)) {
-		if(triggerCharacter === '.') { Analyzer.analyze(ast); } // TODO: Do not analyze here
+	if(triggerCharacter === '.') { 
+		Analyzer.analyze(ast); // TODO: Do not analyze here
+		let propertyAccess = node;
+		if(node.kind === ts.SyntaxKind.Identifier) {
+			propertyAccess = node.parent;
+		} else if(node.kind !== ts.SyntaxKind.PropertyAccessExpression) {
+			return ;
+		}
+		return computePropertyCompletions(propertyAccess);
+	} else if(Ast.isNameOfPropertyAccessExpression(node)) {
 		return computePropertyCompletions(node.parent);
 	} else {
 		return computeIdentifierCompletions(node);
 	}
-
 };
 
 // ----------------------------------------------------------------------------
