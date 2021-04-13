@@ -35,7 +35,9 @@ SignatureHelp.onSignatureHelp = info => {
 	const activeParameter = computeActiveParameter(call, offset);
 	if(activeParameter === null) { return ; }
 	const activeSignature = context.activeSignatureHelp ? context.activeSignatureHelp.activeSignature : 0;
-	setMetadata(ast, call, callees[activeSignature]);
+	if(callees.length > 1) {
+		setMetadata(ast, call, callees[activeSignature]);
+	}
 	const signatures = callees.map(callee => computeFunctionSignature(callee, call))
 
 	return {
