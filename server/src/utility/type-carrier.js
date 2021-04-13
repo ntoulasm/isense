@@ -3,6 +3,7 @@ const Ast = require('../ast/ast');
 const TypeInfo = require('./type-info');
 
 const ts = require('typescript');
+const { doesReturnOnAllControlPaths } = require('../analyzer/implicit-return-detector');
 
 //  ----------------------------------------------------------------------------------
 
@@ -226,20 +227,15 @@ evaluateFunctions[TypeCarrier.Kind.TypeOfExpression] = carrier => {
 };
 
 const unknownCalleeTypeInfo = [ TypeInfo.createAny() ];
-const defaultCallTypeInfo = [ TypeInfo.createUndefined() ];
 
 evaluateFunctions[TypeCarrier.Kind.CallExpression] = carrier => {
-
     const callee = carrier.expression.callee;
-
-    if(!callee) { 
-        return unknownCalleeTypeInfo; 
-    } else if(callee.returnTypeCarriers.length) {
-        return callee.returnTypeCarriers.flatMap(c => TypeCarrier.evaluate(c));   
-    } else {
-        return defaultCallTypeInfo;
+    if(!callee) { return unknownCalleeTypeInfo; }
+    const plausibleTypes = callee.returnTypeCarriers.flatMap(c => TypeCarrier.evaluate(c));
+    if(!doesReturnOnAllControlPaths(callee.body)) {
+        plausibleTypes.push(TypeInfo.createUndefined());
     }
-
+    return plausibleTypes;
 };
 
 evaluateFunctions[TypeCarrier.Kind.NewExpression] = carrier => {
