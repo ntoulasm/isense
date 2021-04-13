@@ -9,7 +9,7 @@ const TypeBinder = require('../utility/type-binder');
 const AnalyzeDiagnostic = require('./analyze-diagnostic');
 const Binder = require('./binder');
 const DiagnosticMessages = require('./diagnostic-messages');
-const { getMetaData } = require('./call');
+const { getMetaData, removeMetaData } = require('./call');
 
 // ----------------------------------------------------------------------------
 
@@ -814,7 +814,14 @@ function pickCallee(call, callees) {
     const callee = Ast.findInnerMostNode(
         ast, calleeInfo.start, ts.isFunctionLike
     );
-    if(callee) { return callee; }
+    if(callee) { 
+        if(callees.indexOf(callee) != -1) {
+            return callee;
+        } else {
+            // TODO: not the right to clear the metadata but it does its job :(
+            removeMetaData(ast, call);
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------

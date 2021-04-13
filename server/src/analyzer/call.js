@@ -31,7 +31,7 @@ Call.setMetadata = (ast, call, callee) => {
 };
 
 Call.getMetaData = (ast, call) => {
-    const fileName = ast.fileName
+    const fileName = ast.fileName;
     if(metadata[fileName]) {
         const callData = metadata[fileName].find(c => c.call.start === call.getStart(ast));
         if(callData) {
@@ -39,6 +39,14 @@ Call.getMetaData = (ast, call) => {
         }
     }
 };
+
+Call.removeMetaData = (ast, call) => {
+    const fileName = ast.filename;
+    if(metadata[fileName]) {
+        const callData = metadata[fileName].find(c => c.call.start === call.getStart(ast));
+        removePrevious(callData, call);
+    }
+}
 
 /**
  * @param {ts.SourceFile} ast 
