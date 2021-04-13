@@ -29,9 +29,7 @@ SignatureHelp.onSignatureHelp = info => {
 
 	if(!call) { return ; }
 	if(!call.expression.carrier) { Analyzer.analyze(ast); }
-	let callees = TypeCarrier.evaluate(call.expression.carrier).filter(t => t.type === TypeInfo.Type.Function && t.value);
-	if(!callees.length) { return ; }
-	callees = callees.map(t => t.value);
+	let callees = call.plausibleCallees;
 	const activeParameter = computeActiveParameter(call, offset);
 	if(activeParameter === null) { return ; }
 	const activeSignature = context.activeSignatureHelp ? context.activeSignatureHelp.activeSignature : 0;

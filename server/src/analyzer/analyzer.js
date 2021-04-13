@@ -242,8 +242,8 @@ Analyzer.analyze = ast => {
                 ts.forEachChild(node, analyzeInternal);
                 
                 const types = TypeCarrier.evaluate(node.expression.carrier);
-                const callees = types.flatMap(t => t.type === TypeInfo.Type.Function ? [t.value] : []);
-                const callee = pickCallee(node, callees);
+                node.plausibleCallees = types.flatMap(t => t.type === TypeInfo.Type.Function ? [t.value] : []);
+                const callee = pickCallee(node);
                 
                 node.carrier = TypeCarrier.createCallExpression(node);
 
@@ -445,9 +445,9 @@ function createEmptyConstructor(classNode) {
  * @param {ts.Node} node 
  * @param {ts.Node} constructor 
  */
-function newClassExpression(node, classNode, thisObject) {
+function newClassExpression(node, constructor, thisObject) {
 
-    const constructor = Ast.findConstructor(classNode) || createEmptyConstructor(classNode);
+    const classNode = constructor.parent;
     const beforeCall = (constructor) => {
         for(const member of classNode.members) {
             if(member.kind === ts.SyntaxKind.PropertyDeclaration) {
@@ -469,20 +469,27 @@ function newClassExpression(node, classNode, thisObject) {
 function newExpression(node) {
 
     const types = TypeCarrier.evaluate(node.expression.carrier);
-    const constructor = types.find(t => (t.type === TypeInfo.Type.Function || t.type === TypeInfo.Type.Class));
+    node.plausibleCallees = types.flatMap(t => {
+        switch(t.type) {
+            case TypeInfo.Type.Function:
+                return t.value;
+            case TypeInfo.Type.Class:
+                return Ast.findConstructor(t.value) || createEmptyConstructor(t.value)
+        }    
+    });
+    const constructor = pickCallee(node);
 
     node.carrier = TypeCarrier.createNewExpression(node);
 
-    // TODO: pick constructor?
-    if(constructor && constructor.value) {
+    if(constructor) {
         const thisObject = TypeInfo.createObject(true);
-        if(constructor.value.name) { 
-            thisObject.constructorName = constructor.value.name.escapedText; 
+        if(constructor.name) { 
+            thisObject.constructorName = constructor.name.escapedText; 
         }
-        if(constructor.type === TypeInfo.Type.Function) {
-            call(node, constructor.value, thisObject);
-        } else if (constructor.type === TypeInfo.Type.Class) {
-            newClassExpression(node, constructor.value, thisObject);
+        if(constructor.kind === ts.SyntaxKind.Constructor) {
+            newClassExpression(node, constructor, thisObject);
+        } else {
+            call(node, constructor, thisObject);
         }
         if(!node.callee.returnTypeCarriers.length) {
             node.callee.returnTypeCarriers.push(TypeCarrier.createConstant(thisObject));
@@ -805,9 +812,9 @@ function isNodeOfInterest(node) {
 
 // ----------------------------------------------------------------------------
 
-function pickCallee(call, callees) {
-    if(!callees.length) { return ; }
-    if(callees.length == 1) { return callees[0]; }
+function pickCallee(call) {
+    if(!call.plausibleCallees.length) { return ; }
+    if(call.plausibleCallees.length == 1) { return call.plausibleCallees[0]; }
     const ast = call.getSourceFile();
     const calleeInfo = getMetaData(ast, call);
     if(!calleeInfo) { return ; }
@@ -815,7 +822,7 @@ function pickCallee(call, callees) {
         ast, calleeInfo.start, ts.isFunctionLike
     );
     if(callee) { 
-        if(callees.indexOf(callee) != -1) {
+        if(call.plausibleCallees.indexOf(callee) != -1) {
             return callee;
         } else {
             // TODO: not the right place to clear the metadata but it does its job :(
