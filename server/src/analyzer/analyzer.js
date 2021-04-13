@@ -818,7 +818,7 @@ function pickCallee(call, callees) {
         if(callees.indexOf(callee) != -1) {
             return callee;
         } else {
-            // TODO: not the right to clear the metadata but it does its job :(
+            // TODO: not the right place to clear the metadata but it does its job :(
             removeMetaData(ast, call);
         }
     }
