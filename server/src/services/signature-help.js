@@ -93,7 +93,7 @@ const computeFunctionSignature = (callee, call) => {
 	}
 	const parametersSignature = computeParametersSignature(callee);
 	signature += `(${parametersSignature.join(', ')})`;
-	signature += `: ${computeReturnInfo(callee)}`;
+	signature += `: ${computeReturnInfo(callee, call)}`;
 	return {
 		documentation: computeDocumentation(callee),
 		label: signature,
@@ -101,13 +101,25 @@ const computeFunctionSignature = (callee, call) => {
 	};
 };
 
-function computeReturnInfo(callee) {
+function computeReturnInfo(callee, call) {
+	if(call.kind === ts.SyntaxKind.NewExpression) {
+		return computeNewExpressionReturnInfo(callee);	
+	}
 	const typeInfo = callee.returnTypeCarriers
 		.flatMap(c => TypeCarrier.evaluate(c));
 	if(!typeInfo.length) { return [ 'any' ]; }
 	return TypeCarrier.removeDuplicates(typeInfo)
 		.map(t => TypeInfo.typeToString(t))
 		.join(' || ');
+}
+
+function computeNewExpressionReturnInfo(callee) {
+	if(callee.kind === ts.SyntaxKind.Constructor && callee.parent.name) {
+		return callee.parent.name.escapedText;
+	} else if(callee.name) {
+		return callee.name.escapedText;
+	}
+	return 'object';
 }
 
 // ----------------------------------------------------------------------------
