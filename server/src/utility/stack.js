@@ -23,6 +23,8 @@ Stack.create = function() {
         return elements[elements.length - 1];
     };
 
+    stack.getElements = () => elements;
+
     return stack;
 
 };

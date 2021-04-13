@@ -247,7 +247,7 @@ Analyzer.analyze = ast => {
                 
                 node.carrier = TypeCarrier.createCallExpression(node);
 
-                if(callee) {
+                if(callee && !isRecursive(callee)) {
                     call(node, callee);
                 }
 
@@ -820,6 +820,16 @@ function pickCallee(call, callees) {
         } else {
             // TODO: not the right place to clear the metadata but it does its job :(
             removeMetaData(ast, call);
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+function isRecursive(func) {
+    for(const c of callStack.getElements()) {
+        if(func._original === c.callee._original) {
+            return true;
         }
     }
 }
