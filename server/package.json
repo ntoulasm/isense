@@ -12,6 +12,7 @@
 		"url": "https://github.com/ntoulasm/isense"
 	},
 	"dependencies": {
+		"typescript": "^4.2.4",
 		"vscode-languageserver": "^7.0.0"
 	},
 	"scripts": {}

@@ -67,7 +67,6 @@
 		"update": "cd client && npm update && cd ../server && npm update && cd .."
 	},
 	"devDependencies": {
-		"typescript": "^3.8.2"
 		"@types/node": "^14.14.41",
 		"eslint": "^7.24.0"
 	},
