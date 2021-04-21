@@ -321,6 +321,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ElseKeyword] =
 Replicator.replicateFunctions[ts.SyntaxKind.EnumKeyword] =
 Replicator.replicateFunctions[ts.SyntaxKind.ExportKeyword] =
 Replicator.replicateFunctions[ts.SyntaxKind.ExtendsKeyword] =
+Replicator.replicateFunctions[ts.SyntaxKind.FalseKeyword] =
 Replicator.replicateFunctions[ts.SyntaxKind.FinallyKeyword] =
 Replicator.replicateFunctions[ts.SyntaxKind.ForKeyword] =
 Replicator.replicateFunctions[ts.SyntaxKind.FunctionKeyword] =
@@ -962,7 +963,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.PropertyAccessExpression] = (node, o
 Replicator.replicateFunctions[ts.SyntaxKind.ElementAccessExpression] = (node, options) => {
     return ts.createElementAccess(
         Replicator.replicateProperty(node, 'expression', options),
-        Replicator.replicateProperty(node, 'index', options)
+        Replicator.replicateProperty(node, 'argumentExpression', options)
     );
 };
 

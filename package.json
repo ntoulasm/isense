@@ -62,14 +62,14 @@
 		}
 	},
 	"scripts": {
-		"vscode:prepublish": "cd client && npm run update-vscode && cd .. ",
-		"postinstall": "cd client && npm install && cd ../server && npm install && cd .."
+		"vscode:prepublish": "",
+		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+		"update": "cd client && npm update && cd ../server && npm update && cd .."
 	},
 	"devDependencies": {
-		"@types/mocha": "^5.2.0",
-		"@types/node": "^8.0.0",
-		"eslint": "^5.13.0",
 		"typescript": "^3.8.2"
+		"@types/node": "^14.14.41",
+		"eslint": "^7.24.0"
 	},
 	"dependencies": {}
 }
