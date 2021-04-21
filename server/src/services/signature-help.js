@@ -105,8 +105,7 @@ function computeReturnInfo(callee, call) {
 	if(call.kind === ts.SyntaxKind.NewExpression) {
 		return computeNewExpressionReturnInfo(callee);	
 	}
-	const typeInfo = callee.returnTypeCarriers
-		.flatMap(c => TypeCarrier.evaluate(c));
+	const typeInfo = TypeCarrier.computePlausibleReturnTypes(callee);
 	if(!typeInfo.length) { return [ 'any' ]; }
 	return TypeCarrier.removeDuplicates(typeInfo)
 		.map(t => TypeInfo.typeToString(t))
