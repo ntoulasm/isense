@@ -1,15 +1,12 @@
 {
 	"env": {
 		"browser": false,
-		"commonjs": true,
 		"es6": true,
 		"node": true
 	},
 	"parserOptions": {
-		"ecmaVersion": 2017,
-		"ecmaFeatures": {
-			"jsx": true
-		},
+		"ecmaVersion": 2020,
+		"ecmaFeatures": { },
 		"sourceType": "module"
 	},
 	"rules": {
