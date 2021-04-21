@@ -483,12 +483,11 @@ function newExpression(node) {
 
     if(constructor) {
         const thisObject = TypeInfo.createObject(true);
-        if(constructor.name) { 
-            thisObject.constructorName = constructor.name.escapedText; 
-        }
         if(constructor.kind === ts.SyntaxKind.Constructor) {
+            setClassConstructorName(constructor, thisObject);
             newClassExpression(node, constructor, thisObject);
         } else {
+            setFunctionConstructorName(constructor, thisObject);
             call(node, constructor, thisObject);
         }
         if(!node.callee.returnTypeCarriers.length) {
@@ -496,6 +495,18 @@ function newExpression(node) {
         }
     }
 
+}
+
+function setFunctionConstructorName(constructor, thisObject) {
+    if(constructor.name) {
+        thisObject.constructorName = constructor.name.escapedText;
+    }
+}
+
+function setClassConstructorName(constructor, thisObject) {
+    if(constructor.parent.name) {
+        thisObject.constructorName = constructor.parent.name.escapedText;
+    }
 }
 
 /**
