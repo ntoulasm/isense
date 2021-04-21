@@ -36,7 +36,7 @@ function stringifyValue(node, typeInfo) {
 		case TypeInfo.Type.Boolean:
 			return String(typeInfo.value);
 		case TypeInfo.Type.String:
-			return String(typeInfo.value);
+			return String(`'${typeInfo.value}'`);
 		case TypeInfo.Type.Array:
 			// TODO: 
 			return '';
