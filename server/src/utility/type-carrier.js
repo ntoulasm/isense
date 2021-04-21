@@ -230,12 +230,7 @@ const unknownCalleeTypeInfo = [ TypeInfo.createAny() ];
 
 evaluateFunctions[TypeCarrier.Kind.CallExpression] = carrier => {
     const callee = carrier.expression.callee;
-    if(!callee) { return unknownCalleeTypeInfo; }
-    const plausibleTypes = callee.returnTypeCarriers.flatMap(c => TypeCarrier.evaluate(c));
-    if(!doesReturnOnAllControlPaths(callee.body)) {
-        plausibleTypes.push(TypeInfo.createUndefined());
-    }
-    return plausibleTypes;
+    return TypeCarrier.computePlausibleReturnTypes(callee);
 };
 
 evaluateFunctions[TypeCarrier.Kind.NewExpression] = carrier => {
@@ -249,6 +244,16 @@ evaluateFunctions[TypeCarrier.Kind.NewExpression] = carrier => {
     }
 
 };
+
+TypeCarrier.computePlausibleReturnTypes = func => {
+    if(!func) { return unknownCalleeTypeInfo; }
+    const plausibleTypes = func.returnTypeCarriers.flatMap(c => TypeCarrier.evaluate(c));
+    if(!doesReturnOnAllControlPaths(func.body)) {
+        plausibleTypes.push(TypeInfo.createUndefined());
+    }
+    return plausibleTypes;
+}
+
 
 //  ----------------------------------------------------------------------------------
 
