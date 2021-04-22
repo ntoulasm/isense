@@ -1,9 +1,19 @@
+const Stack = require('./stack');
+
+// ----------------------------------------------------------------------------
+
 const vscodeLanguageServer = require('vscode-languageserver');
 const ts = require('typescript');
 
 // ----------------------------------------------------------------------------
 
 const Utility = {};
+
+// ----------------------------------------------------------------------------
+
+Utility.blockStack = Stack.create();
+
+// ----------------------------------------------------------------------------
 
 Utility.isNumber = function(value) {
     return typeof(value) == "number";

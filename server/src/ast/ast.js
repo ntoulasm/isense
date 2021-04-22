@@ -348,9 +348,26 @@ Ast.findActiveTypeBindersInStatement = (node, symbol, startNode, stopNode) => {
  * @param {ts.Node} startNode 
  */
 function findActiveTypeBindersInBlock(node, symbol, startNode) {
+    if(!doesBlockAffectSymbol(node, symbol)) { return ; }
     const lastStatement = Ast.findLastStatement(node);
     if(!lastStatement) { return ; }
     return Ast.findActiveTypeBindersInStatement(lastStatement, symbol, startNode, node);
+}
+
+function doesBlockAffectSymbol(node, symbol) {
+    if(node.affectedSymbols.has(symbol)) {
+        return true;
+    }
+    for(const b of node.innerBlocks) {
+        if(doesBlockAffectSymbol(b, symbol)) {
+             return true;
+        }
+    }
+    for(const c of node.innerCalls) {
+        if(doesBlockAffectSymbol(c.callee.body)) {
+            return true;
+        }
+    }
 }
 
 /**

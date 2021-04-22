@@ -10,6 +10,7 @@ const AnalyzeDiagnostic = require('./analyze-diagnostic');
 const Binder = require('./binder');
 const DiagnosticMessages = require('./diagnostic-messages');
 const { getMetaData, removeMetaData } = require('./call');
+const Utility = require('../utility/utility');
 
 // ----------------------------------------------------------------------------
 
@@ -200,6 +201,15 @@ Analyzer.analyze = ast => {
 				break;
 
             }
+            case ts.SyntaxKind.CaseClause:
+            case ts.SyntaxKind.DefaultClause:
+            case ts.SyntaxKind.Block: {
+                initBlock(node);
+                Utility.blockStack.push(node);
+                ts.forEachChild(node, analyzeInternal);
+                Utility.blockStack.pop();
+                break;
+            }
             case ts.SyntaxKind.PropertyAccessExpression: {
                 analyzeInternal(node.expression);
                 analyzePropertyAccessExpression(node);
@@ -233,7 +243,7 @@ Analyzer.analyze = ast => {
                 if(!node.body) { break; }
                 node.carrier = TypeCarrier.createConstant(TypeInfo.createFunction(node));
                 functionStack.push(node);
-                ts.forEachChild(node.body, analyzeInternal);
+                ts.forEachChild(node, analyzeInternal);
                 functionStack.pop(node);
                 break;
             }
@@ -413,13 +423,17 @@ function createCallee(callee) {
  */
 function call(call, callee, thisObject = TypeInfo.createObject(true), beforeCall = noOp) {
     callStack.push(call);
+    storeInner('innerCalls', call);
     Ast.addCallSite(callee, call);
     callee = call.callee = createCallee(callee);
     callee.call = call;
     defineThis(callee, thisObject);
     copyParameterTypeBindersToCallee(callee, call.arguments || []);
     beforeCall(callee);
+    initBlock(callee.body);
+    Utility.blockStack.push(callee.body);
     callee.body && Analyzer.analyze(callee.body);
+    Utility.blockStack.pop();
     callStack.pop();
 }
 
@@ -518,6 +532,7 @@ function setClassConstructorName(constructor, thisObject) {
 function assign(node, symbol, carrier) {
     const binder = TypeBinder.create(symbol, carrier);
     Ast.addTypeBinder(node, binder);
+    storeInner('affectedSymbols', symbol);
     return binder;
 }
 
@@ -850,6 +865,21 @@ function isRecursive(func) {
             return true;
         }
     }
+}
+
+// ----------------------------------------------------------------------------
+
+function initBlock(node) {
+    node.affectedSymbols = new Set();
+    node.innerBlocks = new Set();
+    node.innerCalls = new Set();
+    storeInner('innerBlocks', node);
+}
+
+function storeInner(property, value) {
+    if(Utility.blockStack.isEmpty()) { return ; }
+    const currentBlock = Utility.blockStack.top();
+    currentBlock && currentBlock[property].add(value);
 }
 
 // ----------------------------------------------------------------------------
