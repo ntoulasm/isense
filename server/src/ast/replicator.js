@@ -27,7 +27,7 @@ Replicator.defaultOptions = {
  */
 Replicator.replicate = (node, options = Replicator.defaultOptions) => {
 
-    options = {...Replicator.defaultOptions, ...options};
+    options = { ...Replicator.defaultOptions, ...options };
     const clone = Replicator.replicateInternal(node, options);
 
     return clone;
@@ -977,7 +977,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.CallExpression] = (node, options) =>
     return ts.createCall(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
-        Replicator.replicateIfArrayProperty(node, 'argumentsArray', options)
+        Replicator.replicateIfArrayProperty(node, 'arguments', options)
     );
 };
 
