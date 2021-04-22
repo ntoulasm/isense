@@ -211,7 +211,7 @@ Analyzer.analyze = ast => {
                 break;
             }
             case ts.SyntaxKind.PropertyAccessExpression: {
-                analyzeInternal(node.expression);
+                ts.forEachChild(node, analyzeInternal);
                 analyzePropertyAccessExpression(node);
                 break;
             }
