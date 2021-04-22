@@ -103,11 +103,11 @@ function resetTotalAnonymousClasses() {
 
 bindFunctionScopedDeclarationsFunctions[ts.SyntaxKind.ImportClause] = (node, body) => {
 
-    if(node.hasOwnProperty('name') && node.name.kind === ts.SyntaxKind.Identifier) {
+    if(node.name && node.name.kind === ts.SyntaxKind.Identifier) {
         declareImportClause(node, body);
     }
     
-    if(node.hasOwnProperty('namedBindings')) {
+    if(node.namedBindings) {
         switch(node.namedBindings.kind) {
             case ts.SyntaxKind.NamedImports: {
                 node.namedBindings.elements.forEach(e => { declareImportSpecifier(e, body); });
