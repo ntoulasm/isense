@@ -61,7 +61,7 @@ Analyzer.analyze = ast => {
                     const name = node.name.text;
                     const symbol = Ast.lookUp(node, name);
                     const carrier = node.initializer ? node.initializer.carrier : TypeCarrier.createConstant(TypeInfo.createUndefined());
-                    assign(node, symbol, node.initializer, carrier);
+                    assign(node, symbol, carrier);
                 }
                 
                 break;
@@ -73,7 +73,7 @@ Analyzer.analyze = ast => {
                 const name = node.name.text;
                 const symbol = Ast.lookUp(node, name);
                 const carrier = node.initializer.carrier;
-                assign(node, symbol, node.initializer, carrier);
+                assign(node, symbol, carrier);
                 break;
             }
             case ts.SyntaxKind.NumericLiteral: {
@@ -165,7 +165,7 @@ Analyzer.analyze = ast => {
 						if(symbol) {
 
                             const carrier = node.right.carrier;
-                            assign(node, symbol, node.right, carrier);
+                            assign(node, symbol, carrier);
                             // TODO: move to assign?
                             node.carrier = carrier;
 
@@ -275,7 +275,7 @@ Analyzer.analyze = ast => {
                 if(name !== undefined) {
                     const symbol = Symbol.create(name, node);
                     node.parent.type.properties.insert(symbol);
-                    assign(node, symbol, node.initializer, node.name.carrier);
+                    assign(node, symbol, node.name.carrier);
                 }
 
                 break;
@@ -303,7 +303,7 @@ Analyzer.analyze = ast => {
                 if(name !== undefined) {
                     const symbol = Symbol.create(name, node);
                     node.parent.type.properties.insert(symbol);
-                    assign(node, symbol, node.initializer, node.initializer.carrier);
+                    assign(node, symbol, node.initializer.carrier);
                 }
 
                 break;
@@ -515,7 +515,7 @@ function setClassConstructorName(constructor, thisObject) {
  * @param {ts.Node} rvalue
  * @param {*} carrier
  */
-function assign(node, symbol, rvalue, carrier) {
+function assign(node, symbol, carrier) {
     const binder = TypeBinder.create(symbol, carrier);
     Ast.addTypeBinder(node, binder);
     return binder;
@@ -547,7 +547,7 @@ function setProperty(node, object, name, rvalue, carrier) {
         object.properties.insert(propertySymbol);
     }
     
-    assign(node, propertySymbol, rvalue, carrier);
+    assign(node, propertySymbol, carrier);
 
 }
 
