@@ -10,6 +10,8 @@ const Hover = require('./services/hover');
 const Completion = require('./services/completion');
 const SignatureHelp = require('./services/signature-help');
 const Definition = require('./services/definition');
+const CodeAction = require('./services/code-action');
+
 const es5LibAst = require('./utility/es5-lib');
 const Call = require('./analyzer/call');
 
@@ -59,7 +61,8 @@ connection.onInitialize((params) => {
 			completionProvider: {
 				resolveProvider: true,
 				triggerCharacters: ['.']
-			}
+			},
+			codeActionProvider: true
 		}
 	};
 
@@ -252,6 +255,10 @@ connection.onCompletionResolve(Completion.onCompletionResolve);
 // ----------------------------------------------------------------------------
 
 connection.onDefinition(Definition.onDefinition);
+
+// ----------------------------------------------------------------------------
+
+connection.onCodeAction(CodeAction.onCodeAction);
 
 // ----------------------------------------------------------------------------
 
