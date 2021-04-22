@@ -63,6 +63,12 @@ Analyzer.analyze = ast => {
                     const symbol = Ast.lookUp(node, name);
                     const carrier = node.initializer ? node.initializer.carrier : TypeCarrier.createConstant(TypeInfo.createUndefined());
                     assign(node, symbol, carrier);
+                    if(!node.initializer && Ast.isConstDeclaration(node.parent)) {
+                        Ast.addAnalyzeDiagnostic(
+                            node.getSourceFile(), 
+                            AnalyzeDiagnostic.create(node, DiagnosticMessages.uninitializedConst, name)
+                        );
+                    }
                 }
                 
                 break;
@@ -164,6 +170,13 @@ Analyzer.analyze = ast => {
                         const name = lvalue.escapedText;
                         const symbol = Ast.lookUp(node, name);
 						if(symbol) {
+
+                            if(Ast.isConstDeclaration(symbol.declaration.parent)) {
+                                Ast.addAnalyzeDiagnostic(
+                                    node.getSourceFile(), 
+                                    AnalyzeDiagnostic.create(node, DiagnosticMessages.assignmentToConst, [name])
+                                );
+                            }
 
                             const carrier = node.right.carrier;
                             assign(node, symbol, carrier);
