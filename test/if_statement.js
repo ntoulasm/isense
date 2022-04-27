@@ -1,3 +1,8 @@
+/*
+let x, e;
+if (e) { x = 4; } 
+else { x = 'hello'; }
+*/
 let x = 2;
 let y = 10;
 

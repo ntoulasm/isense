@@ -1,3 +1,15 @@
+function f1(b) {
+    if (b == true) return 'f1';
+    return { flag : b };
+}
+function f2(a,b) {
+    if (a+b == 20) return f1;
+    if (b == -1) return [1,2];
+    return { x : a, y : b };
+}
+let z = f1(false);
+z = f2(10,10);
+
 function get2(a) {
     return {
         a: 2

@@ -68,6 +68,7 @@ function createRectangle(x, y, width, height) {
     return rectangle;
 
 }
+let r = createRectangle(0,0,10,20);
 
 function createBox(x, y, width) {
     const box = createRectangle(x, y, width, width);
@@ -133,3 +134,14 @@ class Animal {
 }
 
 const shapes = createRandomShapes(100);
+
+function createDog (name, age, breed) {
+    return {
+        "name" : name,
+        "age"  : age,
+        "breed" :breed, 
+        bark :(id)=>"Woof " + n + "!"
+    };
+}
+const goodBoy = createDog('Scooby', 2, 'Great Dance');
+goodBoy.bark()

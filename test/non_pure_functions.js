@@ -1,5 +1,14 @@
-let x = 5;
+let z = 7;
+let w = {};
+function f1 ()   { z = []; }
+function f2(a)   { a.x = 10; }
+function f3(a,b) { a.y = b; z='foo'; }
+f1();
+f2(w);
+f3(w, 'bar');
+z; w;
 
+let x = 5;
 x;
 function foo() {}
 foo();

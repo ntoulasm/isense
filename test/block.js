@@ -1,10 +1,4 @@
 let x = 2;
-
-{
-    x = 5;
-    {
-        x = "hello";
-    }
-}
-
-x;
+y = x + 5;
+x = "hello";
+let  y  = x + 5;

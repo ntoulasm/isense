@@ -1,17 +1,11 @@
-let global = 100;
-
-switch(a) {
+let x=100, a, b;
+switch (a) {
     case 1:
-        global = 2;
-        break;
-    case 2: {
-        if(b) {
-            global = 5;
-        }
-        break;
-    }
-    case (global = 6): break;
-    default: break;
+        x = 2; break;
+    case 2:
+        if (b) x = 5; break;
+    case (x = 'foo'): 
+        x = 'bar'; break;
 }
 
-global;
+x

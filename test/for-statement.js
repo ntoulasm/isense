@@ -1,9 +1,15 @@
 // For statement
-
+let b = [], c = {}, e;
+for (let i = 0; i < n; ++i) {
+    b[i] = i * n;
+    c["x" + i] = b[i];
+}
+c.x2 = 2;
+/*
 let i = 10;
 
 for(i = 0; i < 100; ++i) {
-    i = 100;
+    i = 100; 
 }
 
 i;
@@ -33,4 +39,4 @@ for(;;) {
     }
 }
 
-g;
+g;*/
