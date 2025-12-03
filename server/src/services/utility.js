@@ -19,7 +19,7 @@ Utility.getAst = info => {
 };
 
 Utility.createRange = symbol => {
-    const declaration = symbol.declaration;
+	const declaration = symbol.declaration;
 	console.assert(declaration);
 	const ast = declaration.getSourceFile();
 	const startPosition = ast.getLineAndCharacterOfPosition(declaration.getStart(ast));
@@ -31,17 +31,17 @@ Utility.createRange = symbol => {
 // ----------------------------------------------------------------------------
 
 Utility.getCompletionItemKind = type => {
-    switch (type) {
-        case TypeInfo.Type.Class: {
-            return vscodeLanguageServer.CompletionItemKind.Class;
-        }
-        case TypeInfo.Type.Function: {
-            return vscodeLanguageServer.CompletionItemKind.Function;
-        }
-        default: {
-            return vscodeLanguageServer.CompletionItemKind.Variable;
-        }
-    }
+	switch (type) {
+		case TypeInfo.Type.Class: {
+			return vscodeLanguageServer.CompletionItemKind.Class;
+		}
+		case TypeInfo.Type.Function: {
+			return vscodeLanguageServer.CompletionItemKind.Function;
+		}
+		default: {
+			return vscodeLanguageServer.CompletionItemKind.Variable;
+		}
+	}
 };
 
 // ----------------------------------------------------------------------------
@@ -52,13 +52,13 @@ Utility.getCompletionItemKind = type => {
 Utility.getPropertySymbols = node => {
 	const properties = [];
 	const objectTypeInfo = TypeCarrier.evaluate(node.expression.carrier);
-	for(const typeInfo of objectTypeInfo) {
-        switch(typeInfo.type) {
-            case TypeInfo.Type.Object: {
-                if(!typeInfo.hasValue) { break; }
-                properties.push(...Object.values(typeInfo.properties.getSymbols()));
-            }
-        }
+	for (const typeInfo of objectTypeInfo) {
+		switch (typeInfo.type) {
+			case TypeInfo.Type.Object: {
+				if (!typeInfo.hasValue) { break; }
+				properties.push(...Object.values(typeInfo.properties.getSymbols()));
+			}
+		}
 	}
 	return properties;
 }
@@ -69,7 +69,7 @@ Utility.getPropertySymbols = node => {
  * @param {ts.Identifier} node 
  */
 Utility.getSymbolOfIdentifier = node => {
-	if(Ast.isNameOfPropertyAccessExpression(node)) {
+	if (Ast.isNameOfPropertyAccessExpression(node)) {
 		const propertyName = node.getText();
 		const properties = Utility.getPropertySymbols(node.parent);
 		return properties.find(p => p.name === propertyName);
@@ -81,6 +81,9 @@ Utility.getSymbolOfIdentifier = node => {
 // ----------------------------------------------------------------------------
 
 Utility.findFocusedNode = (ast, position) => {
+	if (!ast || typeof ast.getPositionOfLineAndCharacter !== 'function') {
+		throw new Error('AST must implement getPositionOfLineAndCharacter');
+	}
 	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
 	return Ast.findInnermostNodeOfAnyKind(ast, offset);
 };
