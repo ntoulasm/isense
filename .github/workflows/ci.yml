@@ -24,17 +24,27 @@ jobs:
         cache: 'npm'
 
     - name: Install Root Dependencies
-      run: npm ci
+      run: |
+        echo "::group::Installing Root Dependencies"
+        npm ci
+        echo "::endgroup::"
 
     - name: Install Test Dependencies
       run: |
+        echo "::group::Installing Test Dependencies"
         cd test
         npm ci
+        echo "::endgroup::"
 
     - name: Lint
-      run: npx eslint .
+      run: | 
+        echo "::group::Linting"
+        npx eslint .
+        echo "::endgroup::"
 
     - name: Run Tests
       run: |
+        echo "::group::Running Tests"
         cd test
         node run-tests.js --all
+        echo "::endgroup::"
