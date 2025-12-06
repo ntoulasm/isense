@@ -1,22 +1,22 @@
 {
-	"name": "isense-client",
-	"description": "VSCode part of a language server",
-	"publisher": "ntoulasm",
-	"author": "ntoulasm",
-	"license": "MIT",
-	"version": "0.0.1",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/ntoulasm/isense"
-	},
-	"engines": {
-		"vscode": "^1.52.0"
-	},
-	"dependencies": {
-		"vscode-languageclient": "^7.0.0"
-	},
-	"devDependencies": {
-		"@types/vscode": "^1.52.0",
-		"vscode-test": "^1.3.0"
-	}
+    "name": "isense-client",
+    "description": "VSCode part of a language server",
+    "publisher": "ntoulasm",
+    "author": "ntoulasm",
+    "license": "MIT",
+    "version": "0.0.1",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ntoulasm/isense"
+    },
+    "engines": {
+        "vscode": "^1.52.0"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^7.0.0"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.52.0",
+        "vscode-test": "^1.3.0"
+    }
 }

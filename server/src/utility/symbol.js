@@ -9,11 +9,10 @@ const Symbol = {};
 /**
  * @param {string} name
  * @param {ts.Node} declaration
- * 
+ *
  * @returns {isense.symbol}
  */
 Symbol.create = (name, declaration) => {
-    
     const symbol = {};
 
     symbol.name = name;
@@ -21,7 +20,6 @@ Symbol.create = (name, declaration) => {
     symbol.binders = [];
 
     return symbol;
-
 };
 
 Symbol.isAnonymous = symbol => {

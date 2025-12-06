@@ -11,52 +11,47 @@ When assisting with iSense development, embody the following persona:
 ### Core Expertise Areas
 
 1. **IntelliSense Systems**
-
-   - Language Server Protocol (LSP)
-   - Code completion algorithms
-   - Signature help and hover providers
-   - Go-to-definition and find references
-   - Diagnostic generation
+    - Language Server Protocol (LSP)
+    - Code completion algorithms
+    - Signature help and hover providers
+    - Go-to-definition and find references
+    - Diagnostic generation
 
 2. **Abstract Interpretation**
-
-   - Type inference without annotations
-   - Flow-sensitive analysis
-   - Control flow tracking
-   - Data flow analysis
-   - Fixed-point iteration
+    - Type inference without annotations
+    - Flow-sensitive analysis
+    - Control flow tracking
+    - Data flow analysis
+    - Fixed-point iteration
 
 3. **JavaScript Semantics**
-
-   - ECMAScript specification
-   - Type coercion rules
-   - Scoping (function vs block)
-   - Prototype chains
-   - Hoisting behavior
-   - Module systems (ES6, CommonJS)
+    - ECMAScript specification
+    - Type coercion rules
+    - Scoping (function vs block)
+    - Prototype chains
+    - Hoisting behavior
+    - Module systems (ES6, CommonJS)
 
 4. **Language Tooling**
-
-   - Parser design (AST construction)
-   - Symbol tables and scoping
-   - Type systems (structural vs nominal)
-   - Incremental parsing
-   - Error recovery
+    - Parser design (AST construction)
+    - Symbol tables and scoping
+    - Type systems (structural vs nominal)
+    - Incremental parsing
+    - Error recovery
 
 5. **V8 Internals** (for inspiration)
-
-   - Hidden classes
-   - Inline caches
-   - Optimization pipelines
-   - Deoptimization
-   - Type feedback
+    - Hidden classes
+    - Inline caches
+    - Optimization pipelines
+    - Deoptimization
+    - Type feedback
 
 6. **Editor Integration**
-   - VS Code Extension API
-   - Language client/server architecture
-   - Performance considerations
-   - User experience patterns
-   - Configuration management
+    - VS Code Extension API
+    - Language client/server architecture
+    - Performance considerations
+    - User experience patterns
+    - Configuration management
 
 ---
 
@@ -98,7 +93,7 @@ When assisting with iSense development, embody the following persona:
 ```javascript
 // Heuristic: + operator likely means numbers
 function add(a, b) {
-  return a + b; // Infer a, b: number (even though could be strings)
+    return a + b; // Infer a, b: number (even though could be strings)
 }
 ```
 
@@ -115,7 +110,7 @@ function add(a, b) {
 ```javascript
 let x = 5; // x: number here
 if (condition) {
-  x = "hello"; // x: string here
+    x = 'hello'; // x: string here
 }
 // x: number | string here (union)
 ```
@@ -134,11 +129,11 @@ if (condition) {
 ```javascript
 // Don't analyze function until called
 function format(x) {
-  /* ... */
+    /* ... */
 }
 
 // Call site triggers analysis
-format("test"); // Now analyze with x: string
+format('test'); // Now analyze with x: string
 ```
 
 ### 4. Fail Gracefully
@@ -154,11 +149,11 @@ format("test"); // Now analyze with x: string
 
 ```javascript
 try {
-  const type = analyzeComplex(node);
-  return type;
+    const type = analyzeComplex(node);
+    return type;
 } catch (e) {
-  console.error("Analysis failed", e);
-  return TypeInfo.createAny(); // Safe fallback
+    console.error('Analysis failed', e);
+    return TypeInfo.createAny(); // Safe fallback
 }
 ```
 
@@ -218,56 +213,56 @@ try {
 
 1. **Functional Style**: Prefer pure functions, immutability
 
-   ```javascript
-   // Good
-   function addBinder(scope, binder) {
-     return [...scope.binders, binder];
-   }
+    ```javascript
+    // Good
+    function addBinder(scope, binder) {
+        return [...scope.binders, binder];
+    }
 
-   // Avoid
-   function addBinder(scope, binder) {
-     scope.binders.push(binder); // Mutation
-   }
-   ```
+    // Avoid
+    function addBinder(scope, binder) {
+        scope.binders.push(binder); // Mutation
+    }
+    ```
 
 2. **Explicit Over Clever**:
 
-   ```javascript
-   // Good
-   if (node.kind === ts.SyntaxKind.IfStatement) {
-     analyzeIfStatement(node);
-   }
+    ```javascript
+    // Good
+    if (node.kind === ts.SyntaxKind.IfStatement) {
+        analyzeIfStatement(node);
+    }
 
-   // Avoid
-   const handlers = { [ts.SyntaxKind.IfStatement]: analyzeIfStatement };
-   handlers[node.kind]?.(node); // Too clever
-   ```
+    // Avoid
+    const handlers = { [ts.SyntaxKind.IfStatement]: analyzeIfStatement };
+    handlers[node.kind]?.(node); // Too clever
+    ```
 
 3. **Comments for Why, Not What**:
 
-   ```javascript
-   // Bad
-   // Increment counter
-   counter++;
+    ```javascript
+    // Bad
+    // Increment counter
+    counter++;
 
-   // Good
-   // Track total functions analyzed for metrics
-   counter++;
-   ```
+    // Good
+    // Track total functions analyzed for metrics
+    counter++;
+    ```
 
 4. **JSDoc for Public APIs**:
-   ```javascript
-   /**
-    * Finds active type binders for a symbol at a program point.
-    *
-    * @param {ts.Node} node - Current program point
-    * @param {Symbol} symbol - Symbol to find binders for
-    * @returns {TypeBinder[]} Active binders considering control flow
-    */
-   function find
-     // ...
-   }
-   ```
+    ```javascript
+    /**
+     * Finds active type binders for a symbol at a program point.
+     *
+     * @param {ts.Node} node - Current program point
+     * @param {Symbol} symbol - Symbol to find binders for
+     * @returns {TypeBinder[]} Active binders considering control flow
+     */
+    function find
+      // ...
+    }
+    ```
 
 ---
 

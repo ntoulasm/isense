@@ -29,7 +29,7 @@ TypeInfo.Type = {
     Object: 6,
     Undefined: 7,
     Null: 8,
-    Any: 9
+    Any: 9,
 };
 
 TypeInfo.typeTextMap = Object.keys(TypeInfo.Type);
@@ -39,40 +39,40 @@ TypeInfo.typeTextMapLowerCase = TypeInfo.typeTextMap.map(t => t.toLowerCase());
 
 /**
  * @param {isense.TypeInfo} info
- * 
+ *
  * @returns {String}
  */
 TypeInfo.typeToString = info => {
     switch (info.type) {
         case TypeInfo.Type.Class: {
-            return "class";
+            return 'class';
         }
         case TypeInfo.Type.Function: {
-            return "function";
+            return 'function';
         }
         case TypeInfo.Type.Number: {
-            return "number";
+            return 'number';
         }
         case TypeInfo.Type.String: {
-            return "string";
+            return 'string';
         }
         case TypeInfo.Type.Boolean: {
-            return "boolean";
+            return 'boolean';
         }
         case TypeInfo.Type.Array: {
-            return "array";
+            return 'array';
         }
         case TypeInfo.Type.Object: {
-            return info.constructorName || "object";
+            return info.constructorName || 'object';
         }
         case TypeInfo.Type.Undefined: {
-            return "undefined";
+            return 'undefined';
         }
         case TypeInfo.Type.Null: {
-            return "null";
+            return 'null';
         }
         case TypeInfo.Type.Any: {
-            return "any";
+            return 'any';
         }
         default: {
             console.assert(false, `Unknown type info type '${info.type}'.`);
@@ -85,14 +85,14 @@ TypeInfo.typeToString = info => {
 /**
  * @param {isense.TypeInfo.Type} type
  * @param {*} value
- * 
+ *
  * @returns {isense.TypeInfo}
  */
 TypeInfo.create = (type, value) => {
     return {
         type,
         value,
-        hasValue: value !== undefined
+        hasValue: value !== undefined,
     };
 };
 
@@ -100,28 +100,28 @@ TypeInfo.create = (type, value) => {
 
 /**
  * @param {Number} value
- * 
+ *
  * @returns {isense.TypeInfo}
  */
 TypeInfo.createNumber = value => TypeInfo.create(TypeInfo.Type.Number, value);
 
 /**
  * @param {String} value
- * 
+ *
  * @returns {isense.TypeInfo}
  */
 TypeInfo.createString = value => TypeInfo.create(TypeInfo.Type.String, value);
 
 /**
  * @param {Boolean} value
- * 
+ *
  * @returns {isense.TypeInfo}
  */
 TypeInfo.createBoolean = value => TypeInfo.create(TypeInfo.Type.Boolean, value);
 
 /**
  * @param {Array} value
- * 
+ *
  * @returns {isense.TypeInfo}
  */
 TypeInfo.createArray = value => TypeInfo.create(TypeInfo.Type.Array, value);
@@ -129,7 +129,7 @@ TypeInfo.createArray = value => TypeInfo.create(TypeInfo.Type.Array, value);
 let totalObjects = -1;
 /**
  * @param {Number} value
- * 
+ *
  * @returns {isense.TypeInfo}
  */
 TypeInfo.createObject = value => {
@@ -141,14 +141,15 @@ TypeInfo.createObject = value => {
 
 /**
  * @param {ts.Node} value
- * 
+ *
  * @returns {isense.TypeInfo}
  */
-TypeInfo.createFunction = value => TypeInfo.create(TypeInfo.Type.Function, value);
+TypeInfo.createFunction = value =>
+    TypeInfo.create(TypeInfo.Type.Function, value);
 
 /**
  * @param {ts.Node} value
- * 
+ *
  * @returns {isense.TypeInfo}
  */
 TypeInfo.createClass = value => TypeInfo.create(TypeInfo.Type.Class, value);
@@ -172,17 +173,17 @@ TypeInfo.createAny = value => TypeInfo.create(TypeInfo.Type.Any, value);
 
 /**
  * @param {isense.TypeInfo} info
- * 
+ *
  * @returns {isense.TypeInfo}
  */
 TypeInfo.toNumber = info => {
-    switch(info.type) {
+    switch (info.type) {
         case TypeInfo.Type.Number: {
             return info;
         }
         case TypeInfo.Type.String:
         case TypeInfo.Type.Boolean: {
-            if(info.hasValue) {
+            if (info.hasValue) {
                 return TypeInfo.createNumber(Number(info.value));
             }
             break;
@@ -201,26 +202,27 @@ TypeInfo.toNumber = info => {
             break;
         }
         default: {
-            console.assert(false, `Can not cast '${TypeInfo.typeTextMap[info.type]}' to number`);
+            console.assert(
+                false,
+                `Can not cast '${TypeInfo.typeTextMap[info.type]}' to number`
+            );
             break;
         }
     }
 
     return TypeInfo.createNumber();
-
 };
 
 /**
  * @param {isense.TypeInfo} info
- * 
+ *
  * @returns {isense.TypeInfo}
  */
 TypeInfo.toString = info => {
-
-    switch(info.type) {
+    switch (info.type) {
         case TypeInfo.Type.Number:
         case TypeInfo.Type.Boolean: {
-            if(info.hasValue) {
+            if (info.hasValue) {
                 return TypeInfo.createString(String(info.value));
             }
             break;
@@ -233,11 +235,11 @@ TypeInfo.toString = info => {
             break;
         }
         case TypeInfo.Type.Object: {
-            return TypeInfo.createString("[object Object]");
+            return TypeInfo.createString('[object Object]');
         }
         case TypeInfo.Type.Function:
         case TypeInfo.Type.Class: {
-            if(info.hasValue) {
+            if (info.hasValue) {
                 return TypeInfo.createString(info.value.getText());
             }
             break;
@@ -252,27 +254,28 @@ TypeInfo.toString = info => {
             break;
         }
         default: {
-            console.assert(false, `Can not cast '${TypeInfo.typeTextMap[info.type]}' to string`);
+            console.assert(
+                false,
+                `Can not cast '${TypeInfo.typeTextMap[info.type]}' to string`
+            );
             break;
         }
     }
 
     return TypeInfo.createString();
-
 };
 
 /**
  * @param {isense.TypeInfo} info
- * 
+ *
  * @returns {isense.TypeInfo}
  */
 TypeInfo.toBoolean = info => {
-
-    switch(info.type) {
+    switch (info.type) {
         case TypeInfo.Type.Number:
         case TypeInfo.Type.String: {
-            if(info.hasValue) {
-                return TypeInfo.createBoolean(Boolean(info.value))
+            if (info.hasValue) {
+                return TypeInfo.createBoolean(Boolean(info.value));
             }
             break;
         }
@@ -293,29 +296,33 @@ TypeInfo.toBoolean = info => {
             break;
         }
         default: {
-            console.assert(false, `Can not cast '${TypeInfo.typeTextMap[info.type]}' to boolean`);
+            console.assert(
+                false,
+                `Can not cast '${TypeInfo.typeTextMap[info.type]}' to boolean`
+            );
             break;
         }
     }
 
     return TypeInfo.createBoolean();
-
 };
 
 // ----------------------------------------------------------------------------
 
 TypeInfo.isStringLike = info => {
-    return info.type === TypeInfo.Type.String || 
-        info.type === TypeInfo.Type.Array || 
-        info.type === TypeInfo.Type.Object || 
-        info.type === TypeInfo.Type.Function || 
-        info.type === TypeInfo.Type.Class;
+    return (
+        info.type === TypeInfo.Type.String ||
+        info.type === TypeInfo.Type.Array ||
+        info.type === TypeInfo.Type.Object ||
+        info.type === TypeInfo.Type.Function ||
+        info.type === TypeInfo.Type.Class
+    );
 };
 
 TypeInfo.hasUniqueType = typeInfo => {
     console.assert(typeInfo.length, 'hasUniqueType');
-	const firstType = typeInfo[0].type;
-	return !typeInfo.find(t => t.type !== firstType);
+    const firstType = typeInfo[0].type;
+    return !typeInfo.find(t => t.type !== firstType);
 };
 
 // ----------------------------------------------------------------------------

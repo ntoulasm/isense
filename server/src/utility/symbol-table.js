@@ -1,27 +1,26 @@
 const SymbolTable = {};
 
-SymbolTable.create = function() {
-
-	const symbolTable = {};
+SymbolTable.create = function () {
+    const symbolTable = {};
     symbolTable.private = {};
 
-	symbolTable.private.symbols = {};
+    symbolTable.private.symbols = {};
 
     /**
      * @param {isense.Symbol} symbol
      */
-    symbolTable.insert = function(symbol) {
+    symbolTable.insert = function (symbol) {
         const name = symbol.name;
         symbolTable.private.symbols[name] = symbol;
     };
 
     /**
      * @param {string} name
-     * 
+     *
      * @returns {isense.symbol}
      */
-    symbolTable.lookUp = function(name) {
-        if(symbolTable.private.symbols.hasOwnProperty(name)) {
+    symbolTable.lookUp = function (name) {
+        if (symbolTable.private.symbols.hasOwnProperty(name)) {
             return symbolTable.private.symbols[name];
         } else {
             return undefined;
@@ -29,8 +28,8 @@ SymbolTable.create = function() {
     };
 
     symbolTable.hasSymbol = symbol => {
-        for(const [, s] of Object.entries(symbolTable.private.symbols)) {
-            if(symbol === s) {
+        for (const [, s] of Object.entries(symbolTable.private.symbols)) {
+            if (symbol === s) {
                 return true;
             }
         }
@@ -40,31 +39,28 @@ SymbolTable.create = function() {
     /**
      * @returns {array<isense.symbol>}
      */
-    symbolTable.getSymbols = function() {
+    symbolTable.getSymbols = function () {
         return symbolTable.private.symbols;
     };
 
     /**
      * @returns {void}
      */
-    symbolTable.print = function() {
+    symbolTable.print = function () {
         console.log(symbolTable.getSymbols());
     };
 
-	return symbolTable;
-
+    return symbolTable;
 };
 
 SymbolTable.copy = symbolTable => {
-
     const copy = SymbolTable.create();
 
-    for(const [,symbol] of Object.entries(symbolTable.getSymbols())) {
+    for (const [, symbol] of Object.entries(symbolTable.getSymbols())) {
         copy.insert(symbol);
     }
 
     return copy;
-
 };
 
 module.exports = SymbolTable;

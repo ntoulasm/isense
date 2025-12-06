@@ -1,4 +1,4 @@
-const ts = require("typescript");
+const ts = require('typescript');
 
 // ----------------------------------------------------------------------------
 
@@ -7,31 +7,40 @@ function doesReturnOnAllControlPaths(node) {
 }
 
 /**
- * 
- * @param {ts.Node} node 
- * @returns 
+ *
+ * @param {ts.Node} node
+ * @returns
  */
 function doesReturnOnAllControlPathsInternal(node) {
+    if (!node || node.unreachable) {
+        return false;
+    }
 
-    if(!node || node.unreachable) { return false; } 
-    
-    switch(node.kind) {
+    switch (node.kind) {
         case ts.SyntaxKind.IfStatement:
-            if(doesReturnOnAllControlPaths(node.thenStatement) &&
-                doesReturnOnAllControlPaths(node.elseStatement)) {
+            if (
+                doesReturnOnAllControlPaths(node.thenStatement) &&
+                doesReturnOnAllControlPaths(node.elseStatement)
+            ) {
                 return true;
             }
             break;
         case ts.SyntaxKind.Block:
-            if(doesReturnOnAllControlPaths(node)) {
+            if (doesReturnOnAllControlPaths(node)) {
                 return true;
             }
             break;
         case ts.SyntaxKind.SwitchStatement: {
             const clauses = node.caseBlock.clauses;
-            if(!clauses.length || !hasDefaultClase(node)) { return false; }
-            for(const clause of clauses) {
-                if(!doesReturnOnAllControlPaths(clause) && (doesNotFallThrough(clause) || clause == clauses[clauses.length - 1])) {
+            if (!clauses.length || !hasDefaultClase(node)) {
+                return false;
+            }
+            for (const clause of clauses) {
+                if (
+                    !doesReturnOnAllControlPaths(clause) &&
+                    (doesNotFallThrough(clause) ||
+                        clause == clauses[clauses.length - 1])
+                ) {
                     return false;
                 }
             }
@@ -45,29 +54,32 @@ function doesReturnOnAllControlPathsInternal(node) {
         default:
             break;
     }
-
 }
 
 // ----------------------------------------------------------------------------
 
 /**
- * @param {ts.CaseClause} node 
+ * @param {ts.CaseClause} node
  */
 function doesNotFallThrough(node) {
     return ts.forEachChild(node, doesNotFallThroughInternal);
 }
 
 function doesNotFallThroughInternal(node) {
-    if(!node) { return; }
-    switch(node.kind) {
+    if (!node) {
+        return;
+    }
+    switch (node.kind) {
         case ts.SyntaxKind.IfStatement:
-            if(doesNotFallThrough(node.thenStatement) &&
-                doesNotFallThrough(node.elseStatement)) {
-                    return true;
+            if (
+                doesNotFallThrough(node.thenStatement) &&
+                doesNotFallThrough(node.elseStatement)
+            ) {
+                return true;
             }
             break;
         case ts.SyntaxKind.Block:
-            if(doesNotFallThrough(node)) {
+            if (doesNotFallThrough(node)) {
                 return true;
             }
             break;
@@ -75,7 +87,8 @@ function doesNotFallThroughInternal(node) {
         case ts.SyntaxKind.ReturnStatement:
         case ts.SyntaxKind.ThrowStatement:
             return true;
-        default: break;
+        default:
+            break;
     }
 }
 
@@ -83,8 +96,8 @@ function doesNotFallThroughInternal(node) {
  * @param {ts.SwitchStatement} node
  */
 function hasDefaultClase(node) {
-    return node.caseBlock.clauses.find(c => 
-        c.kind === ts.SyntaxKind.DefaultClause
+    return node.caseBlock.clauses.find(
+        c => c.kind === ts.SyntaxKind.DefaultClause
     );
 }
 
@@ -92,5 +105,5 @@ function hasDefaultClase(node) {
 
 module.exports = {
     doesNotFallThrough,
-    doesReturnOnAllControlPaths
+    doesReturnOnAllControlPaths,
 };

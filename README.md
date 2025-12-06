@@ -9,17 +9,20 @@ iSense is an experimental Visual Studio Code extension that provides IntelliSens
 ## The Problem It Solves
 
 Traditional JavaScript IntelliSense relies heavily on:
+
 - TypeScript type annotations
-- JSDoc comments  
+- JSDoc comments
 - Type definition files (`.d.ts`)
 
 **iSense takes a different approach**: It analyzes your pure JavaScript code to infer types, track data flow, and understand program behavior through:
+
 - **Abstract interpretation** of code execution paths
 - **Flow-sensitive type analysis** that tracks how types change through control flow
 - **Heuristic-based inference** from usage patterns
 - **AST-based analysis** using TypeScript's parser
 
 This makes iSense particularly useful for:
+
 - Legacy JavaScript codebases without type annotations
 - Rapid prototyping where adding types slows development
 - Learning projects where you want helpful suggestions without ceremony
@@ -28,6 +31,7 @@ This makes iSense particularly useful for:
 ## High-Level Features
 
 ### 🎯 Core IntelliSense Features
+
 - **Code Completion**: Context-aware suggestions for variables, properties, and functions
 - **Signature Help**: Parameter hints for function calls with inferred types
 - **Hover Information**: Type information on hover, even for untyped code
@@ -37,6 +41,7 @@ This makes iSense particularly useful for:
 - **Code Actions**: Quick fixes for common issues
 
 ### 🔍 Advanced Analysis Capabilities
+
 - **Parameter Type Inference**: Infers parameter types from how they're used
 - **Return Type Inference**: Deduces return types from function bodies
 - **Property Tracking**: Tracks dynamic property assignments on objects
@@ -47,88 +52,95 @@ This makes iSense particularly useful for:
 
 ## How It Differs from Standard IntelliSense
 
-| Feature | Standard JS IntelliSense | iSense |
-|---------|-------------------------|---------|
-| **Requires types** | Yes (TypeScript, JSDoc) | No - pure JavaScript |
-| **Type inference** | Basic, relies on annotations | Advanced flow-sensitive analysis |
-| **Control flow** | Limited | Tracks through conditionals, loops |
-| **Parameter inference** | Minimal | Infers from usage patterns |
-| **Dynamic properties** | Requires declaration | Tracks assignments |
-| **Analysis approach** | Type checker | Abstract interpreter |
+| Feature                 | Standard JS IntelliSense     | iSense                             |
+| ----------------------- | ---------------------------- | ---------------------------------- |
+| **Requires types**      | Yes (TypeScript, JSDoc)      | No - pure JavaScript               |
+| **Type inference**      | Basic, relies on annotations | Advanced flow-sensitive analysis   |
+| **Control flow**        | Limited                      | Tracks through conditionals, loops |
+| **Parameter inference** | Minimal                      | Infers from usage patterns         |
+| **Dynamic properties**  | Requires declaration         | Tracks assignments                 |
+| **Analysis approach**   | Type checker                 | Abstract interpreter               |
 
 ### Key Technical Differences
 
 1. **Flow-Sensitive Analysis**: iSense tracks how types change through your program:
-   ```javascript
-   let x = 5;        // iSense knows x: number
-   if (condition) {
-     x = "hello";    // iSense knows x: string here
-   }
-   // iSense knows x: number | string here
-   ```
+
+    ```javascript
+    let x = 5; // iSense knows x: number
+    if (condition) {
+        x = 'hello'; // iSense knows x: string here
+    }
+    // iSense knows x: number | string here
+    ```
 
 2. **Heuristic Type Inference**: Infers parameter types from operations:
-   ```javascript
-   function add(a, b) {
-     return a + b;   // iSense infers a, b likely: number from + operator
-   }
-   ```
+
+    ```javascript
+    function add(a, b) {
+        return a + b; // iSense infers a, b likely: number from + operator
+    }
+    ```
 
 3. **Property Tracking**: Follows dynamic property creation:
-   ```javascript
-   const obj = {};
-   obj.name = "test";  // iSense tracks that obj has property 'name'
-   obj.na// Suggests 'name'
-   ```
+    ```javascript
+    const obj = {};
+    obj.name = 'test'; // iSense tracks that obj has property 'name'
+    obj.na; // Suggests 'name'
+    ```
 
 ## Example Usage
 
 ### Variable Type Inference
+
 ```javascript
-const num = 42;           // Inferred as number
-const str = "hello";      // Inferred as string
-const arr = [1, 2, 3];    // Inferred as array
-const obj = { x: 10 };    // Inferred as object with property x
+const num = 42; // Inferred as number
+const str = 'hello'; // Inferred as string
+const arr = [1, 2, 3]; // Inferred as array
+const obj = { x: 10 }; // Inferred as object with property x
 ```
 
 ### Function Parameter Inference
+
 ```javascript
 function multiply(a, b) {
-  return a * b;           // Parameters inferred as number from * operator
+    return a * b; // Parameters inferred as number from * operator
 }
 
 function greet(name) {
-  console.log("Hello " + name);  // name inferred as string from concatenation
+    console.log('Hello ' + name); // name inferred as string from concatenation
 }
 ```
 
 ### Control Flow Tracking
+
 ```javascript
 function process(value) {
-  if (typeof value === "number") {
-    return value * 2;     // value known as number here
-  } else if (typeof value === "string") {
-    return value.toUpperCase();  // value known as string here
-  }
+    if (typeof value === 'number') {
+        return value * 2; // value known as number here
+    } else if (typeof value === 'string') {
+        return value.toUpperCase(); // value known as string here
+    }
 }
 ```
 
 ### Class and Constructor Tracking
+
 ```javascript
 class Point {
-  constructor(x, y) {
-    this.x = x;           // iSense tracks Point instances have x, y
-    this.y = y;
-  }
+    constructor(x, y) {
+        this.x = x; // iSense tracks Point instances have x, y
+        this.y = y;
+    }
 }
 
 const p = new Point(10, 20);
-p.x  // iSense suggests x and y properties
+p.x; // iSense suggests x and y properties
 ```
 
 ## Current State of the Project
 
 ### ✅ Working Features
+
 - AST parsing and traversal using TypeScript compiler API
 - Symbol table and scope management
 - Type inference for primitives, objects, arrays, functions
@@ -141,6 +153,7 @@ p.x  // iSense suggests x and y properties
 - Test infrastructure with unit, integration, and performance tests
 
 ### ⚠️ Limitations & Known Issues
+
 - **Incomplete AST replication**: The `replicator.js` has 50+ TODOs for unimplemented node types
 - **Limited type operations**: Array type conversions, some type coercions incomplete
 - **No union type refinement**: Doesn't narrow union types in all branches
@@ -150,6 +163,7 @@ p.x  // iSense suggests x and y properties
 - **Limited ES6+ support**: Some modern JavaScript features not fully handled
 
 ### 🚧 Work in Progress
+
 - Enhanced parameter type inference from call sites
 - Better handling of recursive assignments
 - Improved diagnostic messages
@@ -159,10 +173,12 @@ p.x  // iSense suggests x and y properties
 ## Installation & Development
 
 ### Prerequisites
+
 - Node.js 14+
 - Visual Studio Code 1.52+
 
 ### Setup
+
 ```bash
 # Install dependencies
 npm install
@@ -174,13 +190,16 @@ code .
 ```
 
 ### Disable Built-in TypeScript Extension
+
 In the Extension Development Host:
+
 1. Open Extensions view (View → Extensions)
 2. Search `@builtin typescript`
 3. Disable "TypeScript and JavaScript Language Features"
 4. Reload VS Code
 
 ### Running Tests
+
 ```bash
 cd test
 npm install
@@ -225,6 +244,7 @@ isense/
 ```
 
 ## Technology Stack
+
 - **Runtime**: Node.js
 - **Parser**: TypeScript Compiler API (`typescript` package)
 - **Protocol**: Language Server Protocol (LSP)
@@ -234,6 +254,7 @@ isense/
 ## Contributing
 
 This is an experimental research project exploring type inference for JavaScript. Contributions welcome, especially in:
+
 - Improving type inference accuracy
 - Adding support for more JavaScript patterns
 - Performance optimizations

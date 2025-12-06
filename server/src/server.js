@@ -22,8 +22,9 @@ const vscodeLanguageServer = require('vscode-languageserver');
 
 // ----------------------------------------------------------------------------
 
-
-const connection = vscodeLanguageServer.createConnection(vscodeLanguageServer.ProposedFeatures.all);
+const connection = vscodeLanguageServer.createConnection(
+    vscodeLanguageServer.ProposedFeatures.all
+);
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
@@ -31,52 +32,54 @@ const asts = Ast.asts;
 
 // ----------------------------------------------------------------------------
 
-connection.onInitialize((params) => {
+connection.onInitialize(params => {
+    const capabilities = params.capabilities;
+    hasConfigurationCapability = !!(
+        capabilities.workspace && !!capabilities.workspace.configuration
+    );
+    hasWorkspaceFolderCapability = !!(
+        capabilities.workspace && !!capabilities.workspace.workspaceFolders
+    );
+    hasDiagnosticRelatedInformationCapability = !!(
+        capabilities.textDocument &&
+        capabilities.textDocument.publishDiagnostics &&
+        capabilities.textDocument.publishDiagnostics.relatedInformation
+    );
 
-	const capabilities = params.capabilities;
-	hasConfigurationCapability = !!(
-		capabilities.workspace && !!capabilities.workspace.configuration
-	);
-	hasWorkspaceFolderCapability = !!(
-		capabilities.workspace && !!capabilities.workspace.workspaceFolders
-	);
-	hasDiagnosticRelatedInformationCapability = !!(
-		capabilities.textDocument &&
-		capabilities.textDocument.publishDiagnostics &&
-		capabilities.textDocument.publishDiagnostics.relatedInformation
-	);
+    Analyzer.analyze(es5LibAst);
 
-	Analyzer.analyze(es5LibAst);
-
-	return {
-		capabilities: {
-			textDocumentSync: vscodeLanguageServer.TextDocumentSyncKind.Incremental,
-			hoverProvider: true,
-			documentSymbolProvider: true,
-			definitionProvider: true,
-			signatureHelpProvider: {
-				contextSupport: true,
-				triggerCharacters: ['(', ',']
-			},
-			completionProvider: {
-				resolveProvider: true,
-				triggerCharacters: ['.']
-			},
-			codeActionProvider: true
-		}
-	};
-
+    return {
+        capabilities: {
+            textDocumentSync:
+                vscodeLanguageServer.TextDocumentSyncKind.Incremental,
+            hoverProvider: true,
+            documentSymbolProvider: true,
+            definitionProvider: true,
+            signatureHelpProvider: {
+                contextSupport: true,
+                triggerCharacters: ['(', ','],
+            },
+            completionProvider: {
+                resolveProvider: true,
+                triggerCharacters: ['.'],
+            },
+            codeActionProvider: true,
+        },
+    };
 });
 
 connection.onInitialized(() => {
-	if (hasConfigurationCapability) {
-		connection.client.register(vscodeLanguageServer.DidChangeConfigurationNotification.type, undefined);
-	}
-	if (hasWorkspaceFolderCapability) {
-		connection.workspace.onDidChangeWorkspaceFolders(_event => {
-			connection.console.log('Workspace folder change event received.');
-		});
-	}
+    if (hasConfigurationCapability) {
+        connection.client.register(
+            vscodeLanguageServer.DidChangeConfigurationNotification.type,
+            undefined
+        );
+    }
+    if (hasWorkspaceFolderCapability) {
+        connection.workspace.onDidChangeWorkspaceFolders(_event => {
+            connection.console.log('Workspace folder change event received.');
+        });
+    }
 });
 
 // ----------------------------------------------------------------------------
@@ -89,146 +92,157 @@ const documentSettings = new Map();
 // ----------------------------------------------------------------------------
 
 connection.onDidChangeConfiguration(change => {
-	if (hasConfigurationCapability) {
-		documentSettings.clear();
-	} else {
-		globalSettings = (change.settings.languageServerExample || defaultSettings);
-	}
+    if (hasConfigurationCapability) {
+        documentSettings.clear();
+    } else {
+        globalSettings =
+            change.settings.languageServerExample || defaultSettings;
+    }
 });
 
 function getDocumentSettings(resource) {
-	if (!hasConfigurationCapability) {
-		return Promise.resolve(globalSettings);
-	}
-	let result = documentSettings.get(resource);
-	if (!result) {
-		result = connection.workspace.getConfiguration({
-			scopeUri: resource,
-			section: 'languageServerExample'
-		});
-		documentSettings.set(resource, result);
-	}
-	return result;
+    if (!hasConfigurationCapability) {
+        return Promise.resolve(globalSettings);
+    }
+    let result = documentSettings.get(resource);
+    if (!result) {
+        result = connection.workspace.getConfiguration({
+            scopeUri: resource,
+            section: 'languageServerExample',
+        });
+        documentSettings.set(resource, result);
+    }
+    return result;
 }
 
 // ----------------------------------------------------------------------------
 
 /**
- * @param {ts.SourceFile} ast 
+ * @param {ts.SourceFile} ast
  */
 async function clearDiagnostics(ast) {
-	connection.sendDiagnostics({
-		uri: ast.fileName,
-		diagnostics: []
-	});
+    connection.sendDiagnostics({
+        uri: ast.fileName,
+        diagnostics: [],
+    });
 }
 
 /**
- * @param {ts.SourceFile} ast 
+ * @param {ts.SourceFile} ast
  */
 async function provideParseDiagnostics(ast) {
+    const diagnostics = [];
 
-	const diagnostics = [];
+    ast.parseDiagnostics.forEach(error => {
+        const start = ast.getLineAndCharacterOfPosition(error.start);
+        const end = ast.getLineAndCharacterOfPosition(
+            error.start + error.length
+        );
+        const range = vscodeLanguageServer.Range.create(
+            vscodeLanguageServer.Position.create(start.line, start.character),
+            vscodeLanguageServer.Position.create(end.line, end.character)
+        );
+        const diagnostic = vscodeLanguageServer.Diagnostic.create(
+            range,
+            error.messageText,
+            Utility.typescriptDiagnosticCategoryToVSCodeDiagnosticSeverity(
+                error.category
+            )
+        );
+        diagnostics.push(diagnostic);
+    });
 
-	ast.parseDiagnostics.forEach(error => {
-		const start = ast.getLineAndCharacterOfPosition(error.start);
-		const end = ast.getLineAndCharacterOfPosition(error.start + error.length);
-		const range = vscodeLanguageServer.Range.create(
-			vscodeLanguageServer.Position.create(start.line, start.character),
-			vscodeLanguageServer.Position.create(end.line, end.character)
-		);
-		const diagnostic = vscodeLanguageServer.Diagnostic.create(
-			range, 
-			error.messageText, 
-			Utility.typescriptDiagnosticCategoryToVSCodeDiagnosticSeverity(error.category)
-		);
-		diagnostics.push(diagnostic);
-	});
-
-	connection.sendDiagnostics({
-		uri: ast.fileName,
-		diagnostics
-	});
-
+    connection.sendDiagnostics({
+        uri: ast.fileName,
+        diagnostics,
+    });
 }
 
 /**
- * @param {ts.SourceFile} ast 
+ * @param {ts.SourceFile} ast
  */
 async function provideAnalyzeDiagnostics(ast) {
-	connection.sendDiagnostics({
-		uri: ast.fileName,
-		diagnostics: ast.analyzeDiagnostics
-	});
+    connection.sendDiagnostics({
+        uri: ast.fileName,
+        diagnostics: ast.analyzeDiagnostics,
+    });
 }
 
 // ----------------------------------------------------------------------------
 
 connection.onDidChangeWatchedFiles(change => {
-	connection.console.log('We received a file change event');
+    connection.console.log('We received a file change event');
 });
 
 // ----------------------------------------------------------------------------
 
-connection.onDidOpenTextDocument((params) => {
+connection.onDidOpenTextDocument(params => {
+    const document = params.textDocument;
+    const fileName = document.uri;
+    const text = document.text;
+    const ast = (asts[fileName] = ts.createSourceFile(
+        fileName,
+        text,
+        ts.ScriptTarget.Latest,
+        true,
+        ts.ScriptKind.JS
+    ));
 
-	const document = params.textDocument;
-	const fileName = document.uri;
-	const text = document.text;
-	const ast = asts[fileName] = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+    clearDiagnostics(ast);
+    if (Ast.hasParseError(ast)) {
+        provideParseDiagnostics(ast);
+        return;
+    }
 
-	clearDiagnostics(ast);
-	if(Ast.hasParseError(ast)) { 
-		provideParseDiagnostics(ast);
-		return; 
-	}
-	
-	try {
-		Analyzer.analyze(ast);
-		provideAnalyzeDiagnostics(ast);
-	} catch(e) {
-		console.log(e);
-	}
-
+    try {
+        Analyzer.analyze(ast);
+        provideAnalyzeDiagnostics(ast);
+    } catch (e) {
+        console.log(e);
+    }
 });
 
 // ----------------------------------------------------------------------------
 
-connection.onDidChangeTextDocument((params) => {
+connection.onDidChangeTextDocument(params => {
+    const document = params.textDocument;
+    const fileName = document.uri;
+    let ast = asts[fileName];
+    let text = ast.getFullText();
 
-	const document = params.textDocument;
-	const fileName = document.uri;
-	let ast = asts[fileName];
-	let text = ast.getFullText();
+    for (const change of params.contentChanges) {
+        const changeOffset = ast.getPositionOfLineAndCharacter(
+            change.range.start.line,
+            change.range.start.character
+        );
+        const span = ts.createTextSpan(changeOffset, change.rangeLength);
+        const changeRange = ts.createTextChangeRange(span, change.text.length);
+        const newText =
+            text.slice(0, changeOffset) +
+            change.text +
+            text.slice(changeOffset + change.rangeLength);
+        const previousAst = ast;
+        ast = asts[fileName] = ts.updateSourceFile(ast, newText, changeRange);
+        ast.symbols = previousAst.symbols;
+        ast.binders = previousAst.binders;
+        ast.analyzeDiagnostics = previousAst.analyzeDiagnostics;
+        text = newText;
+        Call.updateMetadata(ast, change);
+    }
 
-	for(const change of params.contentChanges) {
-		const changeOffset = ast.getPositionOfLineAndCharacter(change.range.start.line, change.range.start.character);
-		const span = ts.createTextSpan(changeOffset, change.rangeLength);
-		const changeRange = ts.createTextChangeRange(span, change.text.length);
-		const newText = text.slice(0, changeOffset) + change.text + text.slice(changeOffset + change.rangeLength);
-		const previousAst = ast;
-		ast = asts[fileName] = ts.updateSourceFile(ast, newText, changeRange);
-		ast.symbols = previousAst.symbols;
-		ast.binders = previousAst.binders;
-		ast.analyzeDiagnostics = previousAst.analyzeDiagnostics;
-		text = newText;
-		Call.updateMetadata(ast, change);
-	}
+    clearDiagnostics(ast);
+    if (Ast.hasParseError(ast)) {
+        provideParseDiagnostics(ast);
+        return;
+    }
 
-	clearDiagnostics(ast);
-	if(Ast.hasParseError(ast)) { 
-		provideParseDiagnostics(ast);
-		return; 
-	}
-
-	// TODO: remove temporary try catch;
-	try {
-		Analyzer.analyze(ast);
-		provideAnalyzeDiagnostics(ast);
-	} catch(e) {
-		console.log(e);
-	}
-
+    // TODO: remove temporary try catch;
+    try {
+        Analyzer.analyze(ast);
+        provideAnalyzeDiagnostics(ast);
+    } catch (e) {
+        console.log(e);
+    }
 });
 
 // ----------------------------------------------------------------------------
@@ -262,24 +276,24 @@ connection.onCodeAction(CodeAction.onCodeAction);
 
 // ----------------------------------------------------------------------------
 
-const last = function(array) {
-	return array[array.length - 1];
+const last = function (array) {
+    return array[array.length - 1];
 };
 
-connection.onNotification('custom/generateDot', (params) => {
-	const dotUri = params.fileName.replace('.js', '.dot');
-	const dotFileName = last(dotUri.split('/'));
-	AstDotGenerator.generate(asts[params.fileName], dotFileName);
-	connection.sendNotification('custom/generateDotFinish', { dotUri });
+connection.onNotification('custom/generateDot', params => {
+    const dotUri = params.fileName.replace('.js', '.dot');
+    const dotFileName = last(dotUri.split('/'));
+    AstDotGenerator.generate(asts[params.fileName], dotFileName);
+    connection.sendNotification('custom/generateDotFinish', { dotUri });
 });
 
 // ----------------------------------------------------------------------------
 
 connection.onNotification('custom/generateISenseDot', params => {
-	const dotUri = params.fileName.replace('.js', '.dot');
-	const dotFileName = last(dotUri.split('/'));
-	IstDotGenerator.generate(asts[params.fileName], dotFileName);
-	connection.sendNotification('custom/generateISenseDotFinish', { dotUri });
+    const dotUri = params.fileName.replace('.js', '.dot');
+    const dotFileName = last(dotUri.split('/'));
+    IstDotGenerator.generate(asts[params.fileName], dotFileName);
+    connection.sendNotification('custom/generateISenseDotFinish', { dotUri });
 });
 
 // ----------------------------------------------------------------------------
@@ -287,7 +301,7 @@ connection.onNotification('custom/generateISenseDot', params => {
 // connection.onNotification('custom/focusChanged', (params) => {
 
 // 	const ast = asts[params.fileName];
-// 	const offset = ast.getPositionOfLineAndCharacter(params.position.line, params.position.character); 
+// 	const offset = ast.getPositionOfLineAndCharacter(params.position.line, params.position.character);
 // 	const node = Ast.findInnermostNodeOfAnyKind(ast, offset);
 // 	const func = Ast.findAncestorFunction(node);
 // 	if(func === undefined) { return ; }
