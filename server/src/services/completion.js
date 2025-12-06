@@ -4,7 +4,12 @@ const Symbol = require('../utility/symbol');
 const TypeInfo = require('../utility/type-info');
 const TypeCarrier = require('../utility/type-carrier');
 const Signature = require('../utility/signature');
-const { getAst, getCompletionItemKind, getPropertySymbols, findFocusedNode } = require('./utility');
+const {
+	getAst,
+	getCompletionItemKind,
+	getPropertySymbols,
+	findFocusedNode,
+} = require('./utility');
 
 // ----------------------------------------------------------------------------
 
@@ -18,23 +23,24 @@ const Completion = {};
 // ----------------------------------------------------------------------------
 
 Completion.onCompletion = info => {
-
 	const ast = getAst(info);
 	const node = findFocusedNode(ast, info.position);
 	const triggerCharacter = info.context.triggerCharacter;
 
-	if(!node || Ast.isDeclarationName(node)) { return; }
+	if (!node || Ast.isDeclarationName(node)) {
+		return;
+	}
 
-	if(triggerCharacter === '.') { 
+	if (triggerCharacter === '.') {
 		Analyzer.analyze(ast); // TODO: Do not analyze here
 		let propertyAccess = node;
-		if(node.kind === ts.SyntaxKind.Identifier) {
+		if (node.kind === ts.SyntaxKind.Identifier) {
 			propertyAccess = node.parent;
-		} else if(node.kind !== ts.SyntaxKind.PropertyAccessExpression) {
-			return ;
+		} else if (node.kind !== ts.SyntaxKind.PropertyAccessExpression) {
+			return;
 		}
 		return computePropertyCompletions(propertyAccess);
-	} else if(Ast.isNameOfPropertyAccessExpression(node)) {
+	} else if (Ast.isNameOfPropertyAccessExpression(node)) {
 		return computePropertyCompletions(node.parent);
 	} else {
 		return computeIdentifierCompletions(node);
@@ -52,18 +58,21 @@ Completion.onCompletionResolve = item => {
 
 function computeIdentifierCompletions(node) {
 	const completions = [];
-	Ast.findVisibleSymbols(node)
-	.forEach(symbol => {
-		if(Symbol.isAnonymous(symbol)) { return; }
-		if(completions.find(c => c.label === symbol.name)) { return; }
+	Ast.findVisibleSymbols(node).forEach(symbol => {
+		if (Symbol.isAnonymous(symbol)) {
+			return;
+		}
+		if (completions.find(c => c.label === symbol.name)) {
+			return;
+		}
 		const binders = Ast.findActiveTypeBinders(node, symbol);
-		if(!binders.length) { 
+		if (!binders.length) {
 			completions.push({
 				label: symbol.name,
 				kind: vscodeLanguageServer.CompletionItemKind.Variable,
-				signature: `${symbol.name}: any`
+				signature: `${symbol.name}: any`,
 			});
-			return ;
+			return;
 		}
 		completions.push(computeCompletion(node, symbol, binders));
 	});
@@ -71,7 +80,6 @@ function computeIdentifierCompletions(node) {
 }
 
 function computePropertyCompletions(node) {
-
 	const completionItems = [];
 	const propertySymbols = getPropertySymbols(node);
 
@@ -84,27 +92,35 @@ function computePropertyCompletions(node) {
 	// 			});
 	// 		}
 	// 	}
-	
-	for(const property of propertySymbols) {
-		const propertyBinders = Ast.findActiveTypeBindersInLeftSibling(node, property);
-		if(!propertyBinders.length) { continue; }
-		completionItems.push(computeCompletion(node, property, propertyBinders));
+
+	for (const property of propertySymbols) {
+		const propertyBinders = Ast.findActiveTypeBindersInLeftSibling(
+			node,
+			property
+		);
+		if (!propertyBinders.length) {
+			continue;
+		}
+		completionItems.push(
+			computeCompletion(node, property, propertyBinders)
+		);
 	}
 
 	return completionItems;
-
 }
 
 function computeCompletion(node, symbol, binders) {
-	const plausibleTypes = binders.sort(compareBinders).flatMap(b => TypeCarrier.evaluate(b.carrier));
-	const kind = TypeInfo.hasUniqueType(plausibleTypes) ?
-		getCompletionItemKind(plausibleTypes[0].type) : 
-		vscodeLanguageServer.CompletionItemKind.Variable;
+	const plausibleTypes = binders
+		.sort(compareBinders)
+		.flatMap(b => TypeCarrier.evaluate(b.carrier));
+	const kind = TypeInfo.hasUniqueType(plausibleTypes)
+		? getCompletionItemKind(plausibleTypes[0].type)
+		: vscodeLanguageServer.CompletionItemKind.Variable;
 	const signature = Signature.compute(node, symbol, plausibleTypes);
 	return {
-		label: symbol.name, 
+		label: symbol.name,
 		kind,
-		data: { signature }
+		data: { signature },
 	};
 }
 

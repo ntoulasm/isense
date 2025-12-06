@@ -4,7 +4,6 @@ const vscodeLanguageClient = require('vscode-languageclient');
 
 // ----------------------------------------------------------------------------
 
-
 let client;
 /**
  * @type {vscode.StatusBarItem}
@@ -14,10 +13,9 @@ let offsetStatusBarItem;
 // ----------------------------------------------------------------------------
 
 /**
- * @param {vscode.ExtensionContext} context 
+ * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-
 	let serverModule = context.asAbsolutePath(
 		path.join('server', 'src', 'server.js')
 	);
@@ -26,19 +24,23 @@ function activate(context) {
 	let debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
 
 	let serverOptions = {
-		run: { module: serverModule, transport: vscodeLanguageClient.TransportKind.ipc },
+		run: {
+			module: serverModule,
+			transport: vscodeLanguageClient.TransportKind.ipc,
+		},
 		debug: {
 			module: serverModule,
 			transport: vscodeLanguageClient.TransportKind.ipc,
-			options: debugOptions
-		}
+			options: debugOptions,
+		},
 	};
 
 	let clientOptions = {
 		documentSelector: [{ scheme: 'file', language: 'javascript' }],
 		synchronize: {
-			fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
-		}
+			fileEvents:
+				vscode.workspace.createFileSystemWatcher('**/.clientrc'),
+		},
 	};
 
 	client = new vscodeLanguageClient.LanguageClient(
@@ -47,94 +49,128 @@ function activate(context) {
 		serverOptions,
 		clientOptions
 	);
-	
+
 	// This will also launch the server
 	client.start();
 
-	offsetStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	offsetStatusBarItem = vscode.window.createStatusBarItem(
+		vscode.StatusBarAlignment.Right,
+		100
+	);
 	offsetStatusBarItem.command = 'extension.goToOffset';
 	context.subscriptions.push(offsetStatusBarItem);
-	
-	vscode.window.onDidChangeTextEditorSelection((params) => {
-		if(params.textEditor.document.languageId === "javascript") {
+
+	vscode.window.onDidChangeTextEditorSelection(params => {
+		if (params.textEditor.document.languageId === 'javascript') {
 			const length = params.selections.length;
 			const start = params.selections[0].start;
 			const end = params.selections[0].end;
-			if(length === 1 && start.line === end.line && start.character === end.character) {
+			if (
+				length === 1 &&
+				start.line === end.line &&
+				start.character === end.character
+			) {
 				client.sendNotification('custom/focusChanged', {
 					fileName: params.textEditor.document.uri.toString(),
-					position: start
+					position: start,
 				});
-				client.onNotification('custom/pickCallSite', ({callSites}) => {
-					const quickPick = vscode.window.showQuickPick(callSites);
-					quickPick.then(callSite => {
-						client.sendNotification('custom/selectCallSite', callSites.indexOf(callSite));
-					});
-				});
-			}		
+				client.onNotification(
+					'custom/pickCallSite',
+					({ callSites }) => {
+						const quickPick =
+							vscode.window.showQuickPick(callSites);
+						quickPick.then(callSite => {
+							client.sendNotification(
+								'custom/selectCallSite',
+								callSites.indexOf(callSite)
+							);
+						});
+					}
+				);
+			}
 			updateOffsetStatusBarItem();
 		}
 	});
 
 	// ------------------------------------------------------------------------
 
-	vscode.commands.registerTextEditorCommand('extension.generateDot', (textEditor) => {
+	vscode.commands.registerTextEditorCommand(
+		'extension.generateDot',
+		textEditor => {
+			const activeDocumentPath = textEditor.document.uri.toString();
 
-		const activeDocumentPath = textEditor.document.uri.toString();
-		
-		vscode.window.showInformationMessage(`Dot file for AST of '${activeDocumentPath}' is being generated`);
-		
-		client.sendNotification('custom/generateDot', {
-			fileName: activeDocumentPath
-		});
+			vscode.window.showInformationMessage(
+				`Dot file for AST of '${activeDocumentPath}' is being generated`
+			);
 
-	});
+			client.sendNotification('custom/generateDot', {
+				fileName: activeDocumentPath,
+			});
+		}
+	);
 
-	vscode.commands.registerTextEditorCommand('extension.generateISenseDot', textEditor => {
+	vscode.commands.registerTextEditorCommand(
+		'extension.generateISenseDot',
+		textEditor => {
+			const activeDocumentPath = textEditor.document.uri.toString();
 
-		const activeDocumentPath = textEditor.document.uri.toString();
-		
-		vscode.window.showInformationMessage(`Isense Dot file for AST of '${activeDocumentPath}' is being generated`);
-		
-		client.sendNotification('custom/generateISenseDot', {
-			fileName: activeDocumentPath
-		});
+			vscode.window.showInformationMessage(
+				`Isense Dot file for AST of '${activeDocumentPath}' is being generated`
+			);
 
-	});
+			client.sendNotification('custom/generateISenseDot', {
+				fileName: activeDocumentPath,
+			});
+		}
+	);
 
-	vscode.commands.registerTextEditorCommand('extension.goToOffset', (textEditor) => {
-
-		if(!textEditor) { return ; }
-		const text = textEditor.document.getText();
-		const end = text.length;
-
-		vscode.window.showInputBox({
-			valueSelection: [0, end],
-			placeHolder: 'Type offset to go',
-			validateInput: text => {
-				if(isNaN(text)) {
-					return 'Type a number you moron';
-				}
-				return (text > 0 && text < end) ? null : 'Offset out of range';
+	vscode.commands.registerTextEditorCommand(
+		'extension.goToOffset',
+		textEditor => {
+			if (!textEditor) {
+				return;
 			}
-		}).then((text) => {
-			const position = textEditor.document.positionAt(text);
-			textEditor.selection = new vscode.Selection(position, position);
-			textEditor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
-			vscode.window.showTextDocument(vscode.window.activeTextEditor.document)
-		});
+			const text = textEditor.document.getText();
+			const end = text.length;
 
-	});
+			vscode.window
+				.showInputBox({
+					valueSelection: [0, end],
+					placeHolder: 'Type offset to go',
+					validateInput: text => {
+						if (isNaN(text)) {
+							return 'Type a number you moron';
+						}
+						return text > 0 && text < end
+							? null
+							: 'Offset out of range';
+					},
+				})
+				.then(text => {
+					const position = textEditor.document.positionAt(text);
+					textEditor.selection = new vscode.Selection(
+						position,
+						position
+					);
+					textEditor.revealRange(
+						new vscode.Range(position, position),
+						vscode.TextEditorRevealType.InCenter
+					);
+					vscode.window.showTextDocument(
+						vscode.window.activeTextEditor.document
+					);
+				});
+		}
+	);
 
 	// ------------------------------------------------------------------------
 
 	client.onReady().then(() => {
-
 		updateOffsetStatusBarItem();
 
 		// ------------------------------------------------------------------------
 
-		client.onNotification('custom/generateDotFinish', (params) => {
+		client.onNotification('custom/generateDotFinish', params => {
 			vscode.window.showTextDocument(vscode.Uri.parse(params.dotUri), {});
 		});
 
@@ -151,9 +187,7 @@ function activate(context) {
 		// }
 		// vscode.workspace.findFiles(`*.js`).then(uris => { openUris(uris) });
 		// vscode.workspace.findFiles('**/*.js', '**/node_modules/**').then(uris => { openUris(uris); });
-		
 	});
-
 }
 
 // ----------------------------------------------------------------------------
@@ -178,5 +212,5 @@ function updateOffsetStatusBarItem() {
 
 module.exports = {
 	activate,
-	deactivate
+	deactivate,
 };

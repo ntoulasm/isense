@@ -5,6 +5,7 @@
 		"node": true,
 		"jest": true
 	},
+	"extends": ["prettier"],
 	"parserOptions": {
 		"ecmaVersion": 2020,
 		"ecmaFeatures": {},

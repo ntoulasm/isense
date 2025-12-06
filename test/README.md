@@ -135,91 +135,90 @@ The test suite validates core functionality and provides a foundation for testin
 ### Unit Test Template
 
 ```javascript
-const ModuleToTest = require("../../server/src/path/to/module");
+const ModuleToTest = require('../../server/src/path/to/module');
 
-describe("Module Name", () => {
-  let mockData;
+describe('Module Name', () => {
+	let mockData;
 
-  beforeEach(() => {
-    // Setup test data
-    mockData = createMockData();
-  });
+	beforeEach(() => {
+		// Setup test data
+		mockData = createMockData();
+	});
 
-  describe("function name", () => {
-    it("should handle normal case", () => {
-      // Arrange
-      const input = "test input";
+	describe('function name', () => {
+		it('should handle normal case', () => {
+			// Arrange
+			const input = 'test input';
 
-      // Act
-      const result = ModuleToTest.functionName(input);
+			// Act
+			const result = ModuleToTest.functionName(input);
 
-      // Assert
-      expect(result).toBe("expected output");
-    });
+			// Assert
+			expect(result).toBe('expected output');
+		});
 
-    it("should handle edge case", () => {
-      // Test edge cases
-    });
-  });
+		it('should handle edge case', () => {
+			// Test edge cases
+		});
+	});
 });
 ```
 
 ### Integration Test Template
 
 ```javascript
-describe("Feature Integration", () => {
-  let testSourceFile;
+describe('Feature Integration', () => {
+	let testSourceFile;
 
-  beforeEach(() => {
-    // Create comprehensive test code
-    const sourceCode = `/* test JavaScript code */`;
-    testSourceFile = ts.createSourceFile(
-      "test.js",
-      sourceCode,
-      ts.ScriptTarget.ES2015,
-      true
-    );
-    testSourceFile.analyzeDiagnostics = [];
-  });
+	beforeEach(() => {
+		// Create comprehensive test code
+		const sourceCode = `/* test JavaScript code */`;
+		testSourceFile = ts.createSourceFile(
+			'test.js',
+			sourceCode,
+			ts.ScriptTarget.ES2015,
+			true
+		);
+		testSourceFile.analyzeDiagnostics = [];
+	});
 
-  it("should handle complete workflow", () => {
-    // Test full analysis pipeline
-    Analyzer.analyze(testSourceFile);
+	it('should handle complete workflow', () => {
+		// Test full analysis pipeline
+		Analyzer.analyze(testSourceFile);
 
-    // Test service integrations
-    const completions = Completion.onCompletion(mockInfo);
+		// Test service integrations
+		const completions = Completion.onCompletion(mockInfo);
 
-    expect(completions).toBeDefined();
-  });
+		expect(completions).toBeDefined();
+	});
 });
 ```
 
 ### Performance Test Template
 
 ```javascript
-describe("Performance Test", () => {
-  const TIMEOUT = 30000;
+describe('Performance Test', () => {
+	const TIMEOUT = 30000;
 
-  it(
-    "should complete within time limit",
-    (done) => {
-      // Arrange
-      const largeInput = generateLargeInput();
+	it(
+		'should complete within time limit',
+		done => {
+			// Arrange
+			const largeInput = generateLargeInput();
 
-      // Act
-      const startTime = performance.now();
-      performOperation(largeInput);
-      const endTime = performance.now();
+			// Act
+			const startTime = performance.now();
+			performOperation(largeInput);
+			const endTime = performance.now();
 
-      // Assert
-      expect(endTime - startTime).toBeLessThan(5000);
-      done();
-    },
-    TIMEOUT
-  );
+			// Assert
+			expect(endTime - startTime).toBeLessThan(5000);
+			done();
+		},
+		TIMEOUT
+	);
 });
 ```
-
 
 ## Contributing
 

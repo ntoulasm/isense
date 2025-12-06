@@ -55,9 +55,9 @@ iSense is built on the **Language Server Protocol (LSP)** architecture, consisti
 - Start the language server process
 - Create and manage the language client connection
 - Register custom commands:
-  - `extension.generateDot` - Generate AST visualization
-  - `extension.generateISenseDot` - Generate ISense-annotated AST
-  - `extension.goToOffset` - Navigate by character offset
+    - `extension.generateDot` - Generate AST visualization
+    - `extension.generateISenseDot` - Generate ISense-annotated AST
+    - `extension.goToOffset` - Navigate by character offset
 - Display status bar with current cursor offset
 - Handle custom server notifications
 
@@ -92,9 +92,9 @@ The server is composed of several subsystems:
 - `asts` - Map of file URIs to `ts.SourceFile` AST objects
 - `documentSettings` - Per-document configuration cache
 - Each AST is augmented with iSense-specific properties:
-  - `ast.binders` - Type binding information
-  - `ast.analyzeDiagnostics` - Analysis errors
-  - `ast.symbolTable` - Symbol declarations
+    - `ast.binders` - Type binding information
+    - `ast.analyzeDiagnostics` - Analysis errors
+    - `ast.symbolTable` - Symbol declarations
 
 **Document Change Handling**:
 
@@ -131,13 +131,13 @@ onDidChangeTextDocument(change) {
 
 1. **Binding Phase** (via Binder): Create symbol tables
 2. **Analysis Phase**:
-   - Traverse AST in execution order
-   - Maintain call stack and function stack
-   - Track control flow (if/switch statements)
-   - Simulate function calls by replicating and analyzing callee body
-   - Bind inferred types to symbols via TypeBinders
-   - Detect unreachable code
-   - Infer parameter types from usage
+    - Traverse AST in execution order
+    - Maintain call stack and function stack
+    - Track control flow (if/switch statements)
+    - Simulate function calls by replicating and analyzing callee body
+    - Bind inferred types to symbols via TypeBinders
+    - Detect unreachable code
+    - Infer parameter types from usage
 
 **Type Binding Mechanism**:
 
@@ -201,8 +201,8 @@ Symbol = {
 
 ```javascript
 function example(x, y) {
-  x + 1; // x inferred as number (from + operator)
-  y.toUpperCase(); // y inferred as string (from method call)
+	x + 1; // x inferred as number (from + operator)
+	y.toUpperCase(); // y inferred as string (from method call)
 }
 ```
 
@@ -239,20 +239,20 @@ Implementation:
 **Key Capabilities**:
 
 - **Symbol Resolution**:
-  - `findVisibleSymbols(node)` - All symbols visible from a position
-  - `lookUp(node, name)` - Resolve identifier to symbol
+    - `findVisibleSymbols(node)` - All symbols visible from a position
+    - `lookUp(node, name)` - Resolve identifier to symbol
 - **Type Binder Queries**:
-  - `findActiveTypeBinders(node, symbol)` - Find type bindings for a symbol
-  - Handle complex control flow (if/switch/loops)
-  - Consider block scoping and shadowing
+    - `findActiveTypeBinders(node, symbol)` - Find type bindings for a symbol
+    - Handle complex control flow (if/switch/loops)
+    - Consider block scoping and shadowing
 - **Node Navigation**:
-  - `findInnerMostNode(ast, offset)` - Find node at cursor position
-  - `findChildren(node)`, `findSiblings(node)`
-  - `findLeftSibling(node)`, `findRightMostDescendant(node)`
+    - `findInnerMostNode(ast, offset)` - Find node at cursor position
+    - `findChildren(node)`, `findSiblings(node)`
+    - `findLeftSibling(node)`, `findRightMostDescendant(node)`
 - **AST Augmentation**:
-  - `addTypeBinder(node, binder)` - Attach type binding
-  - `addCallSite(callee, call)` - Track function calls
-  - `addAnalyzeDiagnostic(ast, diagnostic)` - Record errors
+    - `addTypeBinder(node, binder)` - Attach type binding
+    - `addCallSite(callee, call)` - Track function calls
+    - `addAnalyzeDiagnostic(ast, diagnostic)` - Record errors
 
 **Active Type Binder Search Algorithm**:
 
@@ -305,24 +305,24 @@ findActiveTypeBinders(node, symbol):
 
 ```javascript
 TypeInfo.Type = {
-  Class,
-  Function,
-  Number,
-  String,
-  Boolean,
-  Array,
-  Object,
-  Undefined,
-  Null,
-  Any,
+	Class,
+	Function,
+	Number,
+	String,
+	Boolean,
+	Array,
+	Object,
+	Undefined,
+	Null,
+	Any,
 };
 
 TypeInfo = {
-  type: TypeInfo.Type,
-  value: actualValue, // e.g., 42, "hello", true
-  hasValue: boolean, // true if value is known
-  properties: SymbolTable, // For Object type
-  constructorName: string, // For Object type
+	type: TypeInfo.Type,
+	value: actualValue, // e.g., 42, "hello", true
+	hasValue: boolean, // true if value is known
+	properties: SymbolTable, // For Object type
+	constructorName: string, // For Object type
 };
 ```
 
@@ -340,11 +340,11 @@ TypeInfo = {
 
 ```javascript
 TypeCarrier.Kind = {
-  Constant, // Literal values: 42, "hello"
-  Variable, // Symbol references
-  BinaryExpression, // a + b, x === y
-  PrefixUnaryExpression, // -x, !flag
-  PostfixUnaryExpression, // i++, j--
+	Constant, // Literal values: 42, "hello"
+	Variable, // Symbol references
+	BinaryExpression, // a + b, x === y
+	PrefixUnaryExpression, // -x, !flag
+	PostfixUnaryExpression, // i++, j--
 };
 ```
 
@@ -432,18 +432,17 @@ LSP feature implementations that use the analyzer results.
 **Strategies**:
 
 1. **Identifier Completion** (plain identifier context):
-
-   - Find all visible symbols in scope
-   - For each symbol, find active type binders
-   - Generate completion items with inferred types
+    - Find all visible symbols in scope
+    - For each symbol, find active type binders
+    - Generate completion items with inferred types
 
 2. **Property Completion** (after `.` operator):
-   - **IMPORTANT**: Triggers analysis on every `.` press (performance issue)
-   - Get type of left-hand expression
-   - If object type, get properties from symbol table
-   - If array/string, suggest built-in methods
-   - Find active binders for each property
-   - Return completion items
+    - **IMPORTANT**: Triggers analysis on every `.` press (performance issue)
+    - Get type of left-hand expression
+    - If object type, get properties from symbol table
+    - If array/string, suggest built-in methods
+    - Find active binders for each property
+    - Return completion items
 
 **Completion Item**:
 
@@ -639,14 +638,14 @@ iSense uses several techniques to infer types from untyped JavaScript:
 
 ```javascript
 const x = 42; // TypeInfo.createNumber(42) - knows value!
-const s = "hello"; // TypeInfo.createString("hello")
+const s = 'hello'; // TypeInfo.createString("hello")
 ```
 
 ### 2. Operator-Based Inference
 
 ```javascript
 function add(a, b) {
-  return a + b;
+	return a + b;
 }
 // Analysis sees: a and b used with +
 // Heuristic: + with no string context → likely numbers
@@ -657,7 +656,7 @@ function add(a, b) {
 
 ```javascript
 function upper(text) {
-  return text.toUpperCase();
+	return text.toUpperCase();
 }
 // Sees: text.toUpperCase()
 // Knows: toUpperCase() is a String method
@@ -668,7 +667,7 @@ function upper(text) {
 
 ```javascript
 const obj = {};
-obj.name = "John";
+obj.name = 'John';
 obj.age = 30;
 // Creates object type with properties:
 // obj: { name: string, age: number }
@@ -678,9 +677,9 @@ obj.age = 30;
 
 ```javascript
 class Person {
-  constructor(name) {
-    this.name = name; // Track assignment to 'this'
-  }
+	constructor(name) {
+		this.name = name; // Track assignment to 'this'
+	}
 }
 // Person instances have: { name: any }
 ```
@@ -689,10 +688,10 @@ class Person {
 
 ```javascript
 function process(x) {
-  if (typeof x === "number") {
-    // In this branch: x is narrowed to number type
-    return x * 2;
-  }
+	if (typeof x === 'number') {
+		// In this branch: x is narrowed to number type
+		return x * 2;
+	}
 }
 // Condition recorded in binder, type refined
 ```
@@ -701,11 +700,11 @@ function process(x) {
 
 ```javascript
 function calculate() {
-  if (condition) {
-    return 42; // number
-  } else {
-    return "error"; // string
-  }
+	if (condition) {
+		return 42; // number
+	} else {
+		return 'error'; // string
+	}
 }
 // Result type: number | string (union)
 ```
@@ -735,7 +734,7 @@ When multiple binders exist for a symbol:
 
 ```javascript
 function compareBinders(b1, b2) {
-  return b1.parent.end - b2.parent.end;
+	return b1.parent.end - b2.parent.end;
 }
 // Later binders (closer to current position) sorted first
 ```
@@ -873,7 +872,7 @@ Types are bound to program points, not symbols globally:
 ```javascript
 let x = 5; // Binder 1: x → number (at line 1)
 if (condition) {
-  x = "hello"; // Binder 2: x → string (at line 3, if condition)
+	x = 'hello'; // Binder 2: x → string (at line 3, if condition)
 }
 // To get type of x: find active binders considering control flow
 ```
@@ -907,47 +906,41 @@ Symbol resolution walks up the tree.
 ### Bottlenecks
 
 1. **Full Re-analysis on Property Completion**:
-
-   - Currently: `Analyzer.analyze(ast)` called on every `.` press
-   - Should: Analyze once, cache results, invalidate on change
+    - Currently: `Analyzer.analyze(ast)` called on every `.` press
+    - Should: Analyze once, cache results, invalidate on change
 
 2. **Call Simulation Overhead**:
-
-   - Cloning AST is expensive
-   - Deep recursion for nested calls
-   - No memoization of call results
+    - Cloning AST is expensive
+    - Deep recursion for nested calls
+    - No memoization of call results
 
 3. **Binder Search Complexity**:
-
-   - For each symbol reference, search all parent scopes
-   - For each scope, filter by control flow
-   - O(scopes × binders) per query
+    - For each symbol reference, search all parent scopes
+    - For each scope, filter by control flow
+    - O(scopes × binders) per query
 
 4. **No Incremental Analysis**:
-   - Text edits invalidate entire file analysis
-   - Should: Only re-analyze affected scopes
+    - Text edits invalidate entire file analysis
+    - Should: Only re-analyze affected scopes
 
 ### Optimization Opportunities
 
 1. **Caching**:
-
-   - Cache analysis results per file
-   - Cache TypeCarrier evaluations
-   - Cache symbol resolution
+    - Cache analysis results per file
+    - Cache TypeCarrier evaluations
+    - Cache symbol resolution
 
 2. **Incremental Analysis**:
-
-   - Track which scopes are affected by edits
-   - Only re-analyze dirty scopes
+    - Track which scopes are affected by edits
+    - Only re-analyze dirty scopes
 
 3. **Demand-Driven Analysis**:
-
-   - Don't analyze unused functions
-   - Analyze on demand when referenced
+    - Don't analyze unused functions
+    - Analyze on demand when referenced
 
 4. **Call Graph Pruning**:
-   - Limit call simulation depth
-   - Detect recursive calls early
+    - Limit call simulation depth
+    - Detect recursive calls early
 
 ## Limitations
 

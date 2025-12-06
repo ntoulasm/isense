@@ -13,29 +13,30 @@ const DocumentSymbol = {};
 // ----------------------------------------------------------------------------
 
 DocumentSymbol.onDocumentSymbol = info => {
-
 	const fileName = info.textDocument.uri;
 	const ast = Ast.asts[fileName];
 
 	return createDocumentSymbols(ast);
-
 };
 
 // ----------------------------------------------------------------------------
 
 function createDocumentSymbols(node) {
-
 	const symbols = [];
 
-	if(!node.symbols) { return symbols; }
+	if (!node.symbols) {
+		return symbols;
+	}
 
-	for(const symbol of Object.values(node.symbols.getSymbols())) {
-		if(!symbol.declaration) { continue ; }
+	for (const symbol of Object.values(node.symbols.getSymbols())) {
+		if (!symbol.declaration) {
+			continue;
+		}
 		symbols.push(createDocumentSymbol(symbol));
 	}
 
 	const createSymbolsInBlock = node => {
-		switch(node.kind) {
+		switch (node.kind) {
 			case ts.SyntaxKind.Block:
 				symbols.push(...createDocumentSymbols(node));
 				break;
@@ -58,25 +59,23 @@ function createDocumentSymbols(node) {
 				ts.forEachChild(node, createSymbolsInBlock);
 				break;
 		}
-	}
+	};
 	ts.forEachChild(node, createSymbolsInBlock);
 
 	return symbols;
-
 }
 
 function createDocumentSymbol(symbol) {
-
 	const description = '';
 	const range = createRange(symbol);
 	const kind = getSymbolKind(symbol);
 	let children = [];
 
-	if(ts.isFunctionLike(symbol.declaration) && symbol.declaration.body) {
+	if (ts.isFunctionLike(symbol.declaration) && symbol.declaration.body) {
 		children = createDocumentSymbols(symbol.declaration.body);
 	}
 
-	if(ts.isClassLike(symbol.declaration)) {
+	if (ts.isClassLike(symbol.declaration)) {
 		children = createDocumentSymbols(symbol.declaration);
 	}
 
@@ -88,16 +87,14 @@ function createDocumentSymbol(symbol) {
 		range,
 		children
 	);
-
 }
 
 // ----------------------------------------------------------------------------
 
 function getSymbolKind(symbol) {
-
 	const kind = vscodeLanguageServer.SymbolKind;
 
-	switch(symbol.declaration.kind) {
+	switch (symbol.declaration.kind) {
 		case ts.SyntaxKind.ClassDeclaration:
 		case ts.SyntaxKind.ClassExpression:
 			return kind.Class;
@@ -111,9 +108,9 @@ function getSymbolKind(symbol) {
 			return kind.Constructor;
 		case ts.SyntaxKind.SetAccessor:
 		case ts.SyntaxKind.GetAccessor:
-		case ts.SyntaxKind.PropertyDeclaration: 
+		case ts.SyntaxKind.PropertyDeclaration:
 			return kind.Property;
-		default: 
+		default:
 			return kind.Variable;
 	}
 }

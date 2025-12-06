@@ -22,7 +22,9 @@ Utility.createRange = symbol => {
 	const declaration = symbol.declaration;
 	console.assert(declaration);
 	const ast = declaration.getSourceFile();
-	const startPosition = ast.getLineAndCharacterOfPosition(declaration.getStart(ast));
+	const startPosition = ast.getLineAndCharacterOfPosition(
+		declaration.getStart(ast)
+	);
 	const endPosition = ast.getLineAndCharacterOfPosition(declaration.end);
 	const range = vscodeLanguageServer.Range.create(startPosition, endPosition);
 	return range;
@@ -47,7 +49,7 @@ Utility.getCompletionItemKind = type => {
 // ----------------------------------------------------------------------------
 
 /**
- * @param {ts.PropertyAccessExpression} node 
+ * @param {ts.PropertyAccessExpression} node
  */
 Utility.getPropertySymbols = node => {
 	const properties = [];
@@ -55,18 +57,22 @@ Utility.getPropertySymbols = node => {
 	for (const typeInfo of objectTypeInfo) {
 		switch (typeInfo.type) {
 			case TypeInfo.Type.Object: {
-				if (!typeInfo.hasValue) { break; }
-				properties.push(...Object.values(typeInfo.properties.getSymbols()));
+				if (!typeInfo.hasValue) {
+					break;
+				}
+				properties.push(
+					...Object.values(typeInfo.properties.getSymbols())
+				);
 			}
 		}
 	}
 	return properties;
-}
+};
 
 // ----------------------------------------------------------------------------
 
 /**
- * @param {ts.Identifier} node 
+ * @param {ts.Identifier} node
  */
 Utility.getSymbolOfIdentifier = node => {
 	if (Ast.isNameOfPropertyAccessExpression(node)) {
@@ -76,7 +82,7 @@ Utility.getSymbolOfIdentifier = node => {
 	} else {
 		return Ast.lookUp(node, node.text);
 	}
-}
+};
 
 // ----------------------------------------------------------------------------
 
@@ -84,7 +90,10 @@ Utility.findFocusedNode = (ast, position) => {
 	if (!ast || typeof ast.getPositionOfLineAndCharacter !== 'function') {
 		throw new Error('AST must implement getPositionOfLineAndCharacter');
 	}
-	const offset = ast.getPositionOfLineAndCharacter(position.line, position.character);
+	const offset = ast.getPositionOfLineAndCharacter(
+		position.line,
+		position.character
+	);
 	return Ast.findInnermostNodeOfAnyKind(ast, offset);
 };
 

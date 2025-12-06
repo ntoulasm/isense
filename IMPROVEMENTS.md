@@ -239,25 +239,25 @@ onDidChangeTextDocument(change) {
 ```javascript
 // analyzer.js
 function analyzeInternal(node) {
-  if (ts.isFunctionLike(node)) {
-    // Don't analyze body immediately
-    node.lazyAnalyze = () => {
-      if (!node.analyzed) {
-        analyzeFunctionBody(node);
-        node.analyzed = true;
-      }
-    };
-    return; // Skip children
-  }
-  ts.forEachChild(node, analyzeInternal);
+	if (ts.isFunctionLike(node)) {
+		// Don't analyze body immediately
+		node.lazyAnalyze = () => {
+			if (!node.analyzed) {
+				analyzeFunctionBody(node);
+				node.analyzed = true;
+			}
+		};
+		return; // Skip children
+	}
+	ts.forEachChild(node, analyzeInternal);
 }
 
 // Analyze on demand
 function call(call, callee, thisObject) {
-  if (callee.lazyAnalyze) {
-    callee.lazyAnalyze(); // Analyze now
-  }
-  // ... rest of call simulation
+	if (callee.lazyAnalyze) {
+		callee.lazyAnalyze(); // Analyze now
+	}
+	// ... rest of call simulation
 }
 ```
 
@@ -274,22 +274,22 @@ function call(call, callee, thisObject) {
 ```javascript
 // ast.js
 class BinderIndex {
-  constructor() {
-    this.bySymbol = new Map(); // symbol name -> binders[]
-  }
+	constructor() {
+		this.bySymbol = new Map(); // symbol name -> binders[]
+	}
 
-  add(binder) {
-    const name = binder.symbol.name;
-    if (!this.bySymbol.has(name)) {
-      this.bySymbol.set(name, []);
-    }
-    this.bySymbol.get(name).push(binder);
-  }
+	add(binder) {
+		const name = binder.symbol.name;
+		if (!this.bySymbol.has(name)) {
+			this.bySymbol.set(name, []);
+		}
+		this.bySymbol.get(name).push(binder);
+	}
 
-  find(symbolName, node) {
-    const candidates = this.bySymbol.get(symbolName) || [];
-    return candidates.filter((b) => isActive(b, node));
-  }
+	find(symbolName, node) {
+		const candidates = this.bySymbol.get(symbolName) || [];
+		return candidates.filter(b => isActive(b, node));
+	}
 }
 
 // Attach to each scope
@@ -308,23 +308,23 @@ scope.binderIndex = new BinderIndex();
 
 ```javascript
 // server.js
-const { Worker } = require("worker_threads");
-const analysisWorker = new Worker("./analysis-worker.js");
+const { Worker } = require('worker_threads');
+const analysisWorker = new Worker('./analysis-worker.js');
 
 function analyzeAsync(ast) {
-  return new Promise((resolve) => {
-    analysisWorker.postMessage({
-      type: "analyze",
-      code: ast.getFullText(),
-      fileName: ast.fileName,
-    });
+	return new Promise(resolve => {
+		analysisWorker.postMessage({
+			type: 'analyze',
+			code: ast.getFullText(),
+			fileName: ast.fileName,
+		});
 
-    analysisWorker.once("message", (result) => {
-      // Apply results to AST
-      applyAnalysisResults(ast, result);
-      resolve();
-    });
-  });
+		analysisWorker.once('message', result => {
+			// Apply results to AST
+			applyAnalysisResults(ast, result);
+			resolve();
+		});
+	});
 }
 ```
 
@@ -344,24 +344,29 @@ function analyzeAsync(ast) {
 
 ```javascript
 // server.js
-const ts = require("typescript");
+const ts = require('typescript');
 
 let previousAst = null;
 
 function incrementalParse(fileName, text, change) {
-  if (!previousAst) {
-    return ts.createSourceFile(fileName, text, ts.ScriptTarget.ES2015, true);
-  }
+	if (!previousAst) {
+		return ts.createSourceFile(
+			fileName,
+			text,
+			ts.ScriptTarget.ES2015,
+			true
+		);
+	}
 
-  const changeRange = {
-    span: {
-      start: change.rangeOffset,
-      length: change.rangeLength,
-    },
-    newLength: change.text.length,
-  };
+	const changeRange = {
+		span: {
+			start: change.rangeOffset,
+			length: change.rangeLength,
+		},
+		newLength: change.text.length,
+	};
 
-  return ts.updateSourceFile(previousAst, text, changeRange);
+	return ts.updateSourceFile(previousAst, text, changeRange);
 }
 ```
 
@@ -380,20 +385,20 @@ function incrementalParse(fileName, text, change) {
 ```javascript
 // Analyze call sites during initial scan
 function inferParameterTypes(func) {
-  const callSites = findAllCallSites(func);
-  const argumentTypes = callSites.map((call) => {
-    return call.arguments.map((arg) => evaluateType(arg));
-  });
+	const callSites = findAllCallSites(func);
+	const argumentTypes = callSites.map(call => {
+		return call.arguments.map(arg => evaluateType(arg));
+	});
 
-  // For each parameter position, find most common type
-  const paramTypes = func.parameters.map((param, i) => {
-    const types = argumentTypes.map(
-      (args) => args[i] || TypeInfo.createUndefined()
-    );
-    return findMostCommonType(types);
-  });
+	// For each parameter position, find most common type
+	const paramTypes = func.parameters.map((param, i) => {
+		const types = argumentTypes.map(
+			args => args[i] || TypeInfo.createUndefined()
+		);
+		return findMostCommonType(types);
+	});
 
-  return paramTypes;
+	return paramTypes;
 }
 ```
 
@@ -401,11 +406,11 @@ function inferParameterTypes(func) {
 
 ```javascript
 function process(data) {
-  /* ... */
+	/* ... */
 }
 
-process({ id: 1, name: "test" }); // Call site 1
-process({ id: 2, name: "foo" }); // Call site 2
+process({ id: 1, name: 'test' }); // Call site 1
+process({ id: 2, name: 'foo' }); // Call site 2
 
 // Infer: data: { id: number, name: string }
 ```
@@ -421,13 +426,13 @@ process({ id: 2, name: "foo" }); // Call site 2
 ```javascript
 // Infer common object shapes
 function inferObjectShape(objectCreations) {
-  const shapes = objectCreations.map((obj) => getProperties(obj));
-  const commonProperties = intersect(...shapes);
+	const shapes = objectCreations.map(obj => getProperties(obj));
+	const commonProperties = intersect(...shapes);
 
-  return {
-    required: commonProperties,
-    optional: union(...shapes).filter((p) => !commonProperties.includes(p)),
-  };
+	return {
+		required: commonProperties,
+		optional: union(...shapes).filter(p => !commonProperties.includes(p)),
+	};
 }
 ```
 
@@ -435,9 +440,9 @@ function inferObjectShape(objectCreations) {
 
 ```javascript
 const objects = [
-  { id: 1, name: "a", age: 20 },
-  { id: 2, name: "b" },
-  { id: 3, name: "c", age: 25 },
+	{ id: 1, name: 'a', age: 20 },
+	{ id: 2, name: 'b' },
+	{ id: 3, name: 'c', age: 25 },
 ];
 
 // Infer: { id: number, name: string, age?: number }
@@ -454,23 +459,23 @@ const objects = [
 ```javascript
 // Track element types
 function analyzeArrayLiteral(node) {
-  const elementTypes = node.elements.map((el) => evaluateType(el));
+	const elementTypes = node.elements.map(el => evaluateType(el));
 
-  if (TypeInfo.hasUniqueType(elementTypes)) {
-    return TypeInfo.createArray(elementTypes[0]);
-  } else {
-    return TypeInfo.createArray(TypeInfo.createUnion(elementTypes));
-  }
+	if (TypeInfo.hasUniqueType(elementTypes)) {
+		return TypeInfo.createArray(elementTypes[0]);
+	} else {
+		return TypeInfo.createArray(TypeInfo.createUnion(elementTypes));
+	}
 }
 
 // Array methods
 function analyzeArrayMethod(node) {
-  if (node.name.text === "map") {
-    // arr.map(fn) -> infer return type of fn
-    const fn = node.arguments[0];
-    const returnType = inferReturnType(fn);
-    return TypeInfo.createArray(returnType);
-  }
+	if (node.name.text === 'map') {
+		// arr.map(fn) -> infer return type of fn
+		const fn = node.arguments[0];
+		const returnType = inferReturnType(fn);
+		return TypeInfo.createArray(returnType);
+	}
 }
 ```
 
@@ -515,13 +520,13 @@ function inferFromName(name) {
 
 ```javascript
 function setCount(newCount) {
-  // Infer: newCount: number
-  // ...
+	// Infer: newCount: number
+	// ...
 }
 
 function isValid(input) {
-  // Infer: returns boolean
-  // ...
+	// Infer: returns boolean
+	// ...
 }
 ```
 
@@ -534,15 +539,15 @@ function isValid(input) {
 ```javascript
 // Recognize common JavaScript patterns
 const patterns = {
-  // Default parameter
-  "param || defaultValue": (param) =>
-    TypeInfo.createUnion([evaluateType(param), evaluateType(defaultValue)]),
+	// Default parameter
+	'param || defaultValue': param =>
+		TypeInfo.createUnion([evaluateType(param), evaluateType(defaultValue)]),
 
-  // Null check
-  "obj && obj.prop": (obj) => TypeInfo.makeNullable(evaluateType(obj)),
+	// Null check
+	'obj && obj.prop': obj => TypeInfo.makeNullable(evaluateType(obj)),
 
-  // Array check
-  "Array.isArray(x)": (x) => TypeInfo.createArray(),
+	// Array check
+	'Array.isArray(x)': x => TypeInfo.createArray(),
 };
 ```
 
@@ -563,9 +568,9 @@ const patterns = {
 ```javascript
 // Parse JSDoc comments
 function getDocumentation(symbol) {
-  const node = symbol.declaration;
-  const jsDoc = ts.getJSDocCommentsAndTags(node);
-  return jsDoc.map((doc) => doc.comment).join("\n");
+	const node = symbol.declaration;
+	const jsDoc = ts.getJSDocCommentsAndTags(node);
+	return jsDoc.map(doc => doc.comment).join('\n');
 }
 ```
 
@@ -583,18 +588,18 @@ function getDocumentation(symbol) {
 ```javascript
 // Code lens showing inferred types
 function getTypeCodeLens(node) {
-  if (ts.isFunctionDeclaration(node)) {
-    const paramTypes = inferParameterTypes(node);
-    const returnType = inferReturnType(node);
+	if (ts.isFunctionDeclaration(node)) {
+		const paramTypes = inferParameterTypes(node);
+		const returnType = inferReturnType(node);
 
-    return {
-      range: createRange(node),
-      command: {
-        title: `(${paramTypes.join(", ")}) => ${returnType}`,
-        command: "isense.showInferredTypes",
-      },
-    };
-  }
+		return {
+			range: createRange(node),
+			command: {
+				title: `(${paramTypes.join(', ')}) => ${returnType}`,
+				command: 'isense.showInferredTypes',
+			},
+		};
+	}
 }
 ```
 
@@ -627,12 +632,12 @@ function getTypeCodeLens(node) {
 ```javascript
 // Array.isArray narrowing
 if (Array.isArray(x)) {
-  // x is array here
+	// x is array here
 }
 
 // instanceof narrowing
 if (x instanceof MyClass) {
-  // x is MyClass here
+	// x is MyClass here
 }
 ```
 
@@ -663,14 +668,14 @@ if (x instanceof MyClass) {
 
 ```json
 {
-  "isense.analysis.depth": 5, // Max call chain depth
-  "isense.analysis.timeout": 5000, // Max analysis time (ms)
-  "isense.inference.useHeuristics": true,
-  "isense.inference.useCallSites": true,
-  "isense.cache.enabled": true,
-  "isense.cache.location": ".isense/",
-  "isense.diagnostics.level": "warning", // "off", "warning", "error"
-  "isense.completion.maxSuggestions": 50
+	"isense.analysis.depth": 5, // Max call chain depth
+	"isense.analysis.timeout": 5000, // Max analysis time (ms)
+	"isense.inference.useHeuristics": true,
+	"isense.inference.useCallSites": true,
+	"isense.cache.enabled": true,
+	"isense.cache.location": ".isense/",
+	"isense.diagnostics.level": "warning", // "off", "warning", "error"
+	"isense.completion.maxSuggestions": 50
 }
 ```
 
@@ -682,16 +687,16 @@ if (x instanceof MyClass) {
 
 ```javascript
 // server.js
-connection.sendNotification("isense/analysisStarted", { fileName });
+connection.sendNotification('isense/analysisStarted', { fileName });
 
 // ... during analysis
-connection.sendNotification("isense/analysisProgress", {
-  fileName,
-  percent: 50,
-  message: "Analyzing function calls...",
+connection.sendNotification('isense/analysisProgress', {
+	fileName,
+	percent: 50,
+	message: 'Analyzing function calls...',
 });
 
-connection.sendNotification("isense/analysisComplete", { fileName });
+connection.sendNotification('isense/analysisComplete', { fileName });
 ```
 
 **Display**: Progress bar in VS Code status bar
@@ -728,9 +733,9 @@ connection.sendNotification("isense/analysisComplete", { fileName });
 
 ```javascript
 function process(data) {
-  // ^^^^  { id: number, name: string }
-  return data.id * 2;
-  // ^^^^^^  number
+	// ^^^^  { id: number, name: string }
+	return data.id * 2;
+	// ^^^^^^  number
 }
 ```
 
@@ -752,7 +757,7 @@ function process(data) {
 
 ```javascript
 // Before
-const obj = { name: "test", age: 30 };
+const obj = { name: 'test', age: 30 };
 
 // Code action: "Generate interface"
 
@@ -762,7 +767,7 @@ const obj = { name: "test", age: 30 };
  * @property {string} name
  * @property {number} age
  */
-const obj = { name: "test", age: 30 };
+const obj = { name: 'test', age: 30 };
 ```
 
 ---
@@ -774,7 +779,7 @@ const obj = { name: "test", age: 30 };
 ```javascript
 // Input
 function calculate(a, b) {
-  return a + b;
+	return a + b;
 }
 
 // Code action: "Generate documentation"
@@ -787,7 +792,7 @@ function calculate(a, b) {
  * @returns {number} The sum
  */
 function calculate(a, b) {
-  return a + b;
+	return a + b;
 }
 ```
 

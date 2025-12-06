@@ -1,3 +1,3 @@
 module.exports = {
-    assignmentToConst: 0
+	assignmentToConst: 0,
 };

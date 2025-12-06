@@ -27,14 +27,14 @@ IntelliSense Results
 iSense uses TypeScript's parser (`typescript` npm package) to parse JavaScript:
 
 ```javascript
-const ts = require("typescript");
+const ts = require('typescript');
 
 const ast = ts.createSourceFile(
-  fileName,
-  sourceCode,
-  ts.ScriptTarget.ES2015, // Support ES6+
-  true, // setParentNodes
-  ts.ScriptKind.JS
+	fileName,
+	sourceCode,
+	ts.ScriptTarget.ES2015, // Support ES6+
+	true, // setParentNodes
+	ts.ScriptKind.JS
 );
 ```
 
@@ -74,8 +74,8 @@ TypeScript parser provides syntax errors:
 
 ```javascript
 if (ast.parseDiagnostics.length > 0) {
-  // Convert to LSP diagnostics
-  // Display in VS Code problems panel
+	// Convert to LSP diagnostics
+	// Display in VS Code problems panel
 }
 ```
 
@@ -135,15 +135,15 @@ Symbol = {
 
 ```javascript
 function outer(x) {
-  // Scope 1 starts
-  var y = 10;
-  // Symbol Table for Scope 1:
-  function inner(z) {
-    // { x: param, y: var, inner: function }
-    var w = 20; // Scope 2 starts
-    return x + y + z + w; // Symbol Table for Scope 2:
-  } // { z: param, w: var }
-  return inner; // Scope 2 ends
+	// Scope 1 starts
+	var y = 10;
+	// Symbol Table for Scope 1:
+	function inner(z) {
+		// { x: param, y: var, inner: function }
+		var w = 20; // Scope 2 starts
+		return x + y + z + w; // Symbol Table for Scope 2:
+	} // { z: param, w: var }
+	return inner; // Scope 2 ends
 } // Scope 1 ends
 ```
 
@@ -163,31 +163,31 @@ iSense simulates code execution at an abstract level:
 
 ```javascript
 function analyzeInternal(node) {
-  switch (node.kind) {
-    case ts.SyntaxKind.VariableDeclaration:
-      analyzeVariableDeclaration(node);
-      break;
+	switch (node.kind) {
+		case ts.SyntaxKind.VariableDeclaration:
+			analyzeVariableDeclaration(node);
+			break;
 
-    case ts.SyntaxKind.BinaryExpression:
-      analyzeBinaryExpression(node);
-      break;
+		case ts.SyntaxKind.BinaryExpression:
+			analyzeBinaryExpression(node);
+			break;
 
-    case ts.SyntaxKind.CallExpression:
-      analyzeCallExpression(node);
-      break;
+		case ts.SyntaxKind.CallExpression:
+			analyzeCallExpression(node);
+			break;
 
-    case ts.SyntaxKind.IfStatement:
-      analyzeIfStatement(node);
-      break;
+		case ts.SyntaxKind.IfStatement:
+			analyzeIfStatement(node);
+			break;
 
-    case ts.SyntaxKind.PropertyAccessExpression:
-      analyzePropertyAccessExpression(node);
-      break;
+		case ts.SyntaxKind.PropertyAccessExpression:
+			analyzePropertyAccessExpression(node);
+			break;
 
-    // ... 100+ more cases
-  }
+		// ... 100+ more cases
+	}
 
-  ts.forEachChild(node, analyzeInternal); // Recurse
+	ts.forEachChild(node, analyzeInternal); // Recurse
 }
 ```
 
@@ -308,7 +308,7 @@ Analysis:
 
 ```javascript
 function multiply(x, y) {
-  return x * y;
+	return x * y;
 }
 ```
 
@@ -332,7 +332,7 @@ This is a **heuristic**: `*` operator → probably numbers. Not always correct, 
 ```javascript
 let x = 5; // Binder 1: x = 5 (number)
 if (condition) {
-  x = "hello"; // Binder 2: x = "hello" (string), condition: [condition === true]
+	x = 'hello'; // Binder 2: x = "hello" (string), condition: [condition === true]
 }
 console.log(x); // Query: x here
 ```
@@ -352,9 +352,9 @@ Analysis:
 
 ```javascript
 function greet(name) {
-  return "Hello, " + name;
+	return 'Hello, ' + name;
 }
-const msg = greet("Alice");
+const msg = greet('Alice');
 ```
 
 Analysis (call simulation):
@@ -383,7 +383,7 @@ Analysis (call simulation):
 ```javascript
 const obj = {};
 obj.x = 10;
-obj.y = "test";
+obj.y = 'test';
 ```
 
 Analysis:
@@ -517,12 +517,12 @@ Track types through branches:
 
 ```javascript
 let x;
-if (typeof x === "number") {
-  // In this branch: x is number
-  return x * 2;
+if (typeof x === 'number') {
+	// In this branch: x is number
+	return x * 2;
 } else {
-  // In this branch: x is not number
-  return x;
+	// In this branch: x is not number
+	return x;
 }
 ```
 
@@ -539,11 +539,11 @@ Function return type = union of all returned expressions:
 
 ```javascript
 function getValue(useDefault) {
-  if (useDefault) {
-    return 42; // return: number
-  } else {
-    return "none"; // return: string
-  }
+	if (useDefault) {
+		return 42; // return: number
+	} else {
+		return 'none'; // return: string
+	}
 }
 // getValue return type: number | string
 ```
@@ -555,12 +555,12 @@ function getValue(useDefault) {
 returns = findAllReturns(functionBody);
 
 // Evaluate type of each return expression
-types = returns.map((ret) => {
-  if (ret.expression) {
-    return evaluateType(ret.expression);
-  } else {
-    return TypeInfo.createUndefined();
-  }
+types = returns.map(ret => {
+	if (ret.expression) {
+		return evaluateType(ret.expression);
+	} else {
+		return TypeInfo.createUndefined();
+	}
 });
 
 // Union all types
@@ -573,7 +573,7 @@ Track all assignments to a variable:
 
 ```javascript
 let status;
-status = "pending"; // Binder 1: string
+status = 'pending'; // Binder 1: string
 status = 404; // Binder 2: number
 // status type: string | number
 ```
@@ -584,10 +584,10 @@ Track property assignments in constructors:
 
 ```javascript
 class Point {
-  constructor(x, y) {
-    this.x = x; // Point has property x
-    this.y = y; // Point has property y
-  }
+	constructor(x, y) {
+		this.x = x; // Point has property x
+		this.y = y; // Point has property y
+	}
 }
 ```
 
@@ -610,10 +610,10 @@ When calling a function, propagate argument types to parameters:
 
 ```javascript
 function process(data) {
-  // data type unknown
+	// data type unknown
 }
 
-process({ name: "test", id: 123 });
+process({ name: 'test', id: 123 });
 // Call site: argument is object { name: string, id: number }
 // → Propagate to 'data' parameter
 ```
@@ -635,28 +635,25 @@ process({ name: "test", id: 123 });
 ### Context Types
 
 1. **Declaration Context**:
-
-   - Variable declaration: `const x = ...`
-   - Infer type from initializer
+    - Variable declaration: `const x = ...`
+    - Infer type from initializer
 
 2. **Assignment Context**:
-
-   - Simple: `x = ...`
-   - Property: `obj.prop = ...`
-   - Element: `arr[0] = ...`
+    - Simple: `x = ...`
+    - Property: `obj.prop = ...`
+    - Element: `arr[0] = ...`
 
 3. **Expression Context**:
-
-   - Binary: `a + b`
-   - Unary: `-x`, `!flag`
-   - Call: `func(args)`
-   - Property: `obj.prop`
+    - Binary: `a + b`
+    - Unary: `-x`, `!flag`
+    - Call: `func(args)`
+    - Property: `obj.prop`
 
 4. **Statement Context**:
-   - If/else: track branches
-   - Loops: track iterations (simplified)
-   - Switch: track cases
-   - Return: infer function return type
+    - If/else: track branches
+    - Loops: track iterations (simplified)
+    - Switch: track cases
+    - Return: infer function return type
 
 ### Type Inference Chain
 
@@ -681,7 +678,7 @@ Not always correct:
 
 ```javascript
 function weird(a, b) {
-  return a + b;
+	return a + b;
 }
 weird([1], [2]); // a, b are arrays, not numbers!
 // Heuristic wrong: + can concatenate arrays
@@ -719,15 +716,15 @@ x = 10; // Error: Assignment to constant variable
 ```javascript
 // In assign()
 if (symbol.kind === ts.SyntaxKind.VariableDeclaration) {
-  if (isConst(symbol.declaration)) {
-    // Create diagnostic
-    const diagnostic = AnalyzeDiagnostic.create(
-      node,
-      DiagnosticMessages.assignmentToConst,
-      [symbol.name]
-    );
-    Ast.addAnalyzeDiagnostic(ast, diagnostic);
-  }
+	if (isConst(symbol.declaration)) {
+		// Create diagnostic
+		const diagnostic = AnalyzeDiagnostic.create(
+			node,
+			DiagnosticMessages.assignmentToConst,
+			[symbol.name]
+		);
+		Ast.addAnalyzeDiagnostic(ast, diagnostic);
+	}
 }
 ```
 
@@ -761,39 +758,34 @@ Useful for understanding what the analyzer sees.
 ### Bottlenecks
 
 1. **Full Re-analysis**:
-
-   - Every completion request triggers `Analyzer.analyze(ast)`
-   - Inefficient: should cache
+    - Every completion request triggers `Analyzer.analyze(ast)`
+    - Inefficient: should cache
 
 2. **Call Simulation Overhead**:
-
-   - Cloning AST is expensive
-   - Deep call chains multiply cost
+    - Cloning AST is expensive
+    - Deep call chains multiply cost
 
 3. **Binder Search**:
-   - Linear search through scope hierarchy
-   - For large files, many binders to check
+    - Linear search through scope hierarchy
+    - For large files, many binders to check
 
 ### Optimization Strategies (Not Implemented)
 
 1. **Cache Analysis Results**:
-
-   - Hash file content
-   - Reuse analysis if content unchanged
+    - Hash file content
+    - Reuse analysis if content unchanged
 
 2. **Incremental Analysis**:
-
-   - Track dirty scopes
-   - Only re-analyze affected parts
+    - Track dirty scopes
+    - Only re-analyze affected parts
 
 3. **Lazy Analysis**:
-
-   - Analyze functions on demand
-   - Don't analyze unused code
+    - Analyze functions on demand
+    - Don't analyze unused code
 
 4. **Memoize TypeCarrier Evaluation**:
-   - Cache evaluation results
-   - Reuse for identical carriers
+    - Cache evaluation results
+    - Reuse for identical carriers
 
 ## Current Limitations
 

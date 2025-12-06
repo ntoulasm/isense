@@ -1,213 +1,229 @@
 const TypeInfo = require('../../server/src/utility/type-info');
 
 describe('TypeInfo Module', () => {
-  describe('TypeInfo.Type enumeration', () => {
-    it('should have all expected type constants', () => {
-      // Assert
-      expect(TypeInfo.Type.Class).toBe(0);
-      expect(TypeInfo.Type.Function).toBe(1);
-      expect(TypeInfo.Type.Number).toBe(2);
-      expect(TypeInfo.Type.String).toBe(3);
-      expect(TypeInfo.Type.Boolean).toBe(4);
-      expect(TypeInfo.Type.Array).toBe(5);
-      expect(TypeInfo.Type.Object).toBe(6);
-      expect(TypeInfo.Type.Undefined).toBe(7);
-      expect(TypeInfo.Type.Null).toBe(8);
-      expect(TypeInfo.Type.Any).toBe(9);
-    });
+	describe('TypeInfo.Type enumeration', () => {
+		it('should have all expected type constants', () => {
+			// Assert
+			expect(TypeInfo.Type.Class).toBe(0);
+			expect(TypeInfo.Type.Function).toBe(1);
+			expect(TypeInfo.Type.Number).toBe(2);
+			expect(TypeInfo.Type.String).toBe(3);
+			expect(TypeInfo.Type.Boolean).toBe(4);
+			expect(TypeInfo.Type.Array).toBe(5);
+			expect(TypeInfo.Type.Object).toBe(6);
+			expect(TypeInfo.Type.Undefined).toBe(7);
+			expect(TypeInfo.Type.Null).toBe(8);
+			expect(TypeInfo.Type.Any).toBe(9);
+		});
 
-    it('should have corresponding type text maps', () => {
-      // Assert
-      expect(TypeInfo.typeTextMap).toEqual([
-        'Class', 'Function', 'Number', 'String', 'Boolean',
-        'Array', 'Object', 'Undefined', 'Null', 'Any'
-      ]);
-      
-      expect(TypeInfo.typeTextMapLowerCase).toEqual([
-        'class', 'function', 'number', 'string', 'boolean',
-        'array', 'object', 'undefined', 'null', 'any'
-      ]);
-    });
-  });
+		it('should have corresponding type text maps', () => {
+			// Assert
+			expect(TypeInfo.typeTextMap).toEqual([
+				'Class',
+				'Function',
+				'Number',
+				'String',
+				'Boolean',
+				'Array',
+				'Object',
+				'Undefined',
+				'Null',
+				'Any',
+			]);
 
-  describe('TypeInfo.typeToString', () => {
-    it('should return "class" for Class type', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.Class };
+			expect(TypeInfo.typeTextMapLowerCase).toEqual([
+				'class',
+				'function',
+				'number',
+				'string',
+				'boolean',
+				'array',
+				'object',
+				'undefined',
+				'null',
+				'any',
+			]);
+		});
+	});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+	describe('TypeInfo.typeToString', () => {
+		it('should return "class" for Class type', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.Class };
 
-      // Assert
-      expect(result).toBe('class');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should return "function" for Function type', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.Function };
+			// Assert
+			expect(result).toBe('class');
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should return "function" for Function type', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.Function };
 
-      // Assert
-      expect(result).toBe('function');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should return "number" for Number type', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.Number };
+			// Assert
+			expect(result).toBe('function');
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should return "number" for Number type', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.Number };
 
-      // Assert
-      expect(result).toBe('number');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should return "string" for String type', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.String };
+			// Assert
+			expect(result).toBe('number');
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should return "string" for String type', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.String };
 
-      // Assert
-      expect(result).toBe('string');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should return "boolean" for Boolean type', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.Boolean };
+			// Assert
+			expect(result).toBe('string');
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should return "boolean" for Boolean type', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.Boolean };
 
-      // Assert
-      expect(result).toBe('boolean');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should return "array" for Array type', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.Array };
+			// Assert
+			expect(result).toBe('boolean');
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should return "array" for Array type', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.Array };
 
-      // Assert
-      expect(result).toBe('array');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should return "object" for Object type', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.Object };
+			// Assert
+			expect(result).toBe('array');
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should return "object" for Object type', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.Object };
 
-      // Assert
-      expect(result).toBe('object');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should return "undefined" for Undefined type', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.Undefined };
+			// Assert
+			expect(result).toBe('object');
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should return "undefined" for Undefined type', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.Undefined };
 
-      // Assert
-      expect(result).toBe('undefined');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should return "null" for Null type', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.Null };
+			// Assert
+			expect(result).toBe('undefined');
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should return "null" for Null type', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.Null };
 
-      // Assert
-      expect(result).toBe('null');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should return "any" for Any type', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.Any };
+			// Assert
+			expect(result).toBe('null');
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should return "any" for Any type', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.Any };
 
-      // Assert
-      expect(result).toBe('any');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should handle unknown/invalid type gracefully', () => {
-      // Arrange
-      const typeInfo = { type: 999 }; // Invalid type
+			// Assert
+			expect(result).toBe('any');
+		});
 
-      // Act & Assert
-      expect(() => TypeInfo.typeToString(typeInfo)).not.toThrow();
-    });
+		it('should handle unknown/invalid type gracefully', () => {
+			// Arrange
+			const typeInfo = { type: 999 }; // Invalid type
 
-    it('should handle typeInfo with value and hasValue properties', () => {
-      // Arrange
-      const typeInfo = {
-        type: TypeInfo.Type.Number,
-        value: 42,
-        hasValue: true
-      };
+			// Act & Assert
+			expect(() => TypeInfo.typeToString(typeInfo)).not.toThrow();
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should handle typeInfo with value and hasValue properties', () => {
+			// Arrange
+			const typeInfo = {
+				type: TypeInfo.Type.Number,
+				value: 42,
+				hasValue: true,
+			};
 
-      // Assert
-      expect(result).toBe('number');
-    });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-    it('should handle typeInfo with only type property', () => {
-      // Arrange
-      const typeInfo = { type: TypeInfo.Type.String };
+			// Assert
+			expect(result).toBe('number');
+		});
 
-      // Act
-      const result = TypeInfo.typeToString(typeInfo);
+		it('should handle typeInfo with only type property', () => {
+			// Arrange
+			const typeInfo = { type: TypeInfo.Type.String };
 
-      // Assert
-      expect(result).toBe('string');
-    });
-  });
+			// Act
+			const result = TypeInfo.typeToString(typeInfo);
 
-  describe('TypeInfo creation patterns', () => {
-    it('should create valid typeInfo objects', () => {
-      // Arrange & Act
-      const numberTypeInfo = {
-        type: TypeInfo.Type.Number,
-        value: 123,
-        hasValue: true
-      };
+			// Assert
+			expect(result).toBe('string');
+		});
+	});
 
-      const stringTypeInfo = {
-        type: TypeInfo.Type.String,
-        value: 'hello',
-        hasValue: true
-      };
+	describe('TypeInfo creation patterns', () => {
+		it('should create valid typeInfo objects', () => {
+			// Arrange & Act
+			const numberTypeInfo = {
+				type: TypeInfo.Type.Number,
+				value: 123,
+				hasValue: true,
+			};
 
-      const unknownTypeInfo = {
-        type: TypeInfo.Type.Any,
-        value: undefined,
-        hasValue: false
-      };
+			const stringTypeInfo = {
+				type: TypeInfo.Type.String,
+				value: 'hello',
+				hasValue: true,
+			};
 
-      // Assert
-      expect(numberTypeInfo.type).toBe(TypeInfo.Type.Number);
-      expect(numberTypeInfo.value).toBe(123);
-      expect(numberTypeInfo.hasValue).toBe(true);
+			const unknownTypeInfo = {
+				type: TypeInfo.Type.Any,
+				value: undefined,
+				hasValue: false,
+			};
 
-      expect(stringTypeInfo.type).toBe(TypeInfo.Type.String);
-      expect(stringTypeInfo.value).toBe('hello');
-      expect(stringTypeInfo.hasValue).toBe(true);
+			// Assert
+			expect(numberTypeInfo.type).toBe(TypeInfo.Type.Number);
+			expect(numberTypeInfo.value).toBe(123);
+			expect(numberTypeInfo.hasValue).toBe(true);
 
-      expect(unknownTypeInfo.type).toBe(TypeInfo.Type.Any);
-      expect(unknownTypeInfo.hasValue).toBe(false);
-    });
-  });
+			expect(stringTypeInfo.type).toBe(TypeInfo.Type.String);
+			expect(stringTypeInfo.value).toBe('hello');
+			expect(stringTypeInfo.hasValue).toBe(true);
+
+			expect(unknownTypeInfo.type).toBe(TypeInfo.Type.Any);
+			expect(unknownTypeInfo.hasValue).toBe(false);
+		});
+	});
 });
