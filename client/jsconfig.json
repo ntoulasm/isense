@@ -1,9 +1,9 @@
 {
-	"compilerOptions": {
-		"module": "es2015",
-		"target": "es6",
-		"checkJs": false /* Typecheck .js files. */,
-		"lib": ["es6"]
-	},
-	"exclude": ["node_modules"]
+    "compilerOptions": {
+        "module": "es2015",
+        "target": "es6",
+        "checkJs": false /* Typecheck .js files. */,
+        "lib": ["es6"]
+    },
+    "exclude": ["node_modules"]
 }

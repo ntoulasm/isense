@@ -68,7 +68,7 @@ This makes iSense particularly useful for:
     ```javascript
     let x = 5; // iSense knows x: number
     if (condition) {
-    	x = 'hello'; // iSense knows x: string here
+        x = 'hello'; // iSense knows x: string here
     }
     // iSense knows x: number | string here
     ```
@@ -77,7 +77,7 @@ This makes iSense particularly useful for:
 
     ```javascript
     function add(a, b) {
-    	return a + b; // iSense infers a, b likely: number from + operator
+        return a + b; // iSense infers a, b likely: number from + operator
     }
     ```
 
@@ -103,11 +103,11 @@ const obj = { x: 10 }; // Inferred as object with property x
 
 ```javascript
 function multiply(a, b) {
-	return a * b; // Parameters inferred as number from * operator
+    return a * b; // Parameters inferred as number from * operator
 }
 
 function greet(name) {
-	console.log('Hello ' + name); // name inferred as string from concatenation
+    console.log('Hello ' + name); // name inferred as string from concatenation
 }
 ```
 
@@ -115,11 +115,11 @@ function greet(name) {
 
 ```javascript
 function process(value) {
-	if (typeof value === 'number') {
-		return value * 2; // value known as number here
-	} else if (typeof value === 'string') {
-		return value.toUpperCase(); // value known as string here
-	}
+    if (typeof value === 'number') {
+        return value * 2; // value known as number here
+    } else if (typeof value === 'string') {
+        return value.toUpperCase(); // value known as string here
+    }
 }
 ```
 
@@ -127,10 +127,10 @@ function process(value) {
 
 ```javascript
 class Point {
-	constructor(x, y) {
-		this.x = x; // iSense tracks Point instances have x, y
-		this.y = y;
-	}
+    constructor(x, y) {
+        this.x = x; // iSense tracks Point instances have x, y
+        this.y = y;
+    }
 }
 
 const p = new Point(10, 20);

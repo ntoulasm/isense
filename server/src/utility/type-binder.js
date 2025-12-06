@@ -19,23 +19,23 @@ const TypeBinder = {};
  * @returns {isense.TypeBinder}
  */
 TypeBinder.create = (symbol, carrier) => {
-	const binder = {};
+    const binder = {};
 
-	symbol.binders.push(binder);
+    symbol.binders.push(binder);
 
-	binder.symbol = symbol;
-	binder.carrier = carrier;
-	binder.parent = null;
+    binder.symbol = symbol;
+    binder.carrier = carrier;
+    binder.parent = null;
 
-	binder.setParentNode = parent => {
-		if (!binder.parent) {
-			binder.parent = parent;
-		}
-	};
+    binder.setParentNode = parent => {
+        if (!binder.parent) {
+            binder.parent = parent;
+        }
+    };
 
-	binder.getInfo = () => binder.carrier.getInfo(binder.parent);
+    binder.getInfo = () => binder.carrier.getInfo(binder.parent);
 
-	return binder;
+    return binder;
 };
 
 // ----------------------------------------------------------------------------

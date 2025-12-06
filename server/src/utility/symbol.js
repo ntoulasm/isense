@@ -13,18 +13,18 @@ const Symbol = {};
  * @returns {isense.symbol}
  */
 Symbol.create = (name, declaration) => {
-	const symbol = {};
+    const symbol = {};
 
-	symbol.name = name;
-	symbol.declaration = declaration;
-	symbol.binders = [];
+    symbol.name = name;
+    symbol.declaration = declaration;
+    symbol.binders = [];
 
-	return symbol;
+    return symbol;
 };
 
 Symbol.isAnonymous = symbol => {
-	const first = symbol.name[0];
-	return first === '(' || first === '<';
+    const first = symbol.name[0];
+    return first === '(' || first === '<';
 };
 
 module.exports = Symbol;

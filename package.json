@@ -1,79 +1,79 @@
 {
-	"name": "isense",
-	"description": "Intellisense for JavaScript",
-	"publisher": "ntoulasm",
-	"author": "ntoulasm",
-	"license": "MIT",
-	"version": "1.0.0",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/ntoulasm/isense"
-	},
-	"categories": [
-		"Programming Languages",
-		"Linters",
-		"Other"
-	],
-	"keywords": [
-		"isense",
-		"Intellisense",
-		"JavaScript"
-	],
-	"engines": {
-		"vscode": "^1.33.0"
-	},
-	"activationEvents": [
-		"onLanguage:javascript"
-	],
-	"main": "./client/src/extension.js",
-	"contributes": {
-		"commands": [
-			{
-				"command": "extension.generateDot",
-				"title": "Generate DOT file for the AST of current file"
-			},
-			{
-				"command": "extension.generateISenseDot",
-				"title": "Generate ISense DOT file for the AST of current file"
-			}
-		],
-		"configuration": {
-			"type": "object",
-			"title": "Example configuration",
-			"properties": {
-				"languageServerExample.maxNumberOfProblems": {
-					"scope": "resource",
-					"type": "number",
-					"default": 100,
-					"description": "Controls the maximum number of problems produced by the server."
-				},
-				"languageServerExample.trace.server": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"off",
-						"messages",
-						"verbose"
-					],
-					"default": "off",
-					"description": "Traces the communication between VS Code and the language server."
-				}
-			}
-		}
-	},
-	"scripts": {
-		"vscode:prepublish": "",
-		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
-		"update": "cd client && npm update && cd ../server && npm update && cd ..",
-		"lint": "eslint .",
-		"format": "prettier --write .",
-		"format:check": "prettier --check ."
-	},
-	"devDependencies": {
-		"@types/node": "^14.14.41",
-		"eslint": "^8.57.1",
-		"eslint-config-prettier": "^10.1.8",
-		"eslint-formatter-gha": "^1.6.0",
-		"prettier": "^3.7.4"
-	}
+    "name": "isense",
+    "description": "Intellisense for JavaScript",
+    "publisher": "ntoulasm",
+    "author": "ntoulasm",
+    "license": "MIT",
+    "version": "1.0.0",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ntoulasm/isense"
+    },
+    "categories": [
+        "Programming Languages",
+        "Linters",
+        "Other"
+    ],
+    "keywords": [
+        "isense",
+        "Intellisense",
+        "JavaScript"
+    ],
+    "engines": {
+        "vscode": "^1.33.0"
+    },
+    "activationEvents": [
+        "onLanguage:javascript"
+    ],
+    "main": "./client/src/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "extension.generateDot",
+                "title": "Generate DOT file for the AST of current file"
+            },
+            {
+                "command": "extension.generateISenseDot",
+                "title": "Generate ISense DOT file for the AST of current file"
+            }
+        ],
+        "configuration": {
+            "type": "object",
+            "title": "Example configuration",
+            "properties": {
+                "languageServerExample.maxNumberOfProblems": {
+                    "scope": "resource",
+                    "type": "number",
+                    "default": 100,
+                    "description": "Controls the maximum number of problems produced by the server."
+                },
+                "languageServerExample.trace.server": {
+                    "scope": "window",
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Traces the communication between VS Code and the language server."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "",
+        "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+        "update": "cd client && npm update && cd ../server && npm update && cd ..",
+        "lint": "eslint .",
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
+    },
+    "devDependencies": {
+        "@types/node": "^14.14.41",
+        "eslint": "^8.57.1",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-formatter-gha": "^1.6.0",
+        "prettier": "^3.7.4"
+    }
 }

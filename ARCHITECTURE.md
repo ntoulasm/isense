@@ -201,8 +201,8 @@ Symbol = {
 
 ```javascript
 function example(x, y) {
-	x + 1; // x inferred as number (from + operator)
-	y.toUpperCase(); // y inferred as string (from method call)
+    x + 1; // x inferred as number (from + operator)
+    y.toUpperCase(); // y inferred as string (from method call)
 }
 ```
 
@@ -305,24 +305,24 @@ findActiveTypeBinders(node, symbol):
 
 ```javascript
 TypeInfo.Type = {
-	Class,
-	Function,
-	Number,
-	String,
-	Boolean,
-	Array,
-	Object,
-	Undefined,
-	Null,
-	Any,
+    Class,
+    Function,
+    Number,
+    String,
+    Boolean,
+    Array,
+    Object,
+    Undefined,
+    Null,
+    Any,
 };
 
 TypeInfo = {
-	type: TypeInfo.Type,
-	value: actualValue, // e.g., 42, "hello", true
-	hasValue: boolean, // true if value is known
-	properties: SymbolTable, // For Object type
-	constructorName: string, // For Object type
+    type: TypeInfo.Type,
+    value: actualValue, // e.g., 42, "hello", true
+    hasValue: boolean, // true if value is known
+    properties: SymbolTable, // For Object type
+    constructorName: string, // For Object type
 };
 ```
 
@@ -340,11 +340,11 @@ TypeInfo = {
 
 ```javascript
 TypeCarrier.Kind = {
-	Constant, // Literal values: 42, "hello"
-	Variable, // Symbol references
-	BinaryExpression, // a + b, x === y
-	PrefixUnaryExpression, // -x, !flag
-	PostfixUnaryExpression, // i++, j--
+    Constant, // Literal values: 42, "hello"
+    Variable, // Symbol references
+    BinaryExpression, // a + b, x === y
+    PrefixUnaryExpression, // -x, !flag
+    PostfixUnaryExpression, // i++, j--
 };
 ```
 
@@ -645,7 +645,7 @@ const s = 'hello'; // TypeInfo.createString("hello")
 
 ```javascript
 function add(a, b) {
-	return a + b;
+    return a + b;
 }
 // Analysis sees: a and b used with +
 // Heuristic: + with no string context → likely numbers
@@ -656,7 +656,7 @@ function add(a, b) {
 
 ```javascript
 function upper(text) {
-	return text.toUpperCase();
+    return text.toUpperCase();
 }
 // Sees: text.toUpperCase()
 // Knows: toUpperCase() is a String method
@@ -677,9 +677,9 @@ obj.age = 30;
 
 ```javascript
 class Person {
-	constructor(name) {
-		this.name = name; // Track assignment to 'this'
-	}
+    constructor(name) {
+        this.name = name; // Track assignment to 'this'
+    }
 }
 // Person instances have: { name: any }
 ```
@@ -688,10 +688,10 @@ class Person {
 
 ```javascript
 function process(x) {
-	if (typeof x === 'number') {
-		// In this branch: x is narrowed to number type
-		return x * 2;
-	}
+    if (typeof x === 'number') {
+        // In this branch: x is narrowed to number type
+        return x * 2;
+    }
 }
 // Condition recorded in binder, type refined
 ```
@@ -700,11 +700,11 @@ function process(x) {
 
 ```javascript
 function calculate() {
-	if (condition) {
-		return 42; // number
-	} else {
-		return 'error'; // string
-	}
+    if (condition) {
+        return 42; // number
+    } else {
+        return 'error'; // string
+    }
 }
 // Result type: number | string (union)
 ```
@@ -734,7 +734,7 @@ When multiple binders exist for a symbol:
 
 ```javascript
 function compareBinders(b1, b2) {
-	return b1.parent.end - b2.parent.end;
+    return b1.parent.end - b2.parent.end;
 }
 // Later binders (closer to current position) sorted first
 ```
@@ -872,7 +872,7 @@ Types are bound to program points, not symbols globally:
 ```javascript
 let x = 5; // Binder 1: x → number (at line 1)
 if (condition) {
-	x = 'hello'; // Binder 2: x → string (at line 3, if condition)
+    x = 'hello'; // Binder 2: x → string (at line 3, if condition)
 }
 // To get type of x: find active binders considering control flow
 ```

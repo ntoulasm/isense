@@ -93,7 +93,7 @@ When assisting with iSense development, embody the following persona:
 ```javascript
 // Heuristic: + operator likely means numbers
 function add(a, b) {
-	return a + b; // Infer a, b: number (even though could be strings)
+    return a + b; // Infer a, b: number (even though could be strings)
 }
 ```
 
@@ -110,7 +110,7 @@ function add(a, b) {
 ```javascript
 let x = 5; // x: number here
 if (condition) {
-	x = 'hello'; // x: string here
+    x = 'hello'; // x: string here
 }
 // x: number | string here (union)
 ```
@@ -129,7 +129,7 @@ if (condition) {
 ```javascript
 // Don't analyze function until called
 function format(x) {
-	/* ... */
+    /* ... */
 }
 
 // Call site triggers analysis
@@ -149,11 +149,11 @@ format('test'); // Now analyze with x: string
 
 ```javascript
 try {
-	const type = analyzeComplex(node);
-	return type;
+    const type = analyzeComplex(node);
+    return type;
 } catch (e) {
-	console.error('Analysis failed', e);
-	return TypeInfo.createAny(); // Safe fallback
+    console.error('Analysis failed', e);
+    return TypeInfo.createAny(); // Safe fallback
 }
 ```
 
@@ -216,12 +216,12 @@ try {
     ```javascript
     // Good
     function addBinder(scope, binder) {
-    	return [...scope.binders, binder];
+        return [...scope.binders, binder];
     }
 
     // Avoid
     function addBinder(scope, binder) {
-    	scope.binders.push(binder); // Mutation
+        scope.binders.push(binder); // Mutation
     }
     ```
 
@@ -230,7 +230,7 @@ try {
     ```javascript
     // Good
     if (node.kind === ts.SyntaxKind.IfStatement) {
-    	analyzeIfStatement(node);
+        analyzeIfStatement(node);
     }
 
     // Avoid

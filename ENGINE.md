@@ -30,11 +30,11 @@ iSense uses TypeScript's parser (`typescript` npm package) to parse JavaScript:
 const ts = require('typescript');
 
 const ast = ts.createSourceFile(
-	fileName,
-	sourceCode,
-	ts.ScriptTarget.ES2015, // Support ES6+
-	true, // setParentNodes
-	ts.ScriptKind.JS
+    fileName,
+    sourceCode,
+    ts.ScriptTarget.ES2015, // Support ES6+
+    true, // setParentNodes
+    ts.ScriptKind.JS
 );
 ```
 
@@ -74,8 +74,8 @@ TypeScript parser provides syntax errors:
 
 ```javascript
 if (ast.parseDiagnostics.length > 0) {
-	// Convert to LSP diagnostics
-	// Display in VS Code problems panel
+    // Convert to LSP diagnostics
+    // Display in VS Code problems panel
 }
 ```
 
@@ -135,15 +135,15 @@ Symbol = {
 
 ```javascript
 function outer(x) {
-	// Scope 1 starts
-	var y = 10;
-	// Symbol Table for Scope 1:
-	function inner(z) {
-		// { x: param, y: var, inner: function }
-		var w = 20; // Scope 2 starts
-		return x + y + z + w; // Symbol Table for Scope 2:
-	} // { z: param, w: var }
-	return inner; // Scope 2 ends
+    // Scope 1 starts
+    var y = 10;
+    // Symbol Table for Scope 1:
+    function inner(z) {
+        // { x: param, y: var, inner: function }
+        var w = 20; // Scope 2 starts
+        return x + y + z + w; // Symbol Table for Scope 2:
+    } // { z: param, w: var }
+    return inner; // Scope 2 ends
 } // Scope 1 ends
 ```
 
@@ -163,31 +163,31 @@ iSense simulates code execution at an abstract level:
 
 ```javascript
 function analyzeInternal(node) {
-	switch (node.kind) {
-		case ts.SyntaxKind.VariableDeclaration:
-			analyzeVariableDeclaration(node);
-			break;
+    switch (node.kind) {
+        case ts.SyntaxKind.VariableDeclaration:
+            analyzeVariableDeclaration(node);
+            break;
 
-		case ts.SyntaxKind.BinaryExpression:
-			analyzeBinaryExpression(node);
-			break;
+        case ts.SyntaxKind.BinaryExpression:
+            analyzeBinaryExpression(node);
+            break;
 
-		case ts.SyntaxKind.CallExpression:
-			analyzeCallExpression(node);
-			break;
+        case ts.SyntaxKind.CallExpression:
+            analyzeCallExpression(node);
+            break;
 
-		case ts.SyntaxKind.IfStatement:
-			analyzeIfStatement(node);
-			break;
+        case ts.SyntaxKind.IfStatement:
+            analyzeIfStatement(node);
+            break;
 
-		case ts.SyntaxKind.PropertyAccessExpression:
-			analyzePropertyAccessExpression(node);
-			break;
+        case ts.SyntaxKind.PropertyAccessExpression:
+            analyzePropertyAccessExpression(node);
+            break;
 
-		// ... 100+ more cases
-	}
+        // ... 100+ more cases
+    }
 
-	ts.forEachChild(node, analyzeInternal); // Recurse
+    ts.forEachChild(node, analyzeInternal); // Recurse
 }
 ```
 
@@ -308,7 +308,7 @@ Analysis:
 
 ```javascript
 function multiply(x, y) {
-	return x * y;
+    return x * y;
 }
 ```
 
@@ -332,7 +332,7 @@ This is a **heuristic**: `*` operator → probably numbers. Not always correct, 
 ```javascript
 let x = 5; // Binder 1: x = 5 (number)
 if (condition) {
-	x = 'hello'; // Binder 2: x = "hello" (string), condition: [condition === true]
+    x = 'hello'; // Binder 2: x = "hello" (string), condition: [condition === true]
 }
 console.log(x); // Query: x here
 ```
@@ -352,7 +352,7 @@ Analysis:
 
 ```javascript
 function greet(name) {
-	return 'Hello, ' + name;
+    return 'Hello, ' + name;
 }
 const msg = greet('Alice');
 ```
@@ -518,11 +518,11 @@ Track types through branches:
 ```javascript
 let x;
 if (typeof x === 'number') {
-	// In this branch: x is number
-	return x * 2;
+    // In this branch: x is number
+    return x * 2;
 } else {
-	// In this branch: x is not number
-	return x;
+    // In this branch: x is not number
+    return x;
 }
 ```
 
@@ -539,11 +539,11 @@ Function return type = union of all returned expressions:
 
 ```javascript
 function getValue(useDefault) {
-	if (useDefault) {
-		return 42; // return: number
-	} else {
-		return 'none'; // return: string
-	}
+    if (useDefault) {
+        return 42; // return: number
+    } else {
+        return 'none'; // return: string
+    }
 }
 // getValue return type: number | string
 ```
@@ -556,11 +556,11 @@ returns = findAllReturns(functionBody);
 
 // Evaluate type of each return expression
 types = returns.map(ret => {
-	if (ret.expression) {
-		return evaluateType(ret.expression);
-	} else {
-		return TypeInfo.createUndefined();
-	}
+    if (ret.expression) {
+        return evaluateType(ret.expression);
+    } else {
+        return TypeInfo.createUndefined();
+    }
 });
 
 // Union all types
@@ -584,10 +584,10 @@ Track property assignments in constructors:
 
 ```javascript
 class Point {
-	constructor(x, y) {
-		this.x = x; // Point has property x
-		this.y = y; // Point has property y
-	}
+    constructor(x, y) {
+        this.x = x; // Point has property x
+        this.y = y; // Point has property y
+    }
 }
 ```
 
@@ -610,7 +610,7 @@ When calling a function, propagate argument types to parameters:
 
 ```javascript
 function process(data) {
-	// data type unknown
+    // data type unknown
 }
 
 process({ name: 'test', id: 123 });
@@ -678,7 +678,7 @@ Not always correct:
 
 ```javascript
 function weird(a, b) {
-	return a + b;
+    return a + b;
 }
 weird([1], [2]); // a, b are arrays, not numbers!
 // Heuristic wrong: + can concatenate arrays
@@ -716,15 +716,15 @@ x = 10; // Error: Assignment to constant variable
 ```javascript
 // In assign()
 if (symbol.kind === ts.SyntaxKind.VariableDeclaration) {
-	if (isConst(symbol.declaration)) {
-		// Create diagnostic
-		const diagnostic = AnalyzeDiagnostic.create(
-			node,
-			DiagnosticMessages.assignmentToConst,
-			[symbol.name]
-		);
-		Ast.addAnalyzeDiagnostic(ast, diagnostic);
-	}
+    if (isConst(symbol.declaration)) {
+        // Create diagnostic
+        const diagnostic = AnalyzeDiagnostic.create(
+            node,
+            DiagnosticMessages.assignmentToConst,
+            [symbol.name]
+        );
+        Ast.addAnalyzeDiagnostic(ast, diagnostic);
+    }
 }
 ```
 
