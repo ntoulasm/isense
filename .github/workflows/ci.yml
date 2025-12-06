@@ -37,11 +37,9 @@ jobs:
         echo "::endgroup::"
 
     - name: Lint
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: | 
         echo "::group::Linting"
-        npx eslint . -f github
+        npx eslint . -f gha
         echo "::endgroup::"
 
     - name: Run Tests
