@@ -1,5 +1,7 @@
 # iSense
 
+![CI](https://github.com/ntoulasm/isense/actions/workflows/ci.yml/badge.svg)
+
 **Intelligent Code Analysis for JavaScript without Type Annotations**
 
 iSense is an experimental Visual Studio Code extension that provides IntelliSense capabilities for JavaScript code **without requiring TypeScript or JSDoc annotations**. It uses advanced static analysis, type inference, and flow-sensitive analysis to understand your JavaScript code and provide intelligent code completion, hover information, and diagnostics.

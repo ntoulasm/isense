@@ -13,7 +13,7 @@ describe('Binder Module', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset binder counters
     Binder.reset();
 
@@ -503,7 +503,7 @@ describe('Binder Module', () => {
       // Arrange
       const node1 = { kind: ts.SyntaxKind.Block, statements: [] };
       const node2 = { kind: ts.SyntaxKind.Block, statements: [] };
-      
+
       node1.statements.push(node2);
       node2.parent = node1;
       // This creates a potential circular reference
