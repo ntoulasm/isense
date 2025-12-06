@@ -39,7 +39,7 @@ jobs:
     - name: Lint
       run: | 
         echo "::group::Linting"
-        npx eslint .
+        npx eslint . -f github
         echo "::endgroup::"
 
     - name: Run Tests
