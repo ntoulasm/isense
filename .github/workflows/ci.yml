@@ -7,44 +7,45 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [16.x]
-
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'npm'
 
-    - name: Install Root Dependencies
-      run: |
-        echo "::group::Installing Root Dependencies"
-        npm ci
-        echo "::endgroup::"
+      - name: Install Dependencies
+        run: npm ci
 
-    - name: Install Test Dependencies
-      run: |
-        echo "::group::Installing Test Dependencies"
-        cd test
-        npm ci
-        echo "::endgroup::"
+      - name: Lint
+        run: npx eslint . -f gha
 
-    - name: Lint
-      run: | 
-        echo "::group::Linting"
-        npx eslint . -f gha
-        echo "::endgroup::"
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-    - name: Run Tests
-      run: |
-        echo "::group::Running Tests"
-        cd test
-        npx jest --ci --reporters=default --reporters=github-actions --all
-        echo "::endgroup::"
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'npm'
+
+      - name: Install Root Dependencies
+        run: npm ci
+
+      - name: Install Test Dependencies
+        run: |
+          cd test
+          npm ci
+
+      - name: Run Tests
+        run: |
+          cd test
+          npx jest --ci --reporters=default --reporters=github-actions --all
