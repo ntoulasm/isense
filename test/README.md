@@ -17,23 +17,23 @@ npm install
 
 ```bash
 cd test
-node run-tests.js
+npm test
 ```
 
 ### Run Specific Test Types
 
 ```bash
 # Unit tests only (fast)
-node run-tests.js --unit
+npm run test:unit
 
 # Integration tests only
-node run-tests.js --integration
+npm run test:integration
 
 # Performance tests only
-node run-tests.js --performance
+npm run test:performance
 
 # All tests with coverage report
-node run-tests.js --coverage
+npm run test:coverage
 ```
 
 ### Run Individual Tests
@@ -50,7 +50,7 @@ npx jest unit/stack.test.js --no-coverage
 
 ```bash
 # Watch mode for active development
-node run-tests.js --watch
+npm run test:watch
 ```
 
 ### Direct Jest Commands
@@ -60,7 +60,7 @@ node run-tests.js --watch
 npx jest unit/symbol.test.js
 
 # Run tests matching pattern
-npx jest --testNamePattern="Symbol"
+npx jest -t "Symbol"
 
 # Run with verbose output
 npx jest --verbose
@@ -101,7 +101,7 @@ npx jest --coverage
 
 - Performance tests may take longer on slower machines
 - Increase timeout in `jest.config.js` if needed
-- Skip performance tests during development: `node run-tests.js --unit`
+- Skip performance tests during development: `npm run test:unit`
 
 ## Test Structure Overview
 
@@ -111,15 +111,14 @@ test/
 ├── integration/             # End-to-end workflow tests
 ├── performance/             # Stress and benchmark tests
 ├── setup.js                 # Test environment configuration
-├── jest.config.js           # Jest test runner settings
-└── run-tests.js             # Custom test runner script
+└── jest.config.js           # Jest test runner settings
 ```
 
 ### Run All Tests
 
 ```bash
 cd test
-node run-tests.js
+npm test
 ```
 
 ### Run with VS Code Jest Extension

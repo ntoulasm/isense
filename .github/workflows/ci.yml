@@ -46,5 +46,5 @@ jobs:
       run: |
         echo "::group::Running Tests"
         cd test
-        node run-tests.js --all
+        npx jest --ci --reporters=default --reporters=github-actions --all
         echo "::endgroup::"
