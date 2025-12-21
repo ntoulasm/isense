@@ -68,7 +68,8 @@
         "update": "cd client && npm update && cd ../server && npm update && cd ..",
         "lint": "eslint .",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "test": "cd test && npm run test && cd .."
     },
     "devDependencies": {
         "@types/node": "^20.0.0",
