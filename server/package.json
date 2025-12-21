@@ -5,15 +5,15 @@
     "author": "ntoulasm",
     "license": "MIT",
     "engines": {
-        "node": "*"
+        "node": ">=18.0.0"
     },
     "repository": {
         "type": "git",
         "url": "https://github.com/ntoulasm/isense"
     },
     "dependencies": {
-        "typescript": "^4.2.4",
-        "vscode-languageserver": "^7.0.0"
+        "typescript": "^5.9.3",
+        "vscode-languageserver": "^9.0.1"
     },
     "scripts": {}
 }

@@ -176,7 +176,11 @@ const computeActiveParameter = (call, offset) => {
     const argumentsText = ast
         .getFullText()
         .substring(leftParenthesisOffset, call.end);
-    const parenthesizedExpression = ts.createSourceFile('', argumentsText);
+    const parenthesizedExpression = ts.createSourceFile(
+        '',
+        argumentsText,
+        ts.ScriptTarget.Latest
+    );
     let activeParameter = 0;
 
     const countCommas = node => {

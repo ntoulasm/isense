@@ -15,7 +15,7 @@ let offsetStatusBarItem;
 /**
  * @param {vscode.ExtensionContext} context
  */
-function activate(context) {
+async function activate(context) {
     let serverModule = context.asAbsolutePath(
         path.join('server', 'src', 'server.js')
     );
@@ -51,7 +51,7 @@ function activate(context) {
     );
 
     // This will also launch the server
-    client.start();
+    await client.start();
 
     offsetStatusBarItem = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Right,
@@ -165,29 +165,27 @@ function activate(context) {
 
     // ------------------------------------------------------------------------
 
-    client.onReady().then(() => {
-        updateOffsetStatusBarItem();
+    updateOffsetStatusBarItem();
 
-        // ------------------------------------------------------------------------
+    // ------------------------------------------------------------------------
 
-        client.onNotification('custom/generateDotFinish', params => {
-            vscode.window.showTextDocument(vscode.Uri.parse(params.dotUri), {});
-        });
-
-        client.onNotification('custom/generateISenseDotFinish', params => {
-            vscode.window.showTextDocument(vscode.Uri.parse(params.dotUri), {});
-        });
-
-        // ------------------------------------------------------------------------
-
-        // const openUris = uris => {
-        // 	uris.forEach(uri => {
-        // 		vscode.workspace.openTextDocument(uri);
-        // 	});
-        // }
-        // vscode.workspace.findFiles(`*.js`).then(uris => { openUris(uris) });
-        // vscode.workspace.findFiles('**/*.js', '**/node_modules/**').then(uris => { openUris(uris); });
+    client.onNotification('custom/generateDotFinish', params => {
+        vscode.window.showTextDocument(vscode.Uri.parse(params.dotUri), {});
     });
+
+    client.onNotification('custom/generateISenseDotFinish', params => {
+        vscode.window.showTextDocument(vscode.Uri.parse(params.dotUri), {});
+    });
+
+    // ------------------------------------------------------------------------
+
+    // const openUris = uris => {
+    // 	uris.forEach(uri => {
+    // 		vscode.workspace.openTextDocument(uri);
+    // 	});
+    // }
+    // vscode.workspace.findFiles(`*.js`).then(uris => { openUris(uris) });
+    // vscode.workspace.findFiles('**/*.js', '**/node_modules/**').then(uris => { openUris(uris); });
 }
 
 // ----------------------------------------------------------------------------

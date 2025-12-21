@@ -10,11 +10,11 @@
         "test:integration": "jest --testPathPattern=integration"
     },
     "devDependencies": {
-        "jest": "^29.7.0",
         "@types/jest": "^29.5.5",
-        "typescript": "^4.2.4"
+        "jest": "^29.7.0",
+        "typescript": "^5.9.3"
     },
     "dependencies": {
-        "vscode-languageserver": "^7.0.0"
+        "vscode-languageserver": "^9.0.1"
     }
 }
