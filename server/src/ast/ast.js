@@ -45,19 +45,23 @@ Ast.hasParseError = ast =>
     ast.parseDiagnostics.find(d => d.category === ts.DiagnosticCategory.Error);
 
 // ----------------------------------------------------------------------------
-
+const CACHED_CHILDREN_KEY = Symbol.for('AstCachedChildrenList');
 /**
  * @param {ts.Node} node
  *
  * @returns {Array<ts.Node>}
  */
 Ast.findChildren = node => {
+    if (node[CACHED_CHILDREN_KEY]) {
+        return node[CACHED_CHILDREN_KEY];
+    }
     const children = [];
     ts.forEachChild(node, child => {
         if (Ast.isNodeOfInterest(child)) {
             children.push(child);
         }
     });
+    node[CACHED_CHILDREN_KEY] = children;
     return children;
 };
 
