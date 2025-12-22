@@ -1,6 +1,6 @@
 const ts = require('typescript');
-const Analyzer = require('../../server/src/analyzer/analyzer');
-const Ast = require('../../server/src/ast/ast');
+const Analyzer = require('../../src/analyzer/analyzer');
+const Ast = require('../../src/ast/ast');
 
 describe('Language Server Integration Tests', () => {
     let testSourceFile;

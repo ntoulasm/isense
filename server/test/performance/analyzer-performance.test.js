@@ -1,5 +1,5 @@
-const Analyzer = require('../../server/src/analyzer/analyzer');
-const Completion = require('../../server/src/services/completion');
+const Analyzer = require('../../src/analyzer/analyzer');
+const Completion = require('../../src/services/completion');
 const ts = require('typescript');
 
 describe('Performance Tests', () => {
@@ -186,7 +186,7 @@ describe('Performance Tests', () => {
 
             largeObjectSourceFile.analyzeDiagnostics = [];
             Analyzer.analyze(largeObjectSourceFile);
-            const Ast = require('../../server/src/ast/ast');
+            const Ast = require('../../src/ast/ast');
             Ast.asts['file:///large-object-completion.js'] =
                 largeObjectSourceFile;
         });
@@ -202,7 +202,7 @@ describe('Performance Tests', () => {
                 };
 
                 // Mock utility functions
-                const mockUtility = require('../../server/src/services/utility');
+                const mockUtility = require('../../src/services/utility');
                 mockUtility.getAst = jest
                     .fn()
                     .mockReturnValue(largeObjectSourceFile);

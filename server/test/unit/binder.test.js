@@ -1,10 +1,10 @@
-const Binder = require('../../server/src/analyzer/binder');
-const SymbolTable = require('../../server/src/utility/symbol-table');
+const Binder = require('../../src/analyzer/binder');
+const SymbolTable = require('../../src/utility/symbol-table');
 // Use the same TypeScript instance as the server
-const ts = require('../../server/node_modules/typescript');
+const ts = require('../../node_modules/typescript');
 
 // Mock dependencies
-jest.mock('../../server/src/utility/symbol-table');
+jest.mock('../../src/utility/symbol-table');
 
 describe('Binder Module', () => {
     let mockFunctionBody;

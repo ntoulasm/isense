@@ -1,12 +1,12 @@
-const Completion = require('../../server/src/services/completion');
+const Completion = require('../../src/services/completion');
 // Use the same TypeScript instance as the server
-const ts = require('../../server/node_modules/typescript');
+const ts = require('../../node_modules/typescript');
 
 // Mock dependencies
-jest.mock('../../server/src/analyzer/analyzer', () => ({
+jest.mock('../../src/analyzer/analyzer', () => ({
     analyze: jest.fn(),
 }));
-jest.mock('../../server/src/ast/ast', () => ({
+jest.mock('../../src/ast/ast', () => ({
     isDeclarationName: jest.fn(),
     isNameOfPropertyAccessExpression: jest.fn(),
     findVisibleSymbols: jest.fn().mockReturnValue([]),
@@ -14,13 +14,13 @@ jest.mock('../../server/src/ast/ast', () => ({
     findActiveTypeBindersInLeftSibling: jest.fn().mockReturnValue([]),
     isConstDeclaration: jest.fn().mockReturnValue(false),
 }));
-jest.mock('../../server/src/services/utility', () => ({
+jest.mock('../../src/services/utility', () => ({
     getAst: jest.fn(),
     findFocusedNode: jest.fn(),
     getCompletionItemKind: jest.fn(),
     getPropertySymbols: jest.fn(),
 }));
-jest.mock('../../server/src/utility/type-carrier', () => ({
+jest.mock('../../src/utility/type-carrier', () => ({
     Kind: {
         Constant: 0,
         Variable: 1,
@@ -69,9 +69,9 @@ describe('Completion Service', () => {
         };
 
         // Set up default mock return values
-        const mockUtility = require('../../server/src/services/utility');
-        const Analyzer = require('../../server/src/analyzer/analyzer');
-        const Ast = require('../../server/src/ast/ast');
+        const mockUtility = require('../../src/services/utility');
+        const Analyzer = require('../../src/analyzer/analyzer');
+        const Ast = require('../../src/ast/ast');
 
         mockUtility.getAst.mockReturnValue(mockSourceFile);
         mockUtility.findFocusedNode.mockReturnValue({
@@ -90,7 +90,7 @@ describe('Completion Service', () => {
     describe('Completion.onCompletion', () => {
         it('should return undefined when no focused node is found', () => {
             // Arrange
-            const mockUtility = require('../../server/src/services/utility');
+            const mockUtility = require('../../src/services/utility');
             mockUtility.findFocusedNode.mockReturnValue(null);
 
             const completionParams = {
@@ -112,8 +112,8 @@ describe('Completion Service', () => {
 
         it('should return undefined when completing at declaration names', () => {
             // Arrange
-            const Ast = require('../../server/src/ast/ast');
-            const mockUtility = require('../../server/src/services/utility');
+            const Ast = require('../../src/ast/ast');
+            const mockUtility = require('../../src/services/utility');
 
             const declarationNode = {
                 kind: ts.SyntaxKind.Identifier,
@@ -165,7 +165,7 @@ describe('Completion Service', () => {
                 },
             };
 
-            const mockUtility = require('../../server/src/services/utility');
+            const mockUtility = require('../../src/services/utility');
             mockUtility.findFocusedNode.mockReturnValue(mockPropertyAccessNode);
             mockUtility.getPropertySymbols.mockReturnValue([
                 {
@@ -180,8 +180,8 @@ describe('Completion Service', () => {
             mockUtility.getCompletionItemKind.mockReturnValue(6); // Variable kind
 
             // Mock AST to return binders (required for completion to be generated)
-            const Ast = require('../../server/src/ast/ast');
-            const TypeCarrier = require('../../server/src/utility/type-carrier');
+            const Ast = require('../../src/ast/ast');
+            const TypeCarrier = require('../../src/utility/type-carrier');
             Ast.findActiveTypeBindersInLeftSibling.mockReturnValue([
                 {
                     carrier: {
@@ -230,11 +230,11 @@ describe('Completion Service', () => {
                 },
             };
 
-            const mockUtility = require('../../server/src/services/utility');
+            const mockUtility = require('../../src/services/utility');
             mockUtility.findFocusedNode.mockReturnValue(mockIdentifierNode);
 
             // Mock visible symbols for identifier completion
-            const Ast = require('../../server/src/ast/ast');
+            const Ast = require('../../src/ast/ast');
             Ast.findVisibleSymbols.mockReturnValue([
                 {
                     name: 'testVariable',
@@ -247,7 +247,7 @@ describe('Completion Service', () => {
             ]);
 
             // Mock AST to return binders (required for completion to be generated)
-            const TypeCarrier = require('../../server/src/utility/type-carrier');
+            const TypeCarrier = require('../../src/utility/type-carrier');
             Ast.findActiveTypeBinders.mockReturnValue([
                 {
                     carrier: {
@@ -287,7 +287,7 @@ describe('Completion Service', () => {
 
         it('should provide property completions when focused on property access name', () => {
             // Arrange
-            const Ast = require('../../server/src/ast/ast');
+            const Ast = require('../../src/ast/ast');
             Ast.isNameOfPropertyAccessExpression.mockReturnValue(true);
 
             const mockPropertyName = {
@@ -317,7 +317,7 @@ describe('Completion Service', () => {
                 },
             };
 
-            const mockUtility = require('../../server/src/services/utility');
+            const mockUtility = require('../../src/services/utility');
             mockUtility.findFocusedNode.mockReturnValue(mockPropertyName);
             mockUtility.getPropertySymbols.mockReturnValue([
                 {
@@ -332,7 +332,7 @@ describe('Completion Service', () => {
             mockUtility.getCompletionItemKind.mockReturnValue(10); // Property kind
 
             // Mock AST to return binders (required for completion to be generated)
-            const TypeCarrier = require('../../server/src/utility/type-carrier');
+            const TypeCarrier = require('../../src/utility/type-carrier');
             Ast.findActiveTypeBindersInLeftSibling.mockReturnValue([
                 {
                     carrier: {
@@ -370,10 +370,10 @@ describe('Completion Service', () => {
 
         it('should analyze source file before providing dot completion', () => {
             // Arrange
-            const Analyzer = require('../../server/src/analyzer/analyzer');
+            const Analyzer = require('../../src/analyzer/analyzer');
             Analyzer.analyze = jest.fn();
 
-            const mockUtility = require('../../server/src/services/utility');
+            const mockUtility = require('../../src/services/utility');
             mockUtility.findFocusedNode.mockReturnValue({
                 kind: ts.SyntaxKind.PropertyAccessExpression,
                 expression: {
@@ -486,7 +486,7 @@ describe('Completion Service', () => {
                 },
             };
 
-            const mockUtility = require('../../server/src/services/utility');
+            const mockUtility = require('../../src/services/utility');
             mockUtility.findFocusedNode.mockReturnValue(malformedNode);
 
             const info = {
@@ -505,7 +505,7 @@ describe('Completion Service', () => {
                 text: 'unknown',
             };
 
-            const mockUtility = require('../../server/src/services/utility');
+            const mockUtility = require('../../src/services/utility');
             mockUtility.findFocusedNode.mockReturnValue(unknownNode);
 
             // Act & Assert
@@ -522,7 +522,7 @@ describe('Completion Service', () => {
                 parent: null,
             };
 
-            const mockUtility = require('../../server/src/services/utility');
+            const mockUtility = require('../../src/services/utility');
             mockUtility.findFocusedNode.mockReturnValue(orphanNode);
 
             // Act & Assert

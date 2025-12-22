@@ -1,8 +1,8 @@
-const Utility = require('../../server/src/services/utility');
-const Ast = require('../../server/src/ast/ast');
+const Utility = require('../../src/services/utility');
+const Ast = require('../../src/ast/ast');
 
 // Mock Ast.findInnermostNodeOfAnyKind to verify what offset is passed
-jest.mock('../../server/src/ast/ast', () => ({
+jest.mock('../../src/ast/ast', () => ({
     findInnermostNodeOfAnyKind: jest.fn(),
     asts: {},
 }));

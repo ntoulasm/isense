@@ -1,5 +1,5 @@
-const SymbolTable = require('../../server/src/utility/symbol-table');
-const Symbol = require('../../server/src/utility/symbol');
+const SymbolTable = require('../../src/utility/symbol-table');
+const Symbol = require('../../src/utility/symbol');
 const ts = require('typescript');
 
 describe('SymbolTable Module', () => {

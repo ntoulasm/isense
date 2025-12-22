@@ -1,4 +1,4 @@
-const Symbol = require('../../server/src/utility/symbol');
+const Symbol = require('../../src/utility/symbol');
 const ts = require('typescript');
 
 describe('Symbol Module', () => {

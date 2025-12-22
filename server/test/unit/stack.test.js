@@ -1,4 +1,4 @@
-const Stack = require('../../server/src/utility/stack');
+const Stack = require('../../src/utility/stack');
 
 describe('Stack Module', () => {
     let stack;
