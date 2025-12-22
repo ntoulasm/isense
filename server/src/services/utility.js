@@ -13,9 +13,8 @@ const Utility = {};
 // ----------------------------------------------------------------------------
 
 Utility.getAst = info => {
-    const document = info.textDocument;
-    const fileName = document.uri;
-    return Ast.asts[fileName];
+    const uri = info.textDocument.uri;
+    return Ast.asts[uri];
 };
 
 Utility.createRange = symbol => {
