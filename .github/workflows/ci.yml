@@ -50,5 +50,5 @@ jobs:
 
             - name: Run Tests
               run: |
-                  npx jest --ci --reporters=default --reporters=github-actions --all
                   cd server
+                  npx jest --ci --reporters=default --reporters=github-actions --all
