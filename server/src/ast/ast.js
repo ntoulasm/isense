@@ -11,6 +11,10 @@ const Ast = {};
 
 // ----------------------------------------------------------------------------
 
+const CACHED_CHILDREN_KEY = Symbol.for('AstCachedChildrenList');
+
+// ----------------------------------------------------------------------------
+
 Ast.asts = {};
 
 // ----------------------------------------------------------------------------
@@ -52,12 +56,16 @@ Ast.hasParseError = ast =>
  * @returns {Array<ts.Node>}
  */
 Ast.findChildren = node => {
+    if (node[CACHED_CHILDREN_KEY]) {
+        return node[CACHED_CHILDREN_KEY];
+    }
     const children = [];
     ts.forEachChild(node, child => {
         if (Ast.isNodeOfInterest(child)) {
             children.push(child);
         }
     });
+    node[CACHED_CHILDREN_KEY] = children;
     return children;
 };
 
