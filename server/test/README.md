@@ -7,7 +7,7 @@ Ensure you have Node.js installed (version 14 or higher).
 ## Installation
 
 ```bash
-cd test
+cd server
 npm install
 ```
 
@@ -16,13 +16,14 @@ npm install
 ### Run All Tests
 
 ```bash
-cd test
+cd server
 npm test
 ```
 
 ### Run Specific Test Types
 
 ```bash
+cd server
 # Unit tests only (fast)
 npm run test:unit
 
@@ -40,10 +41,10 @@ npm run test:coverage
 
 ```bash
 # Working unit tests:
-npx jest unit/symbol.test.js --no-coverage
-npx jest unit/symbol-table.test.js --no-coverage
-npx jest unit/type-info.test.js --no-coverage
-npx jest unit/stack.test.js --no-coverage
+npx jest test/unit/symbol.test.js --no-coverage
+npx jest test/unit/symbol-table.test.js --no-coverage
+npx jest test/unit/type-info.test.js --no-coverage
+npx jest test/unit/stack.test.js --no-coverage
 ```
 
 ### Development Mode
@@ -57,7 +58,7 @@ npm run test:watch
 
 ```bash
 # Run specific test file
-npx jest unit/symbol.test.js
+npx jest test/unit/symbol.test.js
 
 # Run tests matching pattern
 npx jest -t "Symbol"
@@ -88,7 +89,7 @@ npx jest --coverage
 
 1. Run individual test: `npx jest path/to/failing-test.test.js`
 2. Add `--verbose` flag for detailed output
-3. Check mock setup in `setup.js`
+3. Check mock setup in `test/setup.js`
 
 ### Jest Extension in VS Code:
 
@@ -106,18 +107,21 @@ npx jest --coverage
 ## Test Structure Overview
 
 ```
-test/
-├── unit/                    # Fast, isolated tests
-├── integration/             # End-to-end workflow tests
-├── performance/             # Stress and benchmark tests
-├── setup.js                 # Test environment configuration
-└── jest.config.js           # Jest test runner settings
+server/
+├── src/                     # Source code
+└── test/
+    ├── unit/                # Fast, isolated tests
+    ├── integration/         # End-to-end workflow tests
+    ├── performance/         # Stress and benchmark tests
+    ├── setup.js             # Test environment configuration
+    └── README.md            # This file
+server/jest.config.js        # Jest test runner settings
 ```
 
 ### Run All Tests
 
 ```bash
-cd test
+cd server
 npm test
 ```
 
@@ -135,7 +139,7 @@ The test suite validates core functionality and provides a foundation for testin
 ### Unit Test Template
 
 ```javascript
-const ModuleToTest = require('../../server/src/path/to/module');
+const ModuleToTest = require('../../src/path/to/module');
 
 describe('Module Name', () => {
     let mockData;

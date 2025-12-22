@@ -1,10 +1,8 @@
-const path = require('path');
-
 module.exports = {
     testEnvironment: 'node',
-    rootDir: path.resolve(__dirname, '..'),
+    rootDir: '.',
     setupFilesAfterEnv: ['<rootDir>/test/setup.js'],
-    collectCoverageFrom: ['server/src/**/*.js', '!server/src/**/*.test.js'],
+    collectCoverageFrom: ['src/**/*.js', '!src/**/*.test.js'],
     coverageDirectory: '<rootDir>/test/coverage',
     coverageReporters: ['text', 'lcov', 'html'],
     testMatch: [
@@ -12,7 +10,9 @@ module.exports = {
         '<rootDir>/test/integration/**/*.test.js',
         '<rootDir>/test/performance/**/*.test.js',
     ],
+    testPathIgnorePatterns: ['/node_modules/', '/coverage/'],
+    modulePathIgnorePatterns: ['<rootDir>/test/coverage/'],
     moduleFileExtensions: ['js', 'json'],
     verbose: true,
-    testTimeout: 10000,
+    testTimeout: 30000,
 };

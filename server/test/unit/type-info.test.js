@@ -1,4 +1,4 @@
-const TypeInfo = require('../../server/src/utility/type-info');
+const TypeInfo = require('../../src/utility/type-info');
 
 describe('TypeInfo Module', () => {
     describe('TypeInfo.Type enumeration', () => {

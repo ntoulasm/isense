@@ -45,10 +45,10 @@ jobs:
 
             - name: Install Test Dependencies
               run: |
-                  cd test
+                  cd server
                   npm ci
 
             - name: Run Tests
               run: |
-                  cd test
+                  cd server
                   npx jest --ci --reporters=default --reporters=github-actions --all

@@ -21,7 +21,7 @@
 | Action        | Command                          | Context                              |
 | :------------ | :------------------------------- | :----------------------------------- |
 | **Setup**     | `npm run postinstall`            | Root (Installs client/server deps)   |
-| **Run Tests** | `cd test && npm test`            | Runs Jest suite (Unit + Integration) |
+| **Run Tests** | `cd server && npm test`          | Runs Jest suite (Unit + Integration) |
 | **Lint**      | `npm run lint`                   | Root (Runs ESLint)                   |
 | **Format**    | `npm run format`                 | Root (Runs Prettier)                 |
 | **Debug**     | Use VS Code "Launch Client" (F5) | Starts Extension Host                |
@@ -35,21 +35,23 @@ isense/
 ├── client/                  # VS Code Extension (The "Glue")
 │   └── src/extension.js     # Entry point: Activates LS, registers commands.
 ├── server/                  # The Brain (Language Server)
-│   └── src/
-│       ├── server.js        # LSP Connection & Document Lifecycle events.
-│       ├── analyzer/        # CORE ENGINE: Static Analysis & Type Inference.
-│       │   ├── analyzer.js  # Main analysis loop & abstract interpretation.
-│       │   ├── binder.js    # Scope management & symbol table creation.
-│       │   └── ...          # logic for diagnostics, call graph, etc.
-│       ├── services/        # LSP Features (Consumers of Analysis).
-│       │   ├── completion.js # Autocomplete logic.
-│       │   ├── hover.js      # Hover provider.
-│       │   └── ...           # definition, signature help, etc.
-│       ├── ast/             # AST Utilities.
-│       │   ├── ast.js       # Node navigation & binder queries.
-│       │   └── replicator.js # AST cloning for call simulation.
-│       └── utility/         # Data Structures (TypeInfo, Symbol, Stack).
-└── test/                    # Comprehensive Test Suite (Unit & Integration).
+│   ├── src/
+│   │   ├── server.js        # LSP Connection & Document Lifecycle events.
+│   │   ├── analyzer/        # CORE ENGINE: Static Analysis & Type Inference.
+│   │   │   ├── analyzer.js  # Main analysis loop & abstract interpretation.
+│   │   │   ├── binder.js    # Scope management & symbol table creation.
+│   │   │   └── ...          # logic for diagnostics, call graph, etc.
+│   │   ├── services/        # LSP Features (Consumers of Analysis).
+│   │   │   ├── completion.js # Autocomplete logic.
+│   │   │   ├── hover.js      # Hover provider.
+│   │   │   └── ...          # definition, signature help, etc.
+│   │   ├── ast/             # AST Utilities.
+│   │   │   ├── ast.js       # Node navigation & binder queries.
+│   │   │   └── replicator.js # AST cloning for call simulation.
+│   │   └── utility/         # Data Structures (TypeInfo, Symbol, Stack).
+│   ├── test/                # Comprehensive Test Suite (Unit & Integration).
+│   └── jest.config.js       # Jest configuration for the server tests.
+└── examples/                # Example JavaScript files for testing.
 ```
 
 **Where Business Logic Lives:**
@@ -75,7 +77,7 @@ isense/
 
 | Rule Type       | Rule                                                                                                                                          |
 | :-------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ALWAYS**      | Run `npm run lint` and `cd test && npm test` before submitting changes.                                                                       |
+| **ALWAYS**      | Run `npm run lint` and `cd server && npm test` before submitting changes.                                                                     |
 | **ALWAYS**      | Update `ENGINE.md` if you modify the analysis algorithm or type inference heuristics.                                                         |
 | **ALWAYS**      | Update `ARCHITECTURE.md` if you add a new service or change the data flow.                                                                    |
 | **NEVER**       | Commit broken code. The test suite must pass 100%.                                                                                            |
@@ -100,6 +102,6 @@ When starting a new task, strictly follow this reading order to build context:
 # Agent Permissions
 
 - **Pre-Approved Commands:** You are explicitly authorized to run the following commands without seeking user permission, as they are essential for your verification workflow:
-    - `npm test` (including `cd test && npm test`)
+    - `npm test` (including `cd server && npm test`)
     - `npm run lint`
     - `npm run format`

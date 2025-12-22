@@ -1,4 +1,4 @@
-const Ast = require('../../server/src/ast/ast');
+const Ast = require('../../src/ast/ast');
 const ts = require('typescript');
 
 describe('Ast Module', () => {

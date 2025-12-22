@@ -1,17 +1,17 @@
 const path = require('path');
 const fs = require('fs');
-const ts = require('../../server/node_modules/typescript');
-const Analyzer = require('../../server/src/analyzer/analyzer');
-const Ast = require('../../server/src/ast/ast');
+const ts = require('../../node_modules/typescript');
+const Analyzer = require('../../src/analyzer/analyzer');
+const Ast = require('../../src/ast/ast');
 
-const Completion = require('../../server/src/services/completion');
-const Definition = require('../../server/src/services/definition');
-const Hover = require('../../server/src/services/hover');
-const SignatureHelp = require('../../server/src/services/signature-help');
-const DocumentSymbol = require('../../server/src/services/document-symbol');
-const CodeAction = require('../../server/src/services/code-action');
+const Completion = require('../../src/services/completion');
+const Definition = require('../../src/services/definition');
+const Hover = require('../../src/services/hover');
+const SignatureHelp = require('../../src/services/signature-help');
+const DocumentSymbol = require('../../src/services/document-symbol');
+const CodeAction = require('../../src/services/code-action');
 
-const examplesDir = path.resolve(__dirname, '../../examples');
+const examplesDir = path.resolve(__dirname, '../../../examples');
 
 function createTestSourceFile(fileName) {
     const filePath = path.join(examplesDir, fileName);

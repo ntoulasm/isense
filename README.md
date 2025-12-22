@@ -201,11 +201,15 @@ In the Extension Development Host:
 ### Running Tests
 
 ```bash
-cd test
+# Install dependencies
 npm install
-node run-tests.js              # All tests
-node run-tests.js --unit       # Unit tests only
-node run-tests.js --coverage   # With coverage report
+
+# Run tests
+cd server
+npm test
+
+# Generate coverage report
+npm run test:coverage
 ```
 
 ## Architecture Overview
@@ -216,31 +220,33 @@ isense/
 │   └── src/
 │       └── extension.js # Extension activation & language client
 ├── server/              # Language server
-│   └── src/
-│       ├── server.js        # LSP server & request handlers
-│       ├── analyzer/        # Static analysis engine
-│       │   ├── analyzer.js      # Main analysis orchestrator
-│       │   ├── binder.js        # Symbol binding & scopes
-│       │   └── call.js          # Call graph metadata
-│       ├── ast/             # AST manipulation
-│       │   ├── ast.js           # AST utilities & queries
-│       │   └── replicator.js    # AST cloning for analysis
-│       ├── services/        # LSP service implementations
-│       │   ├── completion.js
-│       │   ├── signature-help.js
-│       │   ├── hover.js
-│       │   ├── definition.js
-│       │   └── code-action.js
-│       └── utility/         # Core data structures
-│           ├── type-info.js     # Type representation
-│           ├── type-carrier.js  # Type propagation
-│           ├── symbol.js        # Symbol utilities
-│           └── symbol-table.js  # Symbol storage
+│   ├── src/
+│   │   ├── server.js        # LSP server & request handlers
+│   │   ├── analyzer/        # Static analysis engine
+│   │   │   ├── analyzer.js      # Main analysis orchestrator
+│   │   │   ├── binder.js        # Symbol binding & scopes
+│   │   │   └── call.js          # Call graph metadata
+│   │   ├── ast/             # AST manipulation
+│   │   │   ├── ast.js           # AST utilities & queries
+│   │   │   └── replicator.js    # AST cloning for analysis
+│   │   ├── services/        # LSP service implementations
+│   │   │   ├── completion.js
+│   │   │   ├── signature-help.js
+│   │   │   ├── hover.js
+│   │   │   ├── definition.js
+│   │   │   └── code-action.js
+│   │   └── utility/         # Core data structures
+│   │       ├── type-info.js     # Type representation
+│   │       ├── type-carrier.js  # Type propagation
+│   │       ├── symbol.js        # Symbol utilities
+│   │       └── symbol-table.js  # Symbol storage
+│   ├── test/                # Automated test suite
+│   │   ├── unit/
+│   │   ├── integration/
+│   │   └── performance/
+│   └── jest.config.js       # Jest configuration
 ├── examples/            # Test cases for manual verification
-└── test/               # Automated test suite
-    ├── unit/
-    ├── integration/
-    └── performance/
+└── package.json         # Root package file
 ```
 
 ## Technology Stack

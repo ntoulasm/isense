@@ -1,10 +1,10 @@
-const Analyzer = require('../../server/src/analyzer/analyzer');
+const Analyzer = require('../../src/analyzer/analyzer');
 // Use the same TypeScript instance as the server
-const ts = require('../../server/node_modules/typescript');
+const ts = require('../../node_modules/typescript');
 
 // Mock dependencies
-jest.mock('../../server/src/ast/ast');
-jest.mock('../../server/src/utility/symbol-table', () => ({
+jest.mock('../../src/ast/ast');
+jest.mock('../../src/utility/symbol-table', () => ({
     create: jest.fn(() => ({
         insert: jest.fn(),
         lookUp: jest.fn(),
