@@ -737,7 +737,7 @@ function analyzeElementAccessExpression(node) {
                     expressionType.hasValue
                 ) {
                     if (
-                        expressionType.value.hasOwnProperty(elementTypeString)
+                        Object.hasOwn(expressionType.value, elementTypeString)
                     ) {
                         info.push(...expressionType.value[elementTypeString]);
                     } else if (!typesContainUndefined) {
@@ -805,7 +805,7 @@ function isInOriginalFunction(node) {
     const outerFunction = Ast.findAncestorFunction(node);
     return (
         outerFunction &&
-        outerFunction.hasOwnProperty('_original') &&
+        Object.hasOwn(outerFunction, '_original') &&
         outerFunction === outerFunction._original
     );
 }

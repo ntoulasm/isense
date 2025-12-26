@@ -42,7 +42,7 @@ me.generate = (root, outputFileName) => {
             }
             case ts.SyntaxKind.CallExpression:
             case ts.SyntaxKind.NewExpression: {
-                if (!node.hasOwnProperty('callee')) {
+                if (!Object.hasOwn(node, 'callee')) {
                     break;
                 }
                 setDotIds(node.callee.parent);
@@ -72,7 +72,7 @@ me.generate = (root, outputFileName) => {
             append('\n');
         }
 
-        if (node.hasOwnProperty('symbols')) {
+        if (Object.hasOwn(node, 'symbols')) {
             const symbols = Object.values(node.symbols.getSymbols());
             append(`node${dotId} [shape = "record", label = "{ SYMBOLS | `);
             append(symbols.map(s => s.name).join(' | '));
@@ -81,7 +81,7 @@ me.generate = (root, outputFileName) => {
             ++dotId;
         }
 
-        if (node.hasOwnProperty('binders') && node.binders.length) {
+        if (Object.hasOwn(node, 'binders') && node.binders.length) {
             append(`node${dotId}[shape = "record", label = "{ TYPEBINDERS | `);
             append(
                 node.binders
