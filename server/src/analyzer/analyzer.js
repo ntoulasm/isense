@@ -903,24 +903,26 @@ function createInducedCarrierFromPrefixUnaryExpression(node) {
         case ts.SyntaxKind.PlusToken:
         case ts.SyntaxKind.MinusToken:
         case ts.SyntaxKind.PlusPlusToken:
-        case ts.SyntaxKind.MinusMinusToken:
+        case ts.SyntaxKind.MinusMinusToken: {
             const carrier = TypeCarrier.createConstant([
                 TypeInfo.createNumber(),
             ]);
             carrier.induced = true;
             return carrier;
+        }
     }
 }
 
 function createInducedCarrierFromPostfixUnaryExpression(node) {
     switch (node.operator) {
         case ts.SyntaxKind.PlusPlusToken:
-        case ts.SyntaxKind.MinusMinusToken:
+        case ts.SyntaxKind.MinusMinusToken: {
             const carrier = TypeCarrier.createConstant([
                 TypeInfo.createNumber(),
             ]);
             carrier.induced = true;
             return carrier;
+        }
     }
 }
 
