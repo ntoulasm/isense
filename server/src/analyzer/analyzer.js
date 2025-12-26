@@ -299,6 +299,7 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.ElementAccessExpression: {
                 ts.forEachChild(node, analyzeInternal);
                 analyzeElementAccessExpression(node);
+                break;
             }
             case ts.SyntaxKind.ParenthesizedExpression: {
                 ts.forEachChild(node, analyzeInternal);
