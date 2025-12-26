@@ -539,11 +539,11 @@ function call(
  * @param {ts.Node} classNode
  */
 function createEmptyConstructor(classNode) {
-    const emptyConstructor = ts.createConstructor(
+    const emptyConstructor = ts.factory.createConstructorDeclaration(
         undefined,
         undefined,
         [],
-        ts.createBlock()
+        ts.factory.createBlock()
     );
     emptyConstructor.pos = classNode.pos;
     emptyConstructor.end = classNode.end;

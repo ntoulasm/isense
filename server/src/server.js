@@ -215,8 +215,8 @@ connection.onDidChangeTextDocument(params => {
             change.range.start.line,
             change.range.start.character
         );
-        const span = ts.createTextSpan(changeOffset, change.rangeLength);
-        const changeRange = ts.createTextChangeRange(span, change.text.length);
+        const span = ts.factory.createTextSpan(changeOffset, change.rangeLength);
+        const changeRange = ts.factory.createTextChangeRange(span, change.text.length);
         const newText =
             text.slice(0, changeOffset) +
             change.text +

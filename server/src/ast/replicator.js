@@ -12,7 +12,7 @@ const ts = require('typescript');
 
 const Replicator = {};
 
-Replicator.replicateFunctions = {};
+Replicator.replicateFunctions = [];
 Replicator.defaultOptions = {
     setOriginal: false,
 };
@@ -78,7 +78,9 @@ Replicator.replicateInternal = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateArrayProperty = (object, property, options) => {
-    return object[property].map(n => Replicator.replicateInternal(n, options));
+    return ts.factory.createNodeArray(
+        object[property].map(n => Replicator.replicateInternal(n, options))
+    );
 };
 
 /**
@@ -91,7 +93,9 @@ Replicator.replicateArrayProperty = (object, property, options) => {
 Replicator.replicateIfArrayProperty = (object, property, options) => {
     return (
         object[property] &&
-        object[property].map(n => Replicator.replicateInternal(n, options))
+        ts.factory.createNodeArray(
+            object[property].map(n => Replicator.replicateInternal(n, options))
+        )
     );
 };
 
@@ -123,6 +127,29 @@ Replicator.replicateIfProperty = (object, property, options) => {
     );
 };
 
+/**
+ * @param {ts.Node} node
+ * @param {ISense.ASTReplicate.Options} options
+ *
+ * @returns {ts.Modifier[] | undefined}
+ */
+Replicator.combineModifiers = (node, options) => {
+    const decorators = Replicator.replicateIfArrayProperty(
+        node,
+        'decorators',
+        options
+    );
+    const modifiers = Replicator.replicateIfArrayProperty(
+        node,
+        'modifiers',
+        options
+    );
+    if (!decorators && !modifiers) return undefined;
+    if (!decorators) return modifiers;
+    if (!modifiers) return decorators;
+    return ts.factory.createNodeArray([...decorators, ...modifiers]);
+};
+
 //-----------------------------------------------------------------------------
 
 // Unknown = 0,
@@ -144,7 +171,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.NumericLiteral] = (
     node,
     options
 ) => {
-    return ts.createNumericLiteral(node.text);
+    return ts.factory.createNumericLiteral(node.text);
 };
 
 /**
@@ -157,7 +184,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.BigIntLiteral] = (
     node,
     options
 ) => {
-    return ts.createBigIntLiteral(node.text);
+    return ts.factory.createBigIntLiteral(node.text);
 };
 
 /**
@@ -170,7 +197,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.StringLiteral] = (
     node,
     options
 ) => {
-    return ts.createStringLiteral(node.text);
+    return ts.factory.createStringLiteral(node.text);
 };
 
 /**
@@ -180,7 +207,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.StringLiteral] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.JsxText] = (node, options) => {
-    return ts.createJsxText(
+    return ts.factory.createJsxText(
         node.text
         // TODO: add containsOnlyTriviaWhiteSpaces parameter
     );
@@ -209,7 +236,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.RegularExpressionLiteral] = (
     node,
     options
 ) => {
-    return ts.createRegularExpressionLiteral(node.text);
+    return ts.factory.createRegularExpressionLiteral(node.text);
 };
 
 /**
@@ -222,7 +249,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.NoSubstitutionTemplateLiteral] = (
     node,
     options
 ) => {
-    return ts.createNoSubstitutionTemplateLiteral(node.text);
+    return ts.factory.createNoSubstitutionTemplateLiteral(node.text);
 };
 
 /**
@@ -232,7 +259,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.NoSubstitutionTemplateLiteral] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TemplateHead] = (node, options) => {
-    return ts.createTemplateHead(node.text);
+    return ts.factory.createTemplateHead(node.text);
 };
 
 /**
@@ -245,7 +272,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TemplateMiddle] = (
     node,
     options
 ) => {
-    return ts.createTemplateMiddle(node.text);
+    return ts.factory.createTemplateMiddle(node.text);
 };
 
 /**
@@ -255,7 +282,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TemplateMiddle] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TemplateTail] = (node, options) => {
-    return ts.createTemplateTail(node.text);
+    return ts.factory.createTemplateTail(node.text);
 };
 
 /**
@@ -323,7 +350,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.OpenBraceToken] =
     Replicator.replicateFunctions[ts.SyntaxKind.BarEqualsToken] =
     Replicator.replicateFunctions[ts.SyntaxKind.CaretEqualsToken] =
         (node, options) => {
-            return ts.createToken(node.kind);
+            return ts.factory.createToken(node.kind);
         };
 
 /**
@@ -333,7 +360,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.OpenBraceToken] =
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.Identifier] = (node, options) => {
-    return ts.createIdentifier(node.text);
+    return ts.factory.createIdentifier(node.text);
 };
 
 /**
@@ -418,7 +445,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.BreakKeyword] =
     Replicator.replicateFunctions[ts.SyntaxKind.BigIntKeyword] =
     Replicator.replicateFunctions[ts.SyntaxKind.OfKeyword] =
         (node, options) => {
-            return ts.createKeywordTypeNode(node.kind);
+            return ts.factory.createKeywordTypeNode(node.kind);
         };
 
 /**
@@ -431,7 +458,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.QualifiedName] = (
     node,
     options
 ) => {
-    return ts.createQualifiedName(
+    return ts.factory.createQualifiedName(
         Replicator.replicateProperty(node, 'left', options),
         Replicator.replicateProperty(node, 'right', options)
     );
@@ -447,7 +474,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ComputedPropertyName] = (
     node,
     options
 ) => {
-    return ts.createComputedPropertyName(
+    return ts.factory.createComputedPropertyName(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -472,9 +499,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.TypeParameter] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.Parameter] = (node, options) => {
-    return ts.createParameter(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createParameterDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateIfProperty(node, 'dotDotDotToken', options),
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateIfProperty(node, 'questionToken', options),
@@ -490,7 +516,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.Parameter] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.Decorator] = (node, options) => {
-    return ts.createDecorator(
+    return ts.factory.createDecorator(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -505,7 +531,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.PropertySignature] = (
     node,
     options
 ) => {
-    return ts.createPropertySignature(
+    return ts.factory.createPropertySignature(
         Replicator.replicateIfArrayProperty(node, 'modifiers', options),
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateIfProperty(node, 'questionToken', options),
@@ -524,9 +550,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.PropertyDeclaration] = (
     node,
     options
 ) => {
-    return ts.createProperty(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createPropertyDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateProperty(node, 'name', options),
         undefined, // TODO: Fix me
         Replicator.replicateIfProperty(node, 'type', options),
@@ -544,12 +569,13 @@ Replicator.replicateFunctions[ts.SyntaxKind.MethodSignature] = (
     node,
     options
 ) => {
-    return ts.createMethodSignature(
+    return ts.factory.createMethodSignature(
+        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+        Replicator.replicateProperty(node, 'name', options),
+        Replicator.replicateIfProperty(node, 'questionToken', options),
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
         Replicator.replicateArrayProperty(node, 'parameters', options),
-        Replicator.replicateIfProperty(node, 'type', options),
-        Replicator.replicateProperty(node, 'name', options),
-        Replicator.replicateIfProperty(node, 'questionToken', options)
+        Replicator.replicateIfProperty(node, 'type', options)
     );
 };
 
@@ -563,9 +589,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.MethodDeclaration] = (
     node,
     options
 ) => {
-    return ts.createMethod(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createMethodDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateIfProperty(node, 'asteriskToken', options),
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateIfProperty(node, 'questionToken', options),
@@ -583,9 +608,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.MethodDeclaration] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.Constructor] = (node, options) => {
-    return ts.createConstructor(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createConstructorDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateArrayProperty(node, 'parameters', options),
         Replicator.replicateIfProperty(node, 'body', options)
     );
@@ -598,9 +622,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.Constructor] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.GetAccessor] = (node, options) => {
-    return ts.createGetAccessor(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createGetAccessorDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateArrayProperty(node, 'parameters', options),
         Replicator.replicateIfProperty(node, 'type', options),
@@ -615,9 +638,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.GetAccessor] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.SetAccessor] = (node, options) => {
-    ts.createSetAccessor(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createSetAccessorDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateArrayProperty(node, 'parameters', options),
         Replicator.replicateIfProperty(node, 'body', options)
@@ -634,7 +656,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.CallSignature] = (
     node,
     options
 ) => {
-    return ts.createCallSignature(
+    return ts.factory.createCallSignature(
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
         Replicator.replicateArrayProperty(node, 'parameters', options),
         Replicator.replicateIfProperty(node, 'type', options)
@@ -651,7 +673,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ConstructSignature] = (
     node,
     options
 ) => {
-    return ts.createConstructSignature(
+    return ts.factory.createConstructSignature(
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
         Replicator.replicateArrayProperty(node, 'parameters', options),
         Replicator.replicateIfProperty(node, 'type', options)
@@ -668,9 +690,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.IndexSignature] = (
     node,
     options
 ) => {
-    return ts.createIndexSignature(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createIndexSignature(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateArrayProperty(node, 'parameters', options),
         Replicator.replicateProperty(node, 'type', options)
     );
@@ -686,7 +707,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TypePredicate] = (
     node,
     options
 ) => {
-    return ts.createTypePredicateNode(
+    return ts.factory.createTypePredicateNode(
         Replicator.replicateProperty(node, 'parameterName', options),
         Replicator.replicateProperty(node, 'type', options)
     );
@@ -702,7 +723,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TypeReference] = (
     node,
     options
 ) => {
-    return ts.createTypeReferenceNode(
+    return ts.factory.createTypeReferenceNode(
         Replicator.replicateProperty(node, 'typeName', options),
         Replicator.replicateIfArrayProperty(node, 'typeArguments', options)
     );
@@ -715,7 +736,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TypeReference] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.FunctionType] = (node, options) => {
-    return ts.createFunctionTypeNode(
+    return ts.factory.createFunctionTypeNode(
         Replicator.replicateIfArrayProperty(node, 'expression', options),
         Replicator.replicateArrayProperty(node, 'parameters', options),
         Replicator.replicateIfProperty(node, 'type', options)
@@ -732,7 +753,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ConstructorType] = (
     node,
     options
 ) => {
-    return ts.createConstructorTypeNode(
+    return ts.factory.createConstructorTypeNode(
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
         Replicator.replicateArrayProperty(node, 'parameters', options),
         Replicator.replicateIfProperty(node, 'type', options)
@@ -746,7 +767,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ConstructorType] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TypeQuery] = (node, options) => {
-    return ts.createTypeQueryNode(
+    return ts.factory.createTypeQueryNode(
         Replicator.replicateProperty(node, 'exprName', options)
     );
 };
@@ -758,7 +779,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TypeQuery] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TypeLiteral] = (node, options) => {
-    return ts.createTypeLiteralNode(
+    return ts.factory.createTypeLiteralNode(
         Replicator.replicateIfArrayProperty(node, 'members', options)
     );
 };
@@ -770,7 +791,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TypeLiteral] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.ArrayType] = (node, options) => {
-    return ts.createArrayTypeNode(
+    return ts.factory.createArrayTypeNode(
         Replicator.replicateProperty(node, 'elementType', options)
     );
 };
@@ -782,7 +803,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ArrayType] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TupleType] = (node, options) => {
-    return ts.createTupleTypeNode(
+    return ts.factory.createTupleTypeNode(
         Replicator.replicateArrayProperty(node, 'elementTypes', options)
     );
 };
@@ -794,7 +815,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TupleType] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.OptionalType] = (node, options) => {
-    return ts.createOptionalTypeNode(
+    return ts.factory.createOptionalTypeNode(
         Replicator.replicateProperty(node, 'type', options)
     );
 };
@@ -806,7 +827,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.OptionalType] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.RestType] = (node, options) => {
-    return ts.createRestTypeNode(
+    return ts.factory.createRestTypeNode(
         Replicator.replicateProperty(node, 'type', options)
     );
 };
@@ -818,7 +839,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.RestType] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.UnionType] = (node, options) => {
-    return ts.createUnionTypeNode(
+    return ts.factory.createUnionTypeNode(
         Replicator.replicateArrayProperty(node, 'types', options)
     );
 };
@@ -833,7 +854,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.IntersectionType] = (
     node,
     options
 ) => {
-    return ts.createIntersectionTypeNode(
+    return ts.factory.createIntersectionTypeNode(
         Replicator.replicateArrayProperty(node, 'types', options)
     );
 };
@@ -848,7 +869,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ConditionalType] = (
     node,
     options
 ) => {
-    return ts.createConditionalTypeNode(
+    return ts.factory.createConditionalTypeNode(
         Replicator.replicateProperty(node, 'checkType', options),
         Replicator.replicateProperty(node, 'extendsType', options),
         Replicator.replicateProperty(node, 'trueType', options),
@@ -863,7 +884,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ConditionalType] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.InferType] = (node, options) => {
-    return ts.createInferTypeNode(
+    return ts.factory.createInferTypeNode(
         Replicator.replicateProperty(node, 'typeParameter', options)
     );
 };
@@ -878,7 +899,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ParenthesizedType] = (
     node,
     options
 ) => {
-    return ts.createParenthesizedType(
+    return ts.factory.createParenthesizedType(
         Replicator.replicateProperty(node, 'type', options)
     );
 };
@@ -890,7 +911,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ParenthesizedType] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.ThisType] = (node, options) => {
-    return ts.createThisTypeNode();
+    return ts.factory.createThisTypeNode();
 };
 
 /**
@@ -900,7 +921,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ThisType] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TypeOperator] = (node, options) => {
-    return ts.createTypeOperatorNode(
+    return ts.factory.createTypeOperatorNode(
         Replicator.replicateProperty(node, 'type', options)
     );
 };
@@ -915,7 +936,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.IndexedAccessType] = (
     node,
     options
 ) => {
-    return ts.createIndexedAccessTypeNode(
+    return ts.factory.createIndexedAccessTypeNode(
         Replicator.replicateProperty(node, 'objectType', options),
         Replicator.replicateProperty(node, 'indexType', options)
     );
@@ -928,7 +949,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.IndexedAccessType] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.MappedType] = (node, options) => {
-    return ts.createMappedTypeNode(
+    return ts.factory.createMappedTypeNode(
         Replicator.replicateIfProperty(node, 'readonlyToken', options),
         Replicator.replicateProperty(node, 'typeParameter', options),
         Replicator.replicateIfProperty(node, 'questionToken', options),
@@ -943,7 +964,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.MappedType] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.LiteralType] = (node, options) => {
-    return ts.createLiteralTypeNode(
+    return ts.factory.createLiteralTypeNode(
         Replicator.replicateProperty(node, 'literal', options)
     );
 };
@@ -955,7 +976,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.LiteralType] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.ImportType] = (node, options) => {
-    return ts.createImportTypeNode(
+    return ts.factory.createImportTypeNode(
         Replicator.replicateProperty(node, 'argument', options),
         Replicator.replicateIfProperty(node, 'qualifier', options),
         Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
@@ -973,7 +994,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ObjectBindingPattern] = (
     node,
     options
 ) => {
-    return ts.createObjectBindingPattern(
+    return ts.factory.createObjectBindingPattern(
         Replicator.replicateArrayProperty(node, 'elements', options)
     );
 };
@@ -988,7 +1009,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ArrayBindingPattern] = (
     node,
     options
 ) => {
-    return ts.createArrayBindingPattern(
+    return ts.factory.createArrayBindingPattern(
         Replicator.replicateArrayProperty(node, 'elements', options)
     );
 };
@@ -1003,7 +1024,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.BindingElement] = (
     node,
     options
 ) => {
-    return ts.createBindingElement(
+    return ts.factory.createBindingElement(
         Replicator.replicateIfProperty(node, 'dotDotDotToken', options),
         Replicator.replicateIfProperty(node, 'propertyName', options),
         Replicator.replicateProperty(node, 'name', options),
@@ -1021,7 +1042,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ArrayLiteralExpression] = (
     node,
     options
 ) => {
-    return ts.createArrayLiteral(
+    return ts.factory.createArrayLiteralExpression(
         Replicator.replicateIfArrayProperty(node, 'elements', options)
         // TODO: multiline parameter?
     );
@@ -1037,7 +1058,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ObjectLiteralExpression] = (
     node,
     options
 ) => {
-    return ts.createObjectLiteral(
+    return ts.factory.createObjectLiteralExpression(
         Replicator.replicateArrayProperty(node, 'properties', options)
         // TODO: multiline parameter?
     );
@@ -1053,7 +1074,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.PropertyAccessExpression] = (
     node,
     options
 ) => {
-    return ts.createPropertyAccess(
+    return ts.factory.createPropertyAccessExpression(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateProperty(node, 'name', options)
     );
@@ -1069,7 +1090,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ElementAccessExpression] = (
     node,
     options
 ) => {
-    return ts.createElementAccess(
+    return ts.factory.createElementAccessExpression(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateProperty(node, 'argumentExpression', options)
     );
@@ -1085,7 +1106,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.CallExpression] = (
     node,
     options
 ) => {
-    return ts.createCall(
+    return ts.factory.createCallExpression(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
         Replicator.replicateIfArrayProperty(node, 'arguments', options)
@@ -1102,7 +1123,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.NewExpression] = (
     node,
     options
 ) => {
-    return ts.createNew(
+    return ts.factory.createNewExpression(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
         Replicator.replicateIfArrayProperty(node, 'arguments', options)
@@ -1132,7 +1153,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TypeAssertionExpression] = (
     node,
     options
 ) => {
-    return ts.createTypeAssertion(
+    return ts.factory.createTypeAssertion(
         Replicator.replicateProperty(node, 'type', options),
         Replicator.replicateProperty(node, 'expression', options)
     );
@@ -1148,7 +1169,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ParenthesizedExpression] = (
     node,
     options
 ) => {
-    return ts.createParen(
+    return ts.factory.createParenthesizedExpression(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -1163,7 +1184,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.FunctionExpression] = (
     node,
     options
 ) => {
-    return ts.createFunctionExpression(
+    return ts.factory.createFunctionExpression(
         Replicator.replicateIfArrayProperty(node, 'modifiers', options),
         Replicator.replicateIfProperty(node, 'asteriskToken', options),
         Replicator.replicateIfProperty(node, 'name', options),
@@ -1184,7 +1205,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ArrowFunction] = (
     node,
     options
 ) => {
-    return ts.createArrowFunction(
+    return ts.factory.createArrowFunction(
         Replicator.replicateIfArrayProperty(node, 'modifiers', options),
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
         Replicator.replicateArrayProperty(node, 'parameters', options),
@@ -1204,7 +1225,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.DeleteExpression] = (
     node,
     options
 ) => {
-    return ts.createDelete(
+    return ts.factory.createDeleteExpression(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -1219,7 +1240,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TypeOfExpression] = (
     node,
     options
 ) => {
-    return ts.createTypeOf(
+    return ts.factory.createTypeOfExpression(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -1234,7 +1255,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.VoidExpression] = (
     node,
     options
 ) => {
-    return ts.createVoid(
+    return ts.factory.createVoidExpression(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -1249,7 +1270,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.AwaitExpression] = (
     node,
     options
 ) => {
-    return ts.createAwait(
+    return ts.factory.createAwaitExpression(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -1264,7 +1285,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.PrefixUnaryExpression] = (
     node,
     options
 ) => {
-    return ts.createPrefix(
+    return ts.factory.createPrefixUnaryExpression(
         node.operator,
         Replicator.replicateProperty(node, 'operand', options)
     );
@@ -1280,7 +1301,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.PostfixUnaryExpression] = (
     node,
     options
 ) => {
-    return ts.createPostfix(
+    return ts.factory.createPostfixUnaryExpression(
         Replicator.replicateProperty(node, 'operand', options),
         node.operator
     );
@@ -1296,7 +1317,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.BinaryExpression] = (
     node,
     options
 ) => {
-    return ts.createBinary(
+    return ts.factory.createBinaryExpression(
         Replicator.replicateProperty(node, 'left', options),
         Replicator.replicateProperty(node, 'operatorToken', options),
         Replicator.replicateProperty(node, 'right', options)
@@ -1313,9 +1334,11 @@ Replicator.replicateFunctions[ts.SyntaxKind.ConditionalExpression] = (
     node,
     options
 ) => {
-    return ts.createConditional(
+    return ts.factory.createConditionalExpression(
         Replicator.replicateProperty(node, 'condition', options),
+        Replicator.replicateIfProperty(node, 'questionToken', options),
         Replicator.replicateProperty(node, 'whenTrue', options),
+        Replicator.replicateIfProperty(node, 'colonToken', options),
         Replicator.replicateProperty(node, 'whenFalse', options)
     );
 };
@@ -1330,7 +1353,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.TemplateExpression] = (
     node,
     options
 ) => {
-    return ts.createTemplateExpression(
+    return ts.factory.createTemplateExpression(
         Replicator.replicateProperty(node, 'head', options),
         Replicator.replicateArrayProperty(node, 'templateSpans', options)
     );
@@ -1346,7 +1369,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.YieldExpression] = (
     node,
     options
 ) => {
-    return ts.createYield(
+    return ts.factory.createYieldExpression(
         Replicator.replicateIfProperty(node, 'expression', options)
     );
 };
@@ -1361,7 +1384,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.SpreadElement] = (
     node,
     options
 ) => {
-    return ts.createSpread(
+    return ts.factory.createSpreadElement(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -1376,7 +1399,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ClassExpression] = (
     node,
     options
 ) => {
-    return ts.createClassExpression(
+    return ts.factory.createClassExpression(
         Replicator.replicateIfArrayProperty(node, 'modifiers', options),
         Replicator.replicateIfProperty(node, 'name', options),
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
@@ -1395,7 +1418,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.OmittedExpression] = (
     node,
     options
 ) => {
-    return ts.createOmittedExpression();
+    return ts.factory.createOmittedExpression();
 };
 
 /**
@@ -1408,7 +1431,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ExpressionWithTypeArguments] = (
     node,
     options
 ) => {
-    return ts.createExpressionWithTypeArguments(
+    return ts.factory.createExpressionWithTypeArguments(
         Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
         Replicator.replicateProperty(node, 'expression', options)
     );
@@ -1421,7 +1444,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ExpressionWithTypeArguments] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.AsExpression] = (node, options) => {
-    return ts.createAsExpression(
+    return ts.factory.createAsExpression(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateProperty(node, 'type', options)
     );
@@ -1437,7 +1460,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.NonNullExpression] = (
     node,
     options
 ) => {
-    return ts.createNonNullExpression(
+    return ts.factory.createNonNullExpression(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -1472,7 +1495,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.SyntheticExpression] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TemplateSpan] = (node, options) => {
-    return ts.createTemplateSpan(
+    return ts.factory.createTemplateSpan(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateProperty(node, 'literal', options)
     );
@@ -1488,7 +1511,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.SemicolonClassElement] = (
     node,
     options
 ) => {
-    return ts.createSemicolonClassElement();
+    return ts.factory.createSemicolonClassElement();
 };
 
 /**
@@ -1498,7 +1521,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.SemicolonClassElement] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.Block] = (node, options) => {
-    return ts.createBlock(
+    return ts.factory.createBlock(
         Replicator.replicateArrayProperty(node, 'statements', options)
     );
 };
@@ -1513,7 +1536,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.VariableStatement] = (
     node,
     options
 ) => {
-    return ts.createVariableStatement(
+    return ts.factory.createVariableStatement(
         Replicator.replicateIfProperty(node, 'modifiers', options),
         Replicator.replicateProperty(node, 'declarationList', options)
     );
@@ -1529,7 +1552,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.EmptyStatement] = (
     node,
     options
 ) => {
-    return ts.createEmptyStatement();
+    return ts.factory.createEmptyStatement();
 };
 
 /**
@@ -1542,7 +1565,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ExpressionStatement] = (
     node,
     options
 ) => {
-    return ts.createExpressionStatement(
+    return ts.factory.createExpressionStatement(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -1554,7 +1577,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ExpressionStatement] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.IfStatement] = (node, options) => {
-    return ts.createIf(
+    return ts.factory.createIfStatement(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateProperty(node, 'thenStatement', options),
         Replicator.replicateIfProperty(node, 'elseStatement', options)
@@ -1568,7 +1591,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.IfStatement] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.DoStatement] = (node, options) => {
-    return ts.createDo(
+    return ts.factory.createDoStatement(
         Replicator.replicateProperty(node, 'statement', options),
         Replicator.replicateProperty(node, 'expression', options)
     );
@@ -1584,7 +1607,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.WhileStatement] = (
     node,
     options
 ) => {
-    return ts.createWhile(
+    return ts.factory.createWhileStatement(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateProperty(node, 'statement', options)
     );
@@ -1597,7 +1620,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.WhileStatement] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.ForStatement] = (node, options) => {
-    return ts.createFor(
+    return ts.factory.createForStatement(
         Replicator.replicateIfProperty(node, 'initializer', options),
         Replicator.replicateIfProperty(node, 'condition', options),
         Replicator.replicateIfProperty(node, 'incrementor', options),
@@ -1615,7 +1638,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ForInStatement] = (
     node,
     options
 ) => {
-    return ts.createForIn(
+    return ts.factory.createForInStatement(
         Replicator.replicateProperty(node, 'initializer', options),
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateProperty(node, 'statement', options)
@@ -1632,7 +1655,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ForOfStatement] = (
     node,
     options
 ) => {
-    return ts.createForOf(
+    return ts.factory.createForOfStatement(
         Replicator.replicateIfProperty(node, 'awaitModifier', options), // TODO: check this again
         Replicator.replicateProperty(node, 'initializer', options),
         Replicator.replicateProperty(node, 'expression', options),
@@ -1650,7 +1673,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ContinueStatement] = (
     node,
     options
 ) => {
-    return ts.createContinue(
+    return ts.factory.createContinueStatement(
         Replicator.replicateIfProperty(node, 'label', options)
     );
 };
@@ -1665,7 +1688,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.BreakStatement] = (
     node,
     options
 ) => {
-    return ts.createBreak(
+    return ts.factory.createBreakStatement(
         Replicator.replicateIfProperty(node, 'label', options)
     );
 };
@@ -1680,7 +1703,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ReturnStatement] = (
     node,
     options
 ) => {
-    return ts.createReturn(
+    return ts.factory.createReturnStatement(
         Replicator.replicateIfProperty(node, 'expression', options)
     );
 };
@@ -1695,7 +1718,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.WithStatement] = (
     node,
     options
 ) => {
-    return ts.createWith(
+    return ts.factory.createWithStatement(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateProperty(node, 'statement', options)
     );
@@ -1711,7 +1734,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.SwitchStatement] = (
     node,
     options
 ) => {
-    return ts.createSwitch(
+    return ts.factory.createSwitchStatement(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateProperty(node, 'caseBlock', options)
     );
@@ -1727,7 +1750,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.LabeledStatement] = (
     node,
     options
 ) => {
-    return ts.createLabel(
+    return ts.factory.createLabeledStatement(
         Replicator.replicateProperty(node, 'label', options),
         Replicator.replicateProperty(node, 'statement', options)
     );
@@ -1743,7 +1766,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ThrowStatement] = (
     node,
     options
 ) => {
-    return ts.createThrow(
+    return ts.factory.createThrowStatement(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -1755,7 +1778,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ThrowStatement] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.TryStatement] = (node, options) => {
-    return ts.createTry(
+    return ts.factory.createTryStatement(
         Replicator.replicateProperty(node, 'tryBlock', options),
         Replicator.replicateIfProperty(node, 'catchClause', options),
         Replicator.replicateIfProperty(node, 'finallyBlock', options)
@@ -1772,7 +1795,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.DebuggerStatement] = (
     node,
     options
 ) => {
-    return ts.createDebuggerStatement();
+    return ts.factory.createDebuggerStatement();
 };
 
 /**
@@ -1785,7 +1808,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.VariableDeclaration] = (
     node,
     options
 ) => {
-    return ts.createVariableDeclaration(
+    return ts.factory.createVariableDeclaration(
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateIfProperty(node, 'type', options),
         Replicator.replicateIfProperty(node, 'initializer', options)
@@ -1802,7 +1825,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.VariableDeclarationList] = (
     node,
     options
 ) => {
-    return ts.createVariableDeclarationList(
+    return ts.factory.createVariableDeclarationList(
         Replicator.replicateArrayProperty(node, 'declarations', options),
         node.flags // TODO: check again
     );
@@ -1818,9 +1841,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.FunctionDeclaration] = (
     node,
     options
 ) => {
-    return ts.createFunctionDeclaration(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createFunctionDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateIfProperty(node, 'asteriskToken', options),
         Replicator.replicateIfProperty(node, 'name', options),
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
@@ -1840,9 +1862,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.ClassDeclaration] = (
     node,
     options
 ) => {
-    return ts.createClassDeclaration(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createClassDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateIfProperty(node, 'name', options),
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
         Replicator.replicateIfArrayProperty(node, 'heritageClauses', options),
@@ -1860,9 +1881,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.InterfaceDeclaration] = (
     node,
     options
 ) => {
-    return ts.createInterfaceDeclaration(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createInterfaceDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
         Replicator.replicateIfArrayProperty(node, 'heritageClauses', options),
@@ -1880,9 +1900,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.TypeAliasDeclaration] = (
     node,
     options
 ) => {
-    return ts.createTypeAliasDeclaration(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createTypeAliasDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateIfArrayProperty(node, 'typeParameters', options),
         Replicator.replicateProperty(node, 'type', options)
@@ -1899,9 +1918,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.EnumDeclaration] = (
     node,
     options
 ) => {
-    return ts.createEnumDeclaration(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createEnumDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateArrayProperty(node, 'members', options)
     );
@@ -1917,9 +1935,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.ModuleDeclaration] = (
     node,
     options
 ) => {
-    return ts.createModuleDeclaration(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createModuleDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateIfProperty(node, 'body', options),
         Replicator.replicateIfProperty(node, 'flags', options)
@@ -1933,7 +1950,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ModuleDeclaration] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.ModuleBlock] = (node, options) => {
-    return ts.createModuleBlock(
+    return ts.factory.createModuleBlock(
         Replicator.replicateArrayProperty(node, 'statements', options)
     );
 };
@@ -1945,7 +1962,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ModuleBlock] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.CaseBlock] = (node, options) => {
-    return ts.createCaseBlock(
+    return ts.factory.createCaseBlock(
         Replicator.replicateArrayProperty(node, 'clauses', options)
     );
 };
@@ -1960,7 +1977,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.NamespaceExportDeclaration] = (
     node,
     options
 ) => {
-    return ts.createNamespaceExportDeclaration(
+    return ts.factory.createNamespaceExportDeclaration(
         Replicator.replicateProperty(node, 'name', options)
     );
 };
@@ -1975,9 +1992,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.ImportEqualsDeclaration] = (
     node,
     options
 ) => {
-    return ts.createImportEqualsDeclaration(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createImportEqualsDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateProperty(node, 'moduleReference', options)
     );
@@ -1993,9 +2009,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.ImportDeclaration] = (
     node,
     options
 ) => {
-    return ts.createImportDeclaration(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createImportDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateIfProperty(node, 'importClause', options),
         Replicator.replicateProperty(node, 'moduleSpecifier', options)
     );
@@ -2008,7 +2023,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ImportDeclaration] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.ImportClause] = (node, options) => {
-    return ts.createImportClause(
+    return ts.factory.createImportClause(
         Replicator.replicateIfProperty(node, 'name', options),
         Replicator.replicateIfProperty(node, 'namedBindings', options)
     );
@@ -2024,7 +2039,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.NamespaceImport] = (
     node,
     options
 ) => {
-    return ts.createNamespaceImport(
+    return ts.factory.createNamespaceImport(
         Replicator.replicateProperty(node, 'name', options)
     );
 };
@@ -2036,7 +2051,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.NamespaceImport] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.NamedImports] = (node, options) => {
-    return ts.createNamedImports(
+    return ts.factory.createNamedImports(
         Replicator.replicateArrayProperty(node, 'elements', options)
     );
 };
@@ -2051,7 +2066,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ImportSpecifier] = (
     node,
     options
 ) => {
-    return ts.createImportSpecifier(
+    return ts.factory.createImportSpecifier(
         Replicator.replicateIfProperty(node, 'propertyName', options),
         Replicator.replicateProperty(node, 'name', options)
     );
@@ -2067,9 +2082,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.ExportAssignment] = (
     node,
     options
 ) => {
-    return ts.createExportAssignment(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createExportAssignment(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateIfProperty(node, 'isExportEquals', options),
         Replicator.replicateProperty(node, 'expression', options)
     );
@@ -2085,9 +2099,8 @@ Replicator.replicateFunctions[ts.SyntaxKind.ExportDeclaration] = (
     node,
     options
 ) => {
-    return ts.createExportDeclaration(
-        Replicator.replicateIfArrayProperty(node, 'decorators', options),
-        Replicator.replicateIfArrayProperty(node, 'modifiers', options),
+    return ts.factory.createExportDeclaration(
+        Replicator.combineModifiers(node, options),
         Replicator.replicateIfProperty(node, 'exportClause', options),
         Replicator.replicateIfProperty(node, 'moduleSpecifier', options)
     );
@@ -2100,7 +2113,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ExportDeclaration] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.NamedExports] = (node, options) => {
-    return ts.createNamedExports(
+    return ts.factory.createNamedExports(
         Replicator.replicateArrayProperty(node, 'elements', options)
     );
 };
@@ -2115,7 +2128,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ExportSpecifier] = (
     node,
     options
 ) => {
-    return ts.createExportSpecifier(
+    return ts.factory.createExportSpecifier(
         Replicator.replicateIfProperty(node, 'propertyName', options),
         Replicator.replicateProperty(node, 'name', options)
     );
@@ -2144,7 +2157,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ExternalModuleReference] = (
     node,
     options
 ) => {
-    return ts.createExternalModuleReference(
+    return ts.factory.createExternalModuleReference(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -2156,7 +2169,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ExternalModuleReference] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.JsxElement] = (node, options) => {
-    return ts.createJsxElement(
+    return ts.factory.createJsxElement(
         Replicator.replicateProperty(node, 'openingElement', options),
         Replicator.replicateArrayProperty(node, 'children', options),
         Replicator.replicateProperty(node, 'closingElement', options)
@@ -2173,7 +2186,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxSelfClosingElement] = (
     node,
     options
 ) => {
-    return ts.createJsxSelfClosingElement(
+    return ts.factory.createJsxSelfClosingElement(
         Replicator.replicateProperty(node, 'tagName', options),
         Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
         Replicator.replicateProperty(node, 'attributes', options)
@@ -2190,7 +2203,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxOpeningElement] = (
     node,
     options
 ) => {
-    return ts.createJsxOpeningElement(
+    return ts.factory.createJsxOpeningElement(
         Replicator.replicateProperty(node, 'tagName', options),
         Replicator.replicateIfArrayProperty(node, 'typeArguments', options),
         Replicator.replicateProperty(node, 'attributes', options)
@@ -2207,7 +2220,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxClosingElement] = (
     node,
     options
 ) => {
-    return ts.createJsxClosingElement(
+    return ts.factory.createJsxClosingElement(
         Replicator.replicateProperty(node, 'tagName', options)
     );
 };
@@ -2219,7 +2232,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxClosingElement] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.JsxFragment] = (node, options) => {
-    return ts.createJsxFragment(
+    return ts.factory.createJsxFragment(
         Replicator.replicateProperty(node, 'openingFragment', options),
         Replicator.replicateArrayProperty(node, 'children', options),
         Replicator.replicateProperty(node, 'closingFragment', options)
@@ -2236,7 +2249,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxOpeningFragment] = (
     node,
     options
 ) => {
-    return ts.createJsxOpeningFragment();
+    return ts.factory.createJsxOpeningFragment();
 };
 
 /**
@@ -2249,7 +2262,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxClosingFragment] = (
     node,
     options
 ) => {
-    return ts.createJsxJsxClosingFragment();
+    return ts.factory.createJsxJsxClosingFragment();
 };
 
 /**
@@ -2259,7 +2272,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxClosingFragment] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.JsxAttribute] = (node, options) => {
-    return ts.createJsxAttribute(
+    return ts.factory.createJsxAttribute(
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateProperty(node, 'initializer', options)
     );
@@ -2275,7 +2288,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxAttributes] = (
     node,
     options
 ) => {
-    return ts.createJsxAttributes(
+    return ts.factory.createJsxAttributes(
         Replicator.replicateArrayProperty(node, 'properties', options)
     );
 };
@@ -2290,7 +2303,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxSpreadAttribute] = (
     node,
     options
 ) => {
-    return ts.createJsxSpreadAttribute(
+    return ts.factory.createJsxSpreadAttribute(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -2305,7 +2318,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxExpression] = (
     node,
     options
 ) => {
-    return ts.createJsxExpression(
+    return ts.factory.createJsxExpression(
         Replicator.replicateIfProperty(node, 'dotDotDotToken', options),
         Replicator.replicateIfProperty(node, 'expression', options)
     );
@@ -2318,7 +2331,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JsxExpression] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.CaseClause] = (node, options) => {
-    return ts.createCaseClause(
+    return ts.factory.createCaseClause(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateArrayProperty(node, 'statements', options)
     );
@@ -2334,7 +2347,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.DefaultClause] = (
     node,
     options
 ) => {
-    return ts.createDefaultClause(
+    return ts.factory.createDefaultClause(
         Replicator.replicateArrayProperty(node, 'statements', options)
     );
 };
@@ -2349,7 +2362,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.HeritageClause] = (
     node,
     options
 ) => {
-    return ts.createHeritageClause(
+    return ts.factory.createHeritageClause(
         Replicator.replicateProperty(node, 'token', options),
         Replicator.replicateArrayProperty(node, 'types', options)
     );
@@ -2362,7 +2375,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.HeritageClause] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.CatchClause] = (node, options) => {
-    return ts.createCatchClause(
+    return ts.factory.createCatchClause(
         Replicator.replicateIfProperty(node, 'variableDeclaration', options),
         Replicator.replicateProperty(node, 'block', options)
     );
@@ -2378,7 +2391,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.PropertyAssignment] = (
     node,
     options
 ) => {
-    return ts.createPropertyAssignment(
+    return ts.factory.createPropertyAssignment(
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateProperty(node, 'initializer', options)
     );
@@ -2394,7 +2407,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.ShorthandPropertyAssignment] = (
     node,
     options
 ) => {
-    return ts.createShorthandPropertyAssignment(
+    return ts.factory.createShorthandPropertyAssignment(
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateIfProperty(
             node,
@@ -2414,7 +2427,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.SpreadAssignment] = (
     node,
     options
 ) => {
-    return ts.createSpreadAssignment(
+    return ts.factory.createSpreadAssignment(
         Replicator.replicateProperty(node, 'expression', options)
     );
 };
@@ -2426,7 +2439,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.SpreadAssignment] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.EnumMember] = (node, options) => {
-    return ts.createEnumMember(
+    return ts.factory.createEnumMember(
         Replicator.replicateProperty(node, 'name', options),
         Replicator.replicateIfProperty(node, 'initializer', options)
     );
@@ -2547,7 +2560,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocTypeExpression] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocTypeExpression);
+    const clone = ts.factory.createJSDocTypeExpression();
     // TODO: copy properties
     return clone;
 };
@@ -2559,7 +2572,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocTypeExpression] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.JSDocAllType] = (node, options) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocAllType);
+    const clone = ts.factory.createJSDocAllType();
     // TODO: copy properties
     return clone;
 };
@@ -2574,7 +2587,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocUnknownType] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocUnknownType);
+    const clone = ts.factory.createJSDocUnknownType();
     // TODO: copy properties
     return clone;
 };
@@ -2589,7 +2602,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocNullableType] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocNullableType);
+    const clone = ts.factory.createJSDocNullableType();
     // TODO: copy properties
     return clone;
 };
@@ -2604,7 +2617,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocNonNullableType] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocNonNullableType);
+    const clone = ts.factory.createJSDocNonNullableType();
     // TODO: copy properties
     return clone;
 };
@@ -2619,7 +2632,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocOptionalType] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocOptionalType);
+    const clone = ts.factory.createJSDocOptionalType();
     // TODO: copy properties
     return clone;
 };
@@ -2634,7 +2647,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocFunctionType] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocFunctionType);
+    const clone = ts.factory.createJSDocFunctionType();
     // TODO: copy properties
     return clone;
 };
@@ -2649,7 +2662,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocVariadicType] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocVariadicType);
+    const clone = ts.factory.createJSDocVariadicType();
     // TODO: copy properties
     return clone;
 };
@@ -2661,7 +2674,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocVariadicType] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.JSDocComment] = (node, options) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocComment);
+    const clone = ts.factory.createJSDocComment();
     // TODO: copy properties
     return clone;
 };
@@ -2676,7 +2689,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocTypeLiteral] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocTypeLiteral);
+    const clone = ts.factory.createJSDocTypeLiteral();
     // TODO: copy properties
     return clone;
 };
@@ -2691,7 +2704,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocSignature] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocSignature);
+    const clone = ts.factory.createJSDocSignature();
     // TODO: copy properties
     return clone;
 };
@@ -2703,7 +2716,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocSignature] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.JSDocTag] = (node, options) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocTag);
+    const clone = ts.factory.createJSDocUnknownTag();
     // TODO: copy properties
     return clone;
 };
@@ -2718,7 +2731,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocAugmentsTag] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocAugmentsTag);
+    const clone = ts.factory.createJSDocAugmentsTag();
     // TODO: copy properties
     return clone;
 };
@@ -2733,7 +2746,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocClassTag] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocClassTag);
+    const clone = ts.factory.createJSDocClassTag();
     // TODO: copy properties
     return clone;
 };
@@ -2748,7 +2761,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocCallbackTag] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocCallbackTag);
+    const clone = ts.factory.createJSDocCallbackTag();
     // TODO: copy properties
     return clone;
 };
@@ -2760,7 +2773,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocCallbackTag] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.JSDocEnumTag] = (node, options) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocEnumTag);
+    const clone = ts.factory.createJSDocEnumTag();
     // TODO: copy properties
     return clone;
 };
@@ -2775,7 +2788,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocParameterTag] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocParameterTag);
+    const clone = ts.factory.createJSDocParameterTag();
     // TODO: copy properties
     return clone;
 };
@@ -2790,7 +2803,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocReturnTag] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocReturnTag);
+    const clone = ts.factory.createJSDocReturnTag();
     // TODO: copy properties
     return clone;
 };
@@ -2802,7 +2815,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocReturnTag] = (
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.JSDocThisTag] = (node, options) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocThisTag);
+    const clone = ts.factory.createJSDocThisTag();
     // TODO: copy properties
     return clone;
 };
@@ -2814,7 +2827,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocThisTag] = (node, options) => {
  * @returns {ts.Node}
  */
 Replicator.replicateFunctions[ts.SyntaxKind.JSDocTypeTag] = (node, options) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocTypeTag);
+    const clone = ts.factory.createJSDocTypeTag();
     // TODO: copy properties
     return clone;
 };
@@ -2829,7 +2842,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocTemplateTag] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocTemplateTag);
+    const clone = ts.factory.createJSDocTemplateTag();
     // TODO: copy properties
     return clone;
 };
@@ -2844,7 +2857,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocTypedefTag] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocTypedefTag);
+    const clone = ts.factory.createJSDocTypedefTag();
     // TODO: copy properties
     return clone;
 };
@@ -2859,7 +2872,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.JSDocPropertyTag] = (
     node,
     options
 ) => {
-    const clone = ts.createNode(ts.SyntaxKind.JSDocPropertyTag);
+    const clone = ts.factory.createJSDocPropertyTag();
     // TODO: copy properties
     return clone;
 };
@@ -2884,7 +2897,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.NotEmittedStatement] = (
     node,
     options
 ) => {
-    return ts.createNotEmittedStatement(
+    return ts.factory.createNotEmittedStatement(
         Replicator.replicateProperty(node, 'original', options)
     );
 };
@@ -2899,7 +2912,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.PartiallyEmittedExpression] = (
     node,
     options
 ) => {
-    return ts.createPartiallyEmittedExpression(
+    return ts.factory.createPartiallyEmittedExpression(
         Replicator.replicateProperty(node, 'expression', options),
         Replicator.replicateIfProperty(node, 'original', options)
     );
@@ -2915,7 +2928,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.CommaListExpression] = (
     node,
     options
 ) => {
-    return ts.createCommaList(
+    return ts.factory.createCommaListExpression(
         Replicator.replicateArrayProperty(node, 'elements', options)
     );
 };
