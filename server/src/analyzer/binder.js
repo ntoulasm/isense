@@ -39,7 +39,7 @@ Binder.bindFunctionScopedDeclarations = body => {
 
     const bindFunctionScopedDeclarationsInternal = node => {
         let iterateChildren = true;
-        if (bindFunctionScopedDeclarationsFunctions.hasOwnProperty(node.kind)) {
+        if (Object.hasOwn(bindFunctionScopedDeclarationsFunctions, node.kind)) {
             iterateChildren = !!bindFunctionScopedDeclarationsFunctions[
                 node.kind
             ](node, body);
@@ -62,7 +62,7 @@ Binder.bindBlockScopedDeclarations = block => {
     block.binders = [];
 
     const bindBlockScopedDeclarationsInternal = node => {
-        if (bindBlockScopedDeclarationsFunctions.hasOwnProperty(node.kind)) {
+        if (Object.hasOwn(bindBlockScopedDeclarationsFunctions, node.kind)) {
             bindBlockScopedDeclarationsFunctions[node.kind](node, block);
         } else {
             ts.forEachChild(node, bindBlockScopedDeclarationsInternal);

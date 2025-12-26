@@ -1,7 +1,9 @@
 {
     "compilerOptions": {
-        "target": "es6",
-        "module": "commonjs",
+        "composite": true,
+        "noEmit": false,
+        "outDir": "dist",
+        "target": "ES2022",
         "moduleResolution": "node",
         "strict": true,
         "rootDir": "src"

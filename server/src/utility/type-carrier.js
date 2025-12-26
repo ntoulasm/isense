@@ -463,7 +463,7 @@ evaluateBinaryExpressionFunctions[ts.SyntaxKind.AmpersandAmpersandToken] =
         for (const l of leftInfo) {
             for (const r of rightInfo) {
                 if (l.hasValue) {
-                    info.push(Boolean(l.value) ? r : l);
+                    info.push(l.value ? r : l);
                 } else {
                     info.push(l);
                     info.push(r);
@@ -487,7 +487,7 @@ evaluateBinaryExpressionFunctions[ts.SyntaxKind.BarBarToken] = carrier => {
     for (const l of leftInfo) {
         for (const r of rightInfo) {
             if (l.hasValue) {
-                info.push(Boolean(l.value) ? l : r);
+                info.push(l.value ? l : r);
             } else {
                 info.push(l);
                 info.push(r);

@@ -299,6 +299,7 @@ Analyzer.analyze = ast => {
             case ts.SyntaxKind.ElementAccessExpression: {
                 ts.forEachChild(node, analyzeInternal);
                 analyzeElementAccessExpression(node);
+                break;
             }
             case ts.SyntaxKind.ParenthesizedExpression: {
                 ts.forEachChild(node, analyzeInternal);
@@ -737,7 +738,7 @@ function analyzeElementAccessExpression(node) {
                     expressionType.hasValue
                 ) {
                     if (
-                        expressionType.value.hasOwnProperty(elementTypeString)
+                        Object.hasOwn(expressionType.value, elementTypeString)
                     ) {
                         info.push(...expressionType.value[elementTypeString]);
                     } else if (!typesContainUndefined) {
@@ -805,7 +806,7 @@ function isInOriginalFunction(node) {
     const outerFunction = Ast.findAncestorFunction(node);
     return (
         outerFunction &&
-        outerFunction.hasOwnProperty('_original') &&
+        Object.hasOwn(outerFunction, '_original') &&
         outerFunction === outerFunction._original
     );
 }
@@ -902,24 +903,26 @@ function createInducedCarrierFromPrefixUnaryExpression(node) {
         case ts.SyntaxKind.PlusToken:
         case ts.SyntaxKind.MinusToken:
         case ts.SyntaxKind.PlusPlusToken:
-        case ts.SyntaxKind.MinusMinusToken:
+        case ts.SyntaxKind.MinusMinusToken: {
             const carrier = TypeCarrier.createConstant([
                 TypeInfo.createNumber(),
             ]);
             carrier.induced = true;
             return carrier;
+        }
     }
 }
 
 function createInducedCarrierFromPostfixUnaryExpression(node) {
     switch (node.operator) {
         case ts.SyntaxKind.PlusPlusToken:
-        case ts.SyntaxKind.MinusMinusToken:
+        case ts.SyntaxKind.MinusMinusToken: {
             const carrier = TypeCarrier.createConstant([
                 TypeInfo.createNumber(),
             ]);
             carrier.induced = true;
             return carrier;
+        }
     }
 }
 
