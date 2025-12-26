@@ -20,7 +20,7 @@ SymbolTable.create = function () {
      * @returns {isense.symbol}
      */
     symbolTable.lookUp = function (name) {
-        if (symbolTable.private.symbols.hasOwnProperty(name)) {
+        if (Object.hasOwn(symbolTable.private.symbols, name)) {
             return symbolTable.private.symbols[name];
         } else {
             return undefined;

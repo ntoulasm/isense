@@ -61,7 +61,7 @@ Replicator.replicatePositionData = (original, clone) => {
  * @returns {ts.Node}
  */
 Replicator.replicateInternal = (node, options) => {
-    if (!Replicator.replicateFunctions.hasOwnProperty(node.kind)) {
+    if (!Object.hasOwn(Replicator.replicateFunctions, node.kind)) {
         throw `Missing replicate function for nodes of kind '${Object.values(ts.SyntaxKind)[node.kind]}'`;
     }
     const clone = Replicator.replicateFunctions[node.kind](node, options);

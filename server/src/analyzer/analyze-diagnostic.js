@@ -29,15 +29,15 @@ AnalyzeDiagnostic.create = (node, config, messageParameters = []) => {
         )
     );
     console.assert(
-        config.hasOwnProperty('message'),
+        Object.hasOwn(config, 'message'),
         'Invalid diagnostic with no message'
     );
     console.assert(
-        config.hasOwnProperty('severity'),
+        Object.hasOwn(config, 'severity'),
         'Invalid diagnostic with no severity'
     );
-    !config.hasOwnProperty('code') && (config.code = null);
-    !config.hasOwnProperty('source') && (config.source = '');
+    !Object.hasOwn(config, 'code') && (config.code = null);
+    !Object.hasOwn(config, 'source') && (config.source = '');
     const diagnostic = vscodeLanguageServer.Diagnostic.create(
         range,
         Utility.format(config.message, messageParameters),
@@ -46,7 +46,7 @@ AnalyzeDiagnostic.create = (node, config, messageParameters = []) => {
         '',
         undefined
     );
-    config.hasOwnProperty('tags') && (diagnostic.tags = config.tags);
+    Object.hasOwn(config, 'tags') && (diagnostic.tags = config.tags);
 
     return diagnostic;
 };
