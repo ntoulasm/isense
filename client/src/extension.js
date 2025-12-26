@@ -1,6 +1,6 @@
 const path = require('path');
 const vscode = require('vscode');
-const vscodeLanguageClient = require('vscode-languageclient');
+const { LanguageClient, TransportKind } = require('vscode-languageclient/node');
 
 // ----------------------------------------------------------------------------
 
@@ -26,11 +26,11 @@ function activate(context) {
     let serverOptions = {
         run: {
             module: serverModule,
-            transport: vscodeLanguageClient.TransportKind.ipc,
+            transport: TransportKind.ipc,
         },
         debug: {
             module: serverModule,
-            transport: vscodeLanguageClient.TransportKind.ipc,
+            transport: TransportKind.ipc,
             options: debugOptions,
         },
     };
@@ -43,15 +43,12 @@ function activate(context) {
         },
     };
 
-    client = new vscodeLanguageClient.LanguageClient(
+    client = new LanguageClient(
         'languageServer',
         'Language Server',
         serverOptions,
         clientOptions
     );
-
-    // This will also launch the server
-    client.start();
 
     offsetStatusBarItem = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Right,
@@ -165,7 +162,8 @@ function activate(context) {
 
     // ------------------------------------------------------------------------
 
-    client.onReady().then(() => {
+    // This will also launch the server
+    client.start().then(() => {
         updateOffsetStatusBarItem();
 
         // ------------------------------------------------------------------------
