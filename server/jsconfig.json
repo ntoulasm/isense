@@ -1,5 +1,8 @@
 {
     "compilerOptions": {
+        "composite": true,
+        "noEmit": false,
+        "outDir": "dist",
         "target": "ES2022",
         "moduleResolution": "node",
         "strict": true,
