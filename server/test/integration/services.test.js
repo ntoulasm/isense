@@ -10,6 +10,7 @@ const Hover = require('../../src/services/hover');
 const SignatureHelp = require('../../src/services/signature-help');
 const DocumentSymbol = require('../../src/services/document-symbol');
 const CodeAction = require('../../src/services/code-action');
+const vscodeLanguageServer = require('vscode-languageserver');
 
 const examplesDir = path.resolve(__dirname, '../../../examples');
 
@@ -63,7 +64,37 @@ describe('Language Server Services Integration', () => {
             const yItem = items.find(i => i.label === 'y');
 
             expect(xItem).toBeDefined();
+            expect(xItem.kind).toBe(
+                vscodeLanguageServer.CompletionItemKind.Variable
+            );
             expect(yItem).toBeDefined();
+            expect(yItem.kind).toBe(
+                vscodeLanguageServer.CompletionItemKind.Variable
+            );
+        });
+
+        it('should suggest the same variable when completing on the RHS of a self-referential assignment', () => {
+            const sourceSelfReferential = createTestSourceFile(
+                'self-referential-assignment.js'
+            );
+            Analyzer.analyze(sourceSelfReferential);
+
+            const needle = 'x = 3 + x;';
+            const index = sourceSelfReferential.text.indexOf(needle);
+            expect(index).not.toBe(-1);
+
+            // Complete at the position of 'x' in '3 + x'
+            const offset = sourceSelfReferential.text.indexOf('x;', index);
+            expect(offset).not.toBe(-1);
+
+            const info = createMockInfo(sourceSelfReferential, offset);
+            const items = Completion.onCompletion(info);
+
+            expect(items).toBeDefined();
+            const xItem = items.find(i => i.label === 'x');
+            expect(xItem).toBeDefined();
+            // It should have the type/value from the previous assignment (x = 2)
+            expect(xItem.data.signature).toContain('x: number = 2');
         });
 
         it('should suggest local variables within a function scope', () => {
@@ -134,6 +165,67 @@ describe('Language Server Services Integration', () => {
             }
 
             expect(text).toMatch(/\b(let|var|const)\s+x\b|x:/);
+        });
+
+        it('should handle self-referential assignments - second x in x = 3 + x refers to initial value', () => {
+            const sourceSelfReferential = createTestSourceFile(
+                'self-referential-assignment.js'
+            );
+            Analyzer.analyze(sourceSelfReferential);
+
+            const needle = 'x = 3 + x;';
+            const index = sourceSelfReferential.text.indexOf(needle);
+            expect(index).not.toBe(-1);
+
+            // Hover over the second 'x' in 'x = 3 + x;'
+            const offset = sourceSelfReferential.text.indexOf('x;', index);
+            expect(offset).not.toBe(-1);
+
+            const info = createMockInfo(sourceSelfReferential, offset);
+            const hover = Hover.onHover(info);
+
+            expect(hover).toBeDefined();
+            const contents = hover.contents;
+            let text = Array.isArray(contents)
+                ? contents
+                      .map(c => (typeof c === 'string' ? c : c.value))
+                      .join('\n')
+                : typeof contents === 'string'
+                  ? contents
+                  : contents.value;
+
+            // Should contain x: number = 2 and mark it as active
+            expect(text).toContain('x: number = 2 at line 1 (up to here)');
+        });
+
+        it('should handle self-referential assignments - first x in x = 3 + x refers to current assignment', () => {
+            const sourceSelfReferential = createTestSourceFile(
+                'self-referential-assignment.js'
+            );
+            Analyzer.analyze(sourceSelfReferential);
+
+            const needle = 'x = 3 + x;';
+            const index = sourceSelfReferential.text.indexOf(needle);
+            expect(index).not.toBe(-1);
+
+            // Hover over the first 'x' in 'x = 3 + x;'
+            const offset = index;
+
+            const info = createMockInfo(sourceSelfReferential, offset);
+            const hover = Hover.onHover(info);
+
+            expect(hover).toBeDefined();
+            const contents = hover.contents;
+            let text = Array.isArray(contents)
+                ? contents
+                      .map(c => (typeof c === 'string' ? c : c.value))
+                      .join('\n')
+                : typeof contents === 'string'
+                  ? contents
+                  : contents.value;
+
+            // Should contain x: number = 5 at line 2 and mark it as active
+            expect(text).toContain('x: number = 5 at line 2 (up to here)');
         });
     });
 
