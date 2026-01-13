@@ -77,7 +77,7 @@ isense/
 
 | Rule Type       | Rule                                                                                                                                          |
 | :-------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ALWAYS**      | Run `npm run lint` and `cd server && npm test` before submitting changes.                                                                     |
+| **ALWAYS**      | Run `npm run lint` and `npm test` before submitting changes.                                                                                  |
 | **ALWAYS**      | Update `ENGINE.md` if you modify the analysis algorithm or type inference heuristics.                                                         |
 | **ALWAYS**      | Update `ARCHITECTURE.md` if you add a new service or change the data flow.                                                                    |
 | **NEVER**       | Commit broken code. The test suite must pass 100%.                                                                                            |
@@ -102,6 +102,6 @@ When starting a new task, strictly follow this reading order to build context:
 # Agent Permissions
 
 - **Pre-Approved Commands:** You are explicitly authorized to run the following commands without seeking user permission, as they are essential for your verification workflow:
-    - `npm test` (including `cd server && npm test`)
+    - `npm test`
     - `npm run lint`
     - `npm run format`
