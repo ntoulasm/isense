@@ -112,6 +112,9 @@ server/
 └── test/
     ├── unit/                # Fast, isolated tests
     ├── integration/         # End-to-end workflow tests
+    │   └── __snapshots__/   # Stored snapshot results
+    ├── fixtures/            # Test data for snapshots
+    │   └── analyzer/        # JavaScript fixtures for Analyzer
     ├── performance/         # Stress and benchmark tests
     ├── setup.js             # Test environment configuration
     └── README.md            # This file
@@ -223,6 +226,25 @@ describe('Performance Test', () => {
     );
 });
 ```
+
+### Snapshot Testing
+
+Snapshot testing is used for "Black Box" verification of the `Analyzer`. It runs the analyzer against fixtures and compares the inferred types against stored "Golden" results.
+
+**Location:** `test/integration/analyzer-snapshot.test.js`
+
+#### How to add a test case:
+
+1.  **Create fixture**: Add a new `.js` file to `test/fixtures/analyzer/`.
+2.  **Run tests**: `npm test` or `npx jest test/integration/analyzer-snapshot.test.js`.
+3.  **Accept snapshot**: If the change is intentional, run `npm test -- -u` to update the snapshots.
+
+#### Serialization Format:
+
+`Line [N] | [Symbol/Expression] | Type/Return: [Inferred Signature]`
+
+Example:
+`Line 1 | Decl: x | Type: x: number = 1`
 
 ## Contributing
 

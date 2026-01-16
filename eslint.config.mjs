@@ -6,7 +6,13 @@ export default [
     js.configs.recommended,
     prettierConfig,
     {
-        ignores: ['node_modules/', 'client/', 'examples/', 'samples/'],
+        ignores: [
+            'node_modules/',
+            'client/',
+            'examples/',
+            'samples/',
+            'test/fixtures/',
+        ],
     },
     {
         languageOptions: {

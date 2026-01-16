@@ -5,3 +5,6 @@ dist
 client/out
 server/out
 examples
+server/test/integration/__snapshots__
+server/test/fixtures
+
