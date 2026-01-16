@@ -10,7 +10,7 @@
         "url": "https://github.com/ntoulasm/isense"
     },
     "engines": {
-        "vscode": "^1.52.0"
+        "vscode": "^1.67.0"
     },
     "dependencies": {
         "vscode-languageclient": "^9.0.1"
