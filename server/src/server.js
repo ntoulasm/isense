@@ -11,6 +11,7 @@ const Completion = require('./services/completion');
 const SignatureHelp = require('./services/signature-help');
 const Definition = require('./services/definition');
 const CodeAction = require('./services/code-action');
+const InlayHint = require('./services/inlay-hint');
 
 const es5LibAst = require('./utility/es5-lib');
 const Call = require('./analyzer/call');
@@ -64,6 +65,7 @@ connection.onInitialize(params => {
                 triggerCharacters: ['.'],
             },
             codeActionProvider: true,
+            inlayHintProvider: true,
         },
     };
 });
@@ -273,6 +275,13 @@ connection.onDefinition(Definition.onDefinition);
 // ----------------------------------------------------------------------------
 
 connection.onCodeAction(CodeAction.onCodeAction);
+
+// ----------------------------------------------------------------------------
+
+connection.languages.inlayHint.on(params => {
+    const result = InlayHint.onInlayHint(params);
+    return result;
+});
 
 // ----------------------------------------------------------------------------
 
