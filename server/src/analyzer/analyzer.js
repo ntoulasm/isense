@@ -750,7 +750,7 @@ function analyzeElementAccessExpression(node) {
         }
     }
 
-    TypeCarrier.createConstant(info);
+    node.carrier = TypeCarrier.createConstant(info);
 }
 
 // ----------------------------------------------------------------------------
@@ -816,6 +816,10 @@ function isInOriginalFunction(node) {
  * @param {ts.Node} node
  */
 function getParameterSymbol(node) {
+    console.assert(
+        node && node.carrier,
+        'getParameterSymbol called with node lacking carrier'
+    );
     if (node.carrier.kind !== TypeCarrier.Kind.Variable) {
         return;
     }
