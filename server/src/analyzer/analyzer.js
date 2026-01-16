@@ -75,7 +75,7 @@ Analyzer.analyze = ast => {
                             AnalyzeDiagnostic.create(
                                 node,
                                 DiagnosticMessages.uninitializedConst,
-                                name
+                                [name]
                             )
                         );
                     }
