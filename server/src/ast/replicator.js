@@ -1810,6 +1810,7 @@ Replicator.replicateFunctions[ts.SyntaxKind.VariableDeclaration] = (
 ) => {
     return ts.factory.createVariableDeclaration(
         Replicator.replicateProperty(node, 'name', options),
+        undefined, // exclamationToken
         Replicator.replicateIfProperty(node, 'type', options),
         Replicator.replicateIfProperty(node, 'initializer', options)
     );

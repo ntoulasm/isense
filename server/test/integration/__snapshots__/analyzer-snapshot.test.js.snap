@@ -469,9 +469,12 @@ Line 30 | Decl: line | Type: const line: object = {
 
 }
 Line 32 | line | Type: const line: object = {
-  begin: any
+  begin: object = {
+    x: any,
+    y: any
+  }
 }
-Line 32 | createPoint(...) | Return: any
+Line 32 | createPoint(...) | Return: object
 Line 32 | createPoint | Type: createPoint: function = function createPoint(x, y) {
     
     const point = {};
@@ -483,10 +486,16 @@ Line 32 | createPoint | Type: createPoint: function = function createPoint(x, y)
 
 }
 Line 33 | line | Type: const line: object = {
-  begin: any,
-  end: any
+  begin: object = {
+    x: any,
+    y: any
+  },
+  end: object = {
+    x: any,
+    y: any
+  }
 }
-Line 33 | createPoint(...) | Return: any
+Line 33 | createPoint(...) | Return: object
 Line 33 | createPoint | Type: createPoint: function = function createPoint(x, y) {
     
     const point = {};
@@ -498,16 +507,25 @@ Line 33 | createPoint | Type: createPoint: function = function createPoint(x, y)
 
 }
 Line 35 | line | Type: const line: object = {
-  begin: any,
-  end: any
+  begin: object = {
+    x: any,
+    y: any
+  },
+  end: object = {
+    x: any,
+    y: any
+  }
 }
 Line 41 | Decl: circle | Type: const circle: object = {
 
 }
 Line 43 | circle | Type: const circle: object = {
-  center: any
+  center: object = {
+    x: any,
+    y: any
+  }
 }
-Line 43 | createPoint(...) | Return: any
+Line 43 | createPoint(...) | Return: object
 Line 43 | createPoint | Type: createPoint: function = function createPoint(x, y) {
     
     const point = {};
@@ -519,11 +537,17 @@ Line 43 | createPoint | Type: createPoint: function = function createPoint(x, y)
 
 }
 Line 44 | circle | Type: const circle: object = {
-  center: any,
+  center: object = {
+    x: any,
+    y: any
+  },
   radius: any
 }
 Line 46 | circle | Type: const circle: object = {
-  center: any,
+  center: object = {
+    x: any,
+    y: any
+  },
   radius: any,
   area: function = () => {
         const area = Math.PI * radius * radius;
@@ -535,7 +559,10 @@ Line 47 | radius | Type: radius: number
 Line 47 | radius | Type: radius: number
 Line 48 | area | Type: const area: number
 Line 51 | circle | Type: const circle: object = {
-  center: any,
+  center: object = {
+    x: any,
+    y: any
+  },
   radius: any,
   area: function = () => {
         const area = Math.PI * radius * radius;
@@ -546,9 +573,12 @@ Line 57 | Decl: rectangle | Type: const rectangle: object = {
 
 }
 Line 59 | rectangle | Type: const rectangle: object = {
-  topLeft: any
+  topLeft: object = {
+    x: any,
+    y: any
+  }
 }
-Line 59 | createPoint(...) | Return: any
+Line 59 | createPoint(...) | Return: object
 Line 59 | createPoint | Type: createPoint: function = function createPoint(x, y) {
     
     const point = {};
@@ -560,16 +590,25 @@ Line 59 | createPoint | Type: createPoint: function = function createPoint(x, y)
 
 }
 Line 60 | rectangle | Type: const rectangle: object = {
-  topLeft: any,
+  topLeft: object = {
+    x: any,
+    y: any
+  },
   width: any
 }
 Line 61 | rectangle | Type: const rectangle: object = {
-  topLeft: any,
+  topLeft: object = {
+    x: any,
+    y: any
+  },
   width: any,
   height: any
 }
 Line 63 | rectangle | Type: const rectangle: object = {
-  topLeft: any,
+  topLeft: object = {
+    x: any,
+    y: any
+  },
   width: any,
   height: any,
   area: function = () => {
@@ -582,7 +621,10 @@ Line 64 | width | Type: width: number
 Line 64 | height | Type: height: number
 Line 65 | area | Type: const area: number
 Line 68 | rectangle | Type: const rectangle: object = {
-  topLeft: any,
+  topLeft: object = {
+    x: any,
+    y: any
+  },
   width: any,
   height: any,
   area: function = () => {
@@ -590,8 +632,19 @@ Line 68 | rectangle | Type: const rectangle: object = {
         return area;
     }
 }
-Line 71 | Decl: r | Type: r: any
-Line 71 | createRectangle(...) | Return: any
+Line 71 | Decl: r | Type: r: object = {
+  topLeft: object = {
+    x: number = 0,
+    y: number = 0
+  },
+  width: number = 10,
+  height: number = 20,
+  area: function = () => {
+        const area = width * height;
+        return area;
+    }
+}
+Line 71 | createRectangle(...) | Return: object
 Line 71 | createRectangle | Type: createRectangle: function = function createRectangle(x, y, width, height) {
 
     const rectangle = {};
@@ -608,8 +661,19 @@ Line 71 | createRectangle | Type: createRectangle: function = function createRec
     return rectangle;
 
 }
-Line 74 | Decl: box | Type: const box: any
-Line 74 | createRectangle(...) | Return: any
+Line 74 | Decl: box | Type: const box: object = {
+  topLeft: object = {
+    x: any,
+    y: any
+  },
+  width: any,
+  height: any,
+  area: function = () => {
+        const area = width * height;
+        return area;
+    }
+}
+Line 74 | createRectangle(...) | Return: object
 Line 74 | createRectangle | Type: createRectangle: function = function createRectangle(x, y, width, height) {
 
     const rectangle = {};
@@ -626,7 +690,18 @@ Line 74 | createRectangle | Type: createRectangle: function = function createRec
     return rectangle;
 
 }
-Line 75 | box | Type: const box: any
+Line 75 | box | Type: const box: object = {
+  topLeft: object = {
+    x: any,
+    y: any
+  },
+  width: any,
+  height: any,
+  area: function = () => {
+        const area = width * height;
+        return area;
+    }
+}
 Line 78 | Decl: ShapeType | Type: const ShapeType: object = {
   Point: number = 0,
   Line: number = 1,
@@ -639,7 +714,7 @@ Line 88 | total | Type: total: number
 Line 88 | i | Type: i: number = 0
 Line 91 | shapes.push(...) | Return: any
 Line 91 | shapes | Type: const shapes: array
-Line 91 | createCircle(...) | Return: any
+Line 91 | createCircle(...) | Return: object
 Line 91 | createCircle | Type: createCircle: function = function createCircle(centerX, centerY, radius) {
 
     const circle = {};
@@ -690,8 +765,8 @@ Line 101 | Animal | Type: Animal: class = class Animal {
     }
 
 }
-Line 136 | Decl: shapes | Type: const shapes: any
-Line 136 | createRandomShapes(...) | Return: any
+Line 136 | Decl: shapes | Type: const shapes: array
+Line 136 | createRandomShapes(...) | Return: array
 Line 136 | createRandomShapes | Type: createRandomShapes: function = function createRandomShapes(total) {
 
     const shapes = [];
