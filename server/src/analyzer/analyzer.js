@@ -691,7 +691,6 @@ function analyzePropertyAccessExpression(node) {
     const expressionTypes = TypeCarrier.evaluate(node.expression.carrier);
     const name = node.name.getText();
     const info = [];
-    let typesContainUndefined = false;
 
     for (const type of expressionTypes) {
         if (type.type === TypeInfo.Type.Object && type.hasValue) {
@@ -742,7 +741,7 @@ function analyzeElementAccessExpression(node) {
                     ) {
                         info.push(...expressionType.value[elementTypeString]);
                     } else if (!typesContainUndefined) {
-                        info.push({ id: TypeInfo.Type.Undefined });
+                        info.push(TypeInfo.createUndefined());
                         typesContainUndefined = true;
                     }
                 }
