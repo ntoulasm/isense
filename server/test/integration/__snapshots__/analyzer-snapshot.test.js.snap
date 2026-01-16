@@ -1,0 +1,2216 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Analyzer Snapshot Tests should match snapshot for basic.js 1`] = `
+"Line 1 | Decl: x | Type: x: number = 1
+Line 2 | Decl: y | Type: const y: string = 'hello'
+Line 3 | Decl: z | Type: z: boolean = true
+Line 4 | Decl: a | Type: a: array
+Line 5 | Decl: b | Type: b: null
+Line 6 | Decl: c | Type: c: undefined
+Line 7 | Decl: d | Type: d: number = 2
+Line 7 | x | Type: x: number = 1
+Line 8 | Decl: e | Type: e: string = 'hello world'
+Line 8 | y | Type: const y: string = 'hello'"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for block.js 1`] = `
+"Line 1 | Decl: x | Type: x: number = 2
+Line 2 | y | Type: y: number = 7
+Line 2 | x | Type: x: number = 2
+Line 3 | x | Type: x: string = 'hello'
+Line 4 | Decl: y | Type: y: string = 'hello5'
+Line 4 | x | Type: x: string = 'hello'"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for code-action.js 1`] = `
+"Line 2 | Decl: x | Type: const x: number = 7
+Line 2 | Decl: y | Type: const y: number = 2
+Line 4 | x | Type: const x: number = 5
+Line 9 | Decl: x | Type: const x: number = 1
+Line 9 | Decl: y | Type: const y: number = 2
+Line 11 | y | Type: const y: number = 10
+Line 15 | Decl: x | Type: const x: number = 1
+Line 15 | Decl: y | Type: const y: number = 2
+Line 15 | Decl: z | Type: const z: number = 3
+Line 18 | z | Type: const z: number = 100
+Line 19 | y | Type: const y: number = 100"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for completion.js 1`] = `""`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for completion_extra.js 1`] = `"Line 2 | Decl: localVariable | Type: localVariable: number = 10"`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for constructors.js 1`] = `
+"Line 1 | Decl: Person | Type: const Person: function = (firstName, lastName, age) => {
+
+  this.firstName = firstName;
+  this.lastName = lastName;
+  this.age = age;
+
+  this.getFullName = () => { this.firstName + this.lastName };
+
+}
+Line 11 | Decl: person | Type: person: object = {
+  firstName: string = 'marios',
+  lastName: string = 'ntoulas',
+  age: number = 24,
+  getFullName: function = () => { this.firstName + this.lastName }
+}
+Line 11 | Person | Type: const Person: function = (firstName, lastName, age) => {
+
+  this.firstName = firstName;
+  this.lastName = lastName;
+  this.age = age;
+
+  this.getFullName = () => { this.firstName + this.lastName };
+
+}
+Line 18 | Decl: cat | Type: const cat: function = function dog(breed, age) {
+	this.breed = breed;
+	this.age = age;
+}
+Line 18 | dog | Type: dog: function = function dog(breed, age) {
+	this.breed = breed;
+	this.age = age;
+}
+Line 19 | Decl: goodBoy1 | Type: const goodBoy1: dog = {
+  breed: string = 'Beagle',
+  age: number = 1
+}
+Line 19 | dog | Type: dog: function = function dog(breed, age) {
+	this.breed = breed;
+	this.age = age;
+}
+Line 20 | Decl: goodBoy2 | Type: const goodBoy2: dog = {
+  breed: string = 'Beagle',
+  age: number = 2
+}
+Line 20 | cat | Type: const cat: function = function dog(breed, age) {
+	this.breed = breed;
+	this.age = age;
+}
+Line 22 | x | Type: x: class = class x {
+  a = 2;
+  b = 3;
+  getA() {
+    return a;
+  }
+  constructor(x) {
+    this.x = x;
+  }
+}
+Line 26 | a | Type: a: number = 2
+Line 33 | Decl: a | Type: a: x = {
+  a: number = 2,
+  b: number = 3,
+  getA: function = getA() {
+    return a;
+  },
+  x: undefined
+}
+Line 33 | x | Type: x: class = class x {
+  a = 2;
+  b = 3;
+  getA() {
+    return a;
+  }
+  constructor(x) {
+    this.x = x;
+  }
+}
+Line 34 | Decl: b | Type: b: x = {
+  a: number = 2,
+  b: number = 3,
+  getA: function = getA() {
+    return a;
+  },
+  x: number = 5
+}
+Line 34 | x | Type: x: class = class x {
+  a = 2;
+  b = 3;
+  getA() {
+    return a;
+  }
+  constructor(x) {
+    this.x = x;
+  }
+}"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for demo.js 1`] = `
+"Line 1 | Decl: global | Type: global: number = 100
+Line 3 | global | Type: global: number = 100
+Line 4 | global | Type: global: string = ''
+Line 6 | nonPure(...) | Return: undefined
+Line 6 | nonPure | Type: nonPure: function = function nonPure() {
+    global;
+    global = '';
+}
+Line 7 | global | Type: global: string = ''
+Line 10 | a | Type: a: number || string
+Line 10 | b | Type: b: number || string
+Line 13 | Decl: x | Type: x: number = 5
+Line 13 | add(...) | Return: number
+Line 13 | add | Type: add: function = function add(a, b) {
+    return a + b;
+}
+Line 17 | a | Type: a: number || string
+Line 19 | Decl: x | Type: x: object = {
+  a: any
+}
+Line 20 | x | Type: x: object = {
+  a: any
+}
+Line 26 | Decl: me | Type: const me: object = {
+
+}
+Line 28 | me | Type: const me: object = {
+  x: any
+}
+Line 29 | me | Type: const me: object = {
+  x: any,
+  y: any
+}
+Line 31 | Decl: sqrt | Type: const sqrt: function = () => {}
+Line 33 | me | Type: const me: object = {
+  x: any,
+  y: any,
+  computeMagnitude: function = () => {
+        return sqrt(me.x * me.x + me.y * me.y);
+    }
+}
+Line 34 | sqrt(...) | Return: undefined
+Line 34 | sqrt | Type: const sqrt: function = () => {}
+Line 34 | me | Type: const me: object = {
+  x: any,
+  y: any
+}
+Line 34 | me | Type: const me: object = {
+  x: any,
+  y: any
+}
+Line 34 | me | Type: const me: object = {
+  x: any,
+  y: any
+}
+Line 34 | me | Type: const me: object = {
+  x: any,
+  y: any
+}
+Line 37 | me | Type: const me: object = {
+  x: any,
+  y: any,
+  computeMagnitude: function = () => {
+        return sqrt(me.x * me.x + me.y * me.y);
+    }
+}"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for dynamic_properties.js 1`] = `
+"Line 1 | Decl: x | Type: x: object = {
+  a: number = -1,
+  b: string = 'sqr',
+  c: boolean = false
+}
+Line 6 | x | Type: x: object = {
+  a: number = 1,
+  b: string = 'sqr',
+  c: boolean = false,
+  d: object = {
+
+  }
+}
+Line 7 | x | Type: x: object = {
+  a: number = -1,
+  b: string = 'sqr',
+  c: boolean = false,
+  d: object = {
+    foo: number = 3.14
+  }
+}
+Line 8 | x | Type: x: object = {
+  a: number = 1,
+  b: string = 'sqr',
+  c: boolean = false,
+  d: object = {
+    foo: number = 3.14,
+    bar: string = 'world'
+  }
+}"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for expressions.js 1`] = `
+"Line 1 | Decl: a | Type: const a: number = 2
+Line 2 | Decl: b | Type: const b: number = 5
+Line 3 | Decl: c | Type: const c: number = 7
+Line 3 | a | Type: const a: number = 2
+Line 3 | b | Type: const b: number = 5
+Line 5 | Decl: d | Type: const d: string = 'd'
+Line 6 | Decl: e | Type: const e: string = 'e'
+Line 7 | Decl: w | Type: w: string = 'de'
+Line 7 | d | Type: const d: string = 'd'
+Line 7 | e | Type: const e: string = 'e'
+Line 9 | Decl: f | Type: f: boolean = true
+Line 10 | Decl: g | Type: g: boolean = false
+Line 11 | Decl: h | Type: h: number = 1
+Line 11 | f | Type: f: boolean = true
+Line 11 | g | Type: g: boolean = false
+Line 12 | f | Type: f: null
+Line 13 | h | Type: h: number
+Line 13 | f | Type: f: null
+Line 13 | f | Type: f: null
+Line 14 | f | Type: f: undefined
+Line 15 | h | Type: h: number
+Line 15 | f | Type: f: undefined
+Line 15 | f | Type: f: undefined
+Line 17 | f | Type: f: function = function () {}
+Line 19 | Decl: x | Type: x: number = 2
+Line 20 | Decl: y | Type: y: string = ''
+Line 22 | Decl: z | Type: z: string = '2'
+Line 22 | x | Type: x: number = 2
+Line 22 | y | Type: y: string = ''
+Line 23 | z | Type: z: number = 3
+Line 24 | z | Type: z: number = 2
+Line 25 | z | Type: z: string
+Line 26 | z | Type: z: string = '2[object Object]'
+Line 28 | x | Type: x: object = {
+  a: number = 2
+}
+Line 28 | a | Type: const a: number = 2
+Line 29 | z | Type: z: string = '[object Object]2'
+Line 29 | x | Type: x: object = {
+  a: number = 2
+}
+Line 30 | z | Type: z: string = '[object Object]aaa'
+Line 30 | x | Type: x: object = {
+  a: number = 2
+}
+Line 31 | z | Type: z: string = '[object Object]true'
+Line 31 | x | Type: x: object = {
+  a: number = 2
+}
+Line 32 | z | Type: z: string = '[object Object]false'
+Line 32 | x | Type: x: object = {
+  a: number = 2
+}
+Line 33 | z | Type: z: string
+Line 33 | x | Type: x: object = {
+  a: number = 2
+}
+Line 34 | z | Type: z: string
+Line 34 | x | Type: x: object = {
+  a: number = 2
+}
+Line 35 | z | Type: z: string
+Line 35 | x | Type: x: object = {
+  a: number = 2
+}
+Line 37 | x | Type: x: function = () => {}
+Line 38 | y | Type: y: function = function() {}
+Line 39 | z | Type: z: string = '() => {}function() {}'
+Line 39 | x | Type: x: function = () => {}
+Line 39 | y | Type: y: function = function() {}
+Line 42 | z | Type: z: number = 2
+Line 43 | z | Type: z: number = 2
+Line 44 | z | Type: z: number = 0
+Line 45 | z | Type: z: number = NaN
+Line 46 | z | Type: z: number = 1
+Line 47 | z | Type: z: number = 0
+Line 48 | z | Type: z: number = NaN
+Line 49 | z | Type: z: number = NaN
+Line 50 | z | Type: z: number = NaN
+Line 51 | z | Type: z: number = NaN
+Line 52 | z | Type: z: number = 0
+Line 53 | z | Type: z: number = NaN
+Line 56 | z | Type: z: number = -2
+Line 57 | z | Type: z: number = -2
+Line 58 | z | Type: z: number = 0
+Line 59 | z | Type: z: number = NaN
+Line 60 | z | Type: z: number = -1
+Line 61 | z | Type: z: number = 0
+Line 62 | z | Type: z: number = NaN
+Line 63 | z | Type: z: number = NaN
+Line 64 | z | Type: z: number = NaN
+Line 65 | z | Type: z: number = NaN
+Line 66 | z | Type: z: number = 0
+Line 67 | z | Type: z: number = NaN
+Line 70 | x | Type: x: number = 2
+Line 71 | z | Type: z: number = 3
+Line 71 | x | Type: x: number = 3
+Line 74 | z | Type: z: number = 2
+Line 74 | x | Type: x: number = 2
+Line 76 | z | Type: z: undefined
+Line 78 | z | Type: z: string = 'number'
+Line 79 | z | Type: z: string = 'string'
+Line 80 | z | Type: z: string = 'boolean'
+Line 81 | z | Type: z: string = 'boolean'
+Line 82 | z | Type: z: string = 'object'
+Line 83 | z | Type: z: string = 'object'
+Line 84 | z | Type: z: string = 'function'
+Line 85 | z | Type: z: string = 'function'
+Line 86 | z | Type: z: string = 'object'
+Line 87 | z | Type: z: string = 'object'
+Line 88 | z | Type: z: string = 'undefined'
+Line 89 | p | Type: p: class = class p {}
+Line 93 | x | Type: x: number = 5
+Line 94 | y | Type: y: number = 10
+Line 96 | z | Type: z: number = -5
+Line 96 | x | Type: x: number = 5
+Line 96 | y | Type: y: number = 10
+Line 97 | y | Type: y: string = '2'
+Line 98 | z | Type: z: number = 3
+Line 98 | x | Type: x: number = 5
+Line 98 | y | Type: y: string = '2'
+Line 99 | y | Type: y: string = 'a'
+Line 100 | z | Type: z: number = NaN
+Line 100 | x | Type: x: number = 5
+Line 100 | y | Type: y: string = 'a'
+Line 101 | z | Type: z: number = 4
+Line 102 | z | Type: z: number = 5
+Line 103 | z | Type: z: number
+Line 104 | z | Type: z: number = NaN
+Line 105 | z | Type: z: number = NaN
+Line 106 | z | Type: z: number = NaN
+Line 107 | z | Type: z: number
+Line 108 | z | Type: z: number
+Line 111 | z | Type: z: number = 9
+Line 113 | z | Type: z: number = NaN
+Line 118 | z | Type: z: number = 0
+Line 119 | z | Type: z: number = 0
+Line 123 | z | Type: z: number = 2
+Line 124 | z | Type: z: number = 2
+Line 129 | z | Type: z: number = 0
+Line 130 | z | Type: z: number = 7
+Line 131 | z | Type: z: number = 1
+Line 134 | z | Type: z: boolean = true
+Line 135 | z | Type: z: boolean = false
+Line 137 | z | Type: z: boolean = true
+Line 138 | z | Type: z: boolean = true
+Line 139 | z | Type: z: boolean = false
+Line 142 | z | Type: z: boolean = true
+Line 143 | z | Type: z: boolean = true
+Line 144 | z | Type: z: boolean = false
+Line 146 | Decl: shorthandProperty | Type: const shorthandProperty: string = 'shorthandProperty'
+Line 147 | Decl: computed | Type: computed: undefined
+Line 149 | computed | Type: computed: string = 'computed1'
+Line 151 | computed | Type: computed: string = 'computed2'"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for for-statement.js 1`] = `
+"Line 2 | Decl: b | Type: b: array
+Line 2 | Decl: c | Type: c: object = {
+
+}
+Line 2 | Decl: e | Type: e: undefined
+Line 3 | Decl: i | Type: i: number = 0
+Line 3 | i | Type: i: number = 0
+Line 3 | i | Type: i: number = 0
+Line 4 | b | Type: b: array
+Line 4 | i | Type: i: number = 0
+Line 4 | i | Type: i: number = 0
+Line 5 | c | Type: c: object = {
+
+}
+Line 5 | i | Type: i: number = 0
+Line 5 | b | Type: b: array
+Line 5 | i | Type: i: number = 0
+Line 7 | c | Type: c: object = {
+  x2: number = 2
+}"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for functions.js 1`] = `
+"Line 2 | a | Type: a: number || string
+Line 2 | b | Type: b: number || string
+Line 5 | Decl: sum | Type: sum: number = 3
+Line 5 | add(...) | Return: number
+Line 5 | add | Type: add: function = function add(a, b) {
+    return a + b;
+}
+Line 6 | Decl: greeting | Type: greeting: string = 'hello world'
+Line 6 | add(...) | Return: string
+Line 6 | add | Type: add: function = function add(a, b) {
+    return a + b;
+}
+Line 8 | Decl: multiply | Type: const multiply: function = (x, y) => x * y
+Line 8 | x | Type: x: number
+Line 8 | y | Type: y: number
+Line 9 | Decl: product | Type: product: undefined
+Line 9 | multiply(...) | Return: undefined
+Line 9 | multiply | Type: const multiply: function = (x, y) => x * y
+Line 12 | name | Type: name: number || string
+Line 15 | greet(...) | Return: string
+Line 15 | greet | Type: greet: function = function greet(name = 'Guest') {
+    return 'Hello ' + name;
+}
+Line 16 | greet(...) | Return: string
+Line 16 | greet | Type: greet: function = function greet(name = 'Guest') {
+    return 'Hello ' + name;
+}"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for goto-definition.js 1`] = `
+"Line 19 | Decl: point | Type: const point: object = {
+
+}
+Line 21 | point | Type: const point: object = {
+  x: any
+}
+Line 22 | point | Type: const point: object = {
+  x: any,
+  y: any
+}
+Line 24 | point | Type: const point: object = {
+  x: any,
+  y: any
+}
+Line 30 | Decl: line | Type: const line: object = {
+
+}
+Line 32 | line | Type: const line: object = {
+  begin: any
+}
+Line 32 | createPoint(...) | Return: any
+Line 32 | createPoint | Type: createPoint: function = function createPoint(x, y) {
+    
+    const point = {};
+
+    point.x = x;
+    point.y = y;
+    
+    return point;
+
+}
+Line 33 | line | Type: const line: object = {
+  begin: any,
+  end: any
+}
+Line 33 | createPoint(...) | Return: any
+Line 33 | createPoint | Type: createPoint: function = function createPoint(x, y) {
+    
+    const point = {};
+
+    point.x = x;
+    point.y = y;
+    
+    return point;
+
+}
+Line 35 | line | Type: const line: object = {
+  begin: any,
+  end: any
+}
+Line 41 | Decl: circle | Type: const circle: object = {
+
+}
+Line 43 | circle | Type: const circle: object = {
+  center: any
+}
+Line 43 | createPoint(...) | Return: any
+Line 43 | createPoint | Type: createPoint: function = function createPoint(x, y) {
+    
+    const point = {};
+
+    point.x = x;
+    point.y = y;
+    
+    return point;
+
+}
+Line 44 | circle | Type: const circle: object = {
+  center: any,
+  radius: any
+}
+Line 46 | circle | Type: const circle: object = {
+  center: any,
+  radius: any,
+  area: function = () => {
+        const area = Math.PI * radius * radius;
+        return area;
+    }
+}
+Line 47 | Decl: area | Type: const area: number
+Line 47 | radius | Type: radius: number
+Line 47 | radius | Type: radius: number
+Line 48 | area | Type: const area: number
+Line 51 | circle | Type: const circle: object = {
+  center: any,
+  radius: any,
+  area: function = () => {
+        const area = Math.PI * radius * radius;
+        return area;
+    }
+}
+Line 57 | Decl: rectangle | Type: const rectangle: object = {
+
+}
+Line 59 | rectangle | Type: const rectangle: object = {
+  topLeft: any
+}
+Line 59 | createPoint(...) | Return: any
+Line 59 | createPoint | Type: createPoint: function = function createPoint(x, y) {
+    
+    const point = {};
+
+    point.x = x;
+    point.y = y;
+    
+    return point;
+
+}
+Line 60 | rectangle | Type: const rectangle: object = {
+  topLeft: any,
+  width: any
+}
+Line 61 | rectangle | Type: const rectangle: object = {
+  topLeft: any,
+  width: any,
+  height: any
+}
+Line 63 | rectangle | Type: const rectangle: object = {
+  topLeft: any,
+  width: any,
+  height: any,
+  area: function = () => {
+        const area = width * height;
+        return area;
+    }
+}
+Line 64 | Decl: area | Type: const area: number
+Line 64 | width | Type: width: number
+Line 64 | height | Type: height: number
+Line 65 | area | Type: const area: number
+Line 68 | rectangle | Type: const rectangle: object = {
+  topLeft: any,
+  width: any,
+  height: any,
+  area: function = () => {
+        const area = width * height;
+        return area;
+    }
+}
+Line 71 | Decl: r | Type: r: any
+Line 71 | createRectangle(...) | Return: any
+Line 71 | createRectangle | Type: createRectangle: function = function createRectangle(x, y, width, height) {
+
+    const rectangle = {};
+
+    rectangle.topLeft = createPoint(x, y);
+    rectangle.width = width;
+    rectangle.height = height;
+
+    rectangle.area = () => {
+        const area = width * height;
+        return area;
+    };
+
+    return rectangle;
+
+}
+Line 74 | Decl: box | Type: const box: any
+Line 74 | createRectangle(...) | Return: any
+Line 74 | createRectangle | Type: createRectangle: function = function createRectangle(x, y, width, height) {
+
+    const rectangle = {};
+
+    rectangle.topLeft = createPoint(x, y);
+    rectangle.width = width;
+    rectangle.height = height;
+
+    rectangle.area = () => {
+        const area = width * height;
+        return area;
+    };
+
+    return rectangle;
+
+}
+Line 75 | box | Type: const box: any
+Line 78 | Decl: ShapeType | Type: const ShapeType: object = {
+  Point: number = 0,
+  Line: number = 1,
+  Circle: number = 2
+}
+Line 86 | Decl: shapes | Type: const shapes: array
+Line 88 | Decl: i | Type: i: number = 0
+Line 88 | i | Type: i: number = 0
+Line 88 | total | Type: total: number
+Line 88 | i | Type: i: number = 0
+Line 91 | shapes.push(...) | Return: any
+Line 91 | shapes | Type: const shapes: array
+Line 91 | createCircle(...) | Return: any
+Line 91 | createCircle | Type: createCircle: function = function createCircle(centerX, centerY, radius) {
+
+    const circle = {};
+
+    circle.center = createPoint(centerX, centerY);
+    circle.radius = radius;
+
+    circle.area = () => {
+        const area = Math.PI * radius * radius;
+        return area;
+    };
+
+    return circle;
+
+}
+Line 97 | shapes | Type: const shapes: array
+Line 101 | Animal | Type: Animal: class = class Animal {
+
+    name;
+    age;
+
+    speak() {
+
+    };
+
+    walk() {
+        
+    }
+
+    sleep() {
+
+    }
+
+    set name() {
+
+    }
+
+    get name() {
+
+    }
+
+    set age() {
+
+    }
+
+    get age() {
+
+    }
+
+}
+Line 136 | Decl: shapes | Type: const shapes: any
+Line 136 | createRandomShapes(...) | Return: any
+Line 136 | createRandomShapes | Type: createRandomShapes: function = function createRandomShapes(total) {
+
+    const shapes = [];
+    
+    for(let i = 0; i < total; ++i) {
+        switch(random) {
+            case 0: {
+                shapes.push(createCircle());
+                break;
+            }
+        }
+    }
+
+    return shapes;
+
+}
+Line 146 | Decl: goodBoy | Type: const goodBoy: object = {
+  name: string = 'Scooby',
+  age: number = 2,
+  breed: string = 'Great Dance',
+  bark: function = (id)=>"Woof " + n + "!"
+}
+Line 146 | createDog(...) | Return: object
+Line 146 | createDog | Type: createDog: function = function createDog (name, age, breed) {
+    return {
+        "name" : name,
+        "age"  : age,
+        "breed" :breed, 
+        bark :(id)=>"Woof " + n + "!"
+    };
+}
+Line 147 | goodBoy.bark(...) | Return: undefined
+Line 147 | goodBoy | Type: const goodBoy: object = {
+  name: string = 'Scooby',
+  age: number = 2,
+  breed: string = 'Great Dance',
+  bark: function = (id)=>"Woof " + n + "!"
+}"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for if_statement.js 1`] = `
+"Line 6 | Decl: x | Type: x: number = 2
+Line 7 | Decl: y | Type: y: number = 10
+Line 11 | x | Type: x: number = 2
+Line 12 | x | Type: x: number = 5
+Line 13 | y | Type: y: number = 5
+Line 17 | x | Type: x: number = 10
+Line 18 | y | Type: y: number = 12
+Line 22 | x | Type: x: number = 50
+Line 25 | x | Type: x: number = 2
+Line 27 | y | Type: y: string = ''
+Line 28 | y | Type: y: object = {
+  a: number = 2
+}
+Line 29 | y | Type: y: number = 5
+Line 30 | x | Type: x: number = 5"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for import.js 1`] = `
+"Line 1 | defaultExport1 | Type: defaultExport1: any
+Line 2 | namedImports1 | Type: namedImports1: any
+Line 3 | export1 | Type: export1: any
+Line 4 | export2 | Type: export2: any
+Line 4 | export3 | Type: export3: any
+Line 5 | export4 | Type: export4: any
+Line 6 | defaultExport2 | Type: defaultExport2: any
+Line 6 | export5 | Type: export5: any
+Line 7 | defaultExport3 | Type: defaultExport3: any
+Line 7 | namedImports2 | Type: namedImports2: any"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for index.js 1`] = `
+"Line 10 | Decl: redirects | Type: redirects: array
+Line 11 | Decl: footerItems | Type: footerItems: array
+Line 14 | document.getElementById(...) | Return: any
+Line 14 | getImage(...) | Return: any
+Line 17 | Decl: item | Type: item: undefined
+Line 17 | redirects | Type: redirects: array
+Line 18 | document.getElementById(redirects[item]).addEventListener(...) | Return: any
+Line 18 | document.getElementById(...) | Return: any
+Line 18 | redirects | Type: redirects: array
+Line 18 | item | Type: item: undefined
+Line 19 | page.pageSwap(...) | Return: any
+Line 19 | page | Type: page: undefined
+Line 24 | document.getElementById('optionsButton').addEventListener(...) | Return: any
+Line 24 | document.getElementById(...) | Return: any
+Line 25 | document.getElementById(...) | Return: any
+Line 26 | document.getElementById(...) | Return: any
+Line 28 | document.getElementById(...) | Return: any
+Line 32 | localStorage.getItem(...) | Return: any
+Line 32 | document.getElementById(...) | Return: any
+Line 33 | document.getElementById(...) | Return: any
+Line 35 | document.getElementById('soundButton').addEventListener(...) | Return: any
+Line 35 | document.getElementById(...) | Return: any
+Line 36 | Decl: element | Type: element: any
+Line 36 | document.getElementById(...) | Return: any
+Line 37 | localStorage.getItem(...) | Return: any
+Line 38 | element | Type: element: any
+Line 39 | localStorage.setItem(...) | Return: any
+Line 41 | element | Type: element: any
+Line 42 | localStorage.setItem(...) | Return: any
+Line 49 | Decl: pageWrapper | Type: pageWrapper: any
+Line 49 | document.createElement(...) | Return: any
+Line 50 | addIDToElement(...) | Return: any
+Line 50 | pageWrapper | Type: pageWrapper: any
+Line 52 | Decl: appName | Type: appName: any
+Line 52 | document.createElement(...) | Return: any
+Line 53 | appName.setAttribute(...) | Return: any
+Line 53 | appName | Type: appName: any
+Line 54 | pageWrapper.appendChild(...) | Return: any
+Line 54 | pageWrapper | Type: pageWrapper: any
+Line 54 | appName | Type: appName: any
+Line 56 | Decl: mainMenu | Type: mainMenu: any
+Line 56 | document.createElement(...) | Return: any
+Line 57 | addClassToElement(...) | Return: any
+Line 57 | mainMenu | Type: mainMenu: any
+Line 58 | addIDToElement(...) | Return: any
+Line 58 | mainMenu | Type: mainMenu: any
+Line 60 | Decl: item | Type: item: undefined
+Line 60 | redirects | Type: redirects: array
+Line 61 | Decl: but | Type: but: any
+Line 61 | document.createElement(...) | Return: any
+Line 62 | addIDToElement(...) | Return: any
+Line 62 | redirects | Type: redirects: array
+Line 62 | item | Type: item: undefined
+Line 62 | but | Type: but: any
+Line 63 | but | Type: but: any
+Line 63 | getImage(...) | Return: any
+Line 63 | redirects | Type: redirects: array
+Line 63 | item | Type: item: undefined
+Line 64 | mainMenu.appendChild(...) | Return: any
+Line 64 | mainMenu | Type: mainMenu: any
+Line 64 | but | Type: but: any
+Line 66 | pageWrapper.appendChild(...) | Return: any
+Line 66 | pageWrapper | Type: pageWrapper: any
+Line 66 | mainMenu | Type: mainMenu: any
+Line 68 | Decl: optionsButton | Type: optionsButton: any
+Line 68 | document.createElement(...) | Return: any
+Line 69 | addIDToElement(...) | Return: any
+Line 69 | optionsButton | Type: optionsButton: any
+Line 70 | pageWrapper.appendChild(...) | Return: any
+Line 70 | pageWrapper | Type: pageWrapper: any
+Line 70 | optionsButton | Type: optionsButton: any
+Line 72 | Decl: footer | Type: footer: any
+Line 72 | document.createElement(...) | Return: any
+Line 73 | addIDToElement(...) | Return: any
+Line 73 | footer | Type: footer: any
+Line 75 | Decl: item | Type: item: undefined
+Line 75 | footerItems | Type: footerItems: array
+Line 76 | Decl: but | Type: but: any
+Line 76 | document.createElement(...) | Return: any
+Line 77 | addIDToElement(...) | Return: any
+Line 77 | footerItems | Type: footerItems: array
+Line 77 | item | Type: item: undefined
+Line 77 | but | Type: but: any
+Line 78 | addClassToElement(...) | Return: any
+Line 78 | but | Type: but: any
+Line 79 | footer.appendChild(...) | Return: any
+Line 79 | footer | Type: footer: any
+Line 79 | but | Type: but: any
+Line 81 | pageWrapper.appendChild(...) | Return: any
+Line 81 | pageWrapper | Type: pageWrapper: any
+Line 81 | footer | Type: footer: any
+Line 83 | document.body.appendChild(...) | Return: any
+Line 83 | pageWrapper | Type: pageWrapper: any
+Line 84 | eventListeners(...) | Return: undefined
+Line 84 | eventListeners | Type: eventListeners: function = function eventListeners() {
+        document.getElementById('appName').style.backgroundImage = "url('" + getImage("appName") + "')";
+
+
+        for(var item in redirects){
+            document.getElementById(redirects[item]).addEventListener("click", function (e) {
+                page.pageSwap(e.target.id);
+                return;
+            });
+        }
+
+        document.getElementById('optionsButton').addEventListener("click", function () {
+            if (document.getElementById('footer').style.width == '0px') {
+                document.getElementById('footer').style.width = '80%';
+            } else {
+                document.getElementById('footer').style.width = '0';
+            }
+        });
+
+        if (localStorage.getItem("sound_opt") === "On") document.getElementById('soundButton').style.backgroundImage = 'url("./images/soundOn.png")';
+        else document.getElementById('soundButton').style.backgroundImage = 'url("./images/soundOff.png")';
+
+        document.getElementById('soundButton').addEventListener("click", function () {
+            var element = document.getElementById('soundButton');
+            if (localStorage.getItem("sound_opt") === "On") {
+                element.style.backgroundImage = 'url("./images/soundOff.png")';
+                localStorage.setItem("sound_opt", "Off");
+            } else {
+                element.style.backgroundImage = 'url("./images/soundOn.png")';
+                localStorage.setItem("sound_opt", "On");
+                //mediaPlay(getSound("bell")).play();
+            }
+        });
+    }
+Line 88 | document.getElementById('pageWrapper').remove(...) | Return: any
+Line 88 | document.getElementById(...) | Return: any
+Line 92 | builderUI | Type: builderUI: function = function builderUI(){
+        var pageWrapper = document.createElement('div');
+        addIDToElement('pageWrapper',pageWrapper);
+
+        var appName = document.createElement('div');
+        appName.setAttribute('id','appName');
+        pageWrapper.appendChild(appName);
+
+        var mainMenu = document.createElement('div');
+        addClassToElement('unselectable',mainMenu);
+        addIDToElement('mainMenu', mainMenu);
+
+        for(var item in redirects){
+            var but = document.createElement('button');
+            addIDToElement(redirects[item],but);
+            but.style.backgroundImage = "url('" + getImage("start-"+redirects[item]) + "')";
+            mainMenu.appendChild(but);
+        }
+        pageWrapper.appendChild(mainMenu);
+
+        var optionsButton = document.createElement('button');
+        addIDToElement('optionsButton',optionsButton);
+        pageWrapper.appendChild(optionsButton);
+
+        var footer = document.createElement('div');
+        addIDToElement('footer',footer);
+
+        for(var item in footerItems){
+            var but = document.createElement('button');
+            addIDToElement(footerItems[item]+'Button',but);
+            addClassToElement("index_footerItem",but);
+            footer.appendChild(but);
+        }
+        pageWrapper.appendChild(footer);
+        
+        document.body.appendChild(pageWrapper);
+        eventListeners();
+    }
+Line 93 | destructorUI | Type: destructorUI: function = function destructorUI(){
+        document.getElementById('pageWrapper').remove();
+    }
+Line 98 | Decl: currPage | Type: currPage: object = {
+  builderUI: function = function builderUI(){
+        var pageWrapper = document.createElement('div');
+        addIDToElement('pageWrapper',pageWrapper);
+
+        var appName = document.createElement('div');
+        appName.setAttribute('id','appName');
+        pageWrapper.appendChild(appName);
+
+        var mainMenu = document.createElement('div');
+        addClassToElement('unselectable',mainMenu);
+        addIDToElement('mainMenu', mainMenu);
+
+        for(var item in redirects){
+            var but = document.createElement('button');
+            addIDToElement(redirects[item],but);
+            but.style.backgroundImage = "url('" + getImage("start-"+redirects[item]) + "')";
+            mainMenu.appendChild(but);
+        }
+        pageWrapper.appendChild(mainMenu);
+
+        var optionsButton = document.createElement('button');
+        addIDToElement('optionsButton',optionsButton);
+        pageWrapper.appendChild(optionsButton);
+
+        var footer = document.createElement('div');
+        addIDToElement('footer',footer);
+
+        for(var item in footerItems){
+            var but = document.createElement('button');
+            addIDToElement(footerItems[item]+'Button',but);
+            addClassToElement("index_footerItem",but);
+            footer.appendChild(but);
+        }
+        pageWrapper.appendChild(footer);
+        
+        document.body.appendChild(pageWrapper);
+        eventListeners();
+    },
+  destructorUI: function = function destructorUI(){
+        document.getElementById('pageWrapper').remove();
+    }
+}
+Line 98 | IndexPage | Type: IndexPage: function = function IndexPage(){
+    
+    var redirects = ['campaign','selectLevel','achievements','statistics'];
+    var footerItems = ['sound'];
+
+    function eventListeners() {
+        document.getElementById('appName').style.backgroundImage = "url('" + getImage("appName") + "')";
+
+
+        for(var item in redirects){
+            document.getElementById(redirects[item]).addEventListener("click", function (e) {
+                page.pageSwap(e.target.id);
+                return;
+            });
+        }
+
+        document.getElementById('optionsButton').addEventListener("click", function () {
+            if (document.getElementById('footer').style.width == '0px') {
+                document.getElementById('footer').style.width = '80%';
+            } else {
+                document.getElementById('footer').style.width = '0';
+            }
+        });
+
+        if (localStorage.getItem("sound_opt") === "On") document.getElementById('soundButton').style.backgroundImage = 'url("./images/soundOn.png")';
+        else document.getElementById('soundButton').style.backgroundImage = 'url("./images/soundOff.png")';
+
+        document.getElementById('soundButton').addEventListener("click", function () {
+            var element = document.getElementById('soundButton');
+            if (localStorage.getItem("sound_opt") === "On") {
+                element.style.backgroundImage = 'url("./images/soundOff.png")';
+                localStorage.setItem("sound_opt", "Off");
+            } else {
+                element.style.backgroundImage = 'url("./images/soundOn.png")';
+                localStorage.setItem("sound_opt", "On");
+                //mediaPlay(getSound("bell")).play();
+            }
+        });
+    }
+
+    function builderUI(){
+        var pageWrapper = document.createElement('div');
+        addIDToElement('pageWrapper',pageWrapper);
+
+        var appName = document.createElement('div');
+        appName.setAttribute('id','appName');
+        pageWrapper.appendChild(appName);
+
+        var mainMenu = document.createElement('div');
+        addClassToElement('unselectable',mainMenu);
+        addIDToElement('mainMenu', mainMenu);
+
+        for(var item in redirects){
+            var but = document.createElement('button');
+            addIDToElement(redirects[item],but);
+            but.style.backgroundImage = "url('" + getImage("start-"+redirects[item]) + "')";
+            mainMenu.appendChild(but);
+        }
+        pageWrapper.appendChild(mainMenu);
+
+        var optionsButton = document.createElement('button');
+        addIDToElement('optionsButton',optionsButton);
+        pageWrapper.appendChild(optionsButton);
+
+        var footer = document.createElement('div');
+        addIDToElement('footer',footer);
+
+        for(var item in footerItems){
+            var but = document.createElement('button');
+            addIDToElement(footerItems[item]+'Button',but);
+            addClassToElement("index_footerItem",but);
+            footer.appendChild(but);
+        }
+        pageWrapper.appendChild(footer);
+        
+        document.body.appendChild(pageWrapper);
+        eventListeners();
+    }
+
+    function destructorUI(){
+        document.getElementById('pageWrapper').remove();
+    }
+
+    return {
+        builderUI,
+        destructorUI
+    }
+}
+Line 100 | Decl: scr | Type: scr: undefined
+Line 101 | Decl: scriptElem | Type: scriptElem: any
+Line 101 | document.createElement(...) | Return: any
+Line 102 | scriptElem.setAttribute(...) | Return: any
+Line 102 | scriptElem | Type: scriptElem: any
+Line 103 | scriptElem.setAttribute(...) | Return: any
+Line 103 | scriptElem | Type: scriptElem: any
+Line 103 | scr | Type: scr: undefined
+Line 104 | document.body.appendChild(...) | Return: any
+Line 104 | scriptElem | Type: scriptElem: any
+Line 106 | Decl: css | Type: css: undefined
+Line 107 | Decl: cssElem | Type: cssElem: any
+Line 107 | document.createElement(...) | Return: any
+Line 108 | cssElem.setAttribute(...) | Return: any
+Line 108 | cssElem | Type: cssElem: any
+Line 109 | cssElem.setAttribute(...) | Return: any
+Line 109 | cssElem | Type: cssElem: any
+Line 110 | cssElem.setAttribute(...) | Return: any
+Line 110 | cssElem | Type: cssElem: any
+Line 110 | css | Type: css: undefined
+Line 111 | document.head.appendChild(...) | Return: any
+Line 111 | cssElem | Type: cssElem: any
+Line 116 | installPages(...) | Return: undefined
+Line 116 | installPages | Type: installPages: function = function installPages(){
+        for(var scr in translator.requiredScripts){
+            var scriptElem = document.createElement('script');
+            scriptElem.setAttribute('type','text/javascript');
+            scriptElem.setAttribute('src', translator.requiredScripts[scr]);
+            document.body.appendChild(scriptElem);
+        }
+        for(var css in translator.requiredCSS){
+            var cssElem = document.createElement('link');
+            cssElem.setAttribute('rel','stylesheet');
+            cssElem.setAttribute('type','text/css');
+            cssElem.setAttribute('href', translator.requiredCSS[css]);
+            document.head.appendChild(cssElem);
+        }
+    }
+Line 117 | document.addEventListener(...) | Return: any
+Line 117 | onPause.bind(...) | Return: any
+Line 117 | onPause | Type: onPause: function = function onPause() {
+        console.log("INDEX PAGE pause");
+        // TODO: This application has been suspended. Save application state here.
+    }
+Line 118 | document.addEventListener(...) | Return: any
+Line 118 | onResume.bind(...) | Return: any
+Line 118 | onResume | Type: onResume: function = function onResume() {
+        console.log("INDEX PAGE resume");
+        // TODO: This application has been reactivated. Restore application state here.
+    }
+Line 120 | preLoad(...) | Return: any
+Line 120 | builderUI | Type: builderUI: function = function builderUI(){
+        currPage.builderUI();
+    }
+Line 124 | console.log(...) | Return: any
+Line 129 | console.log(...) | Return: any
+Line 134 | currPage.builderUI(...) | Return: undefined
+Line 134 | currPage | Type: currPage: object = {
+  builderUI: function = function builderUI(){
+        var pageWrapper = document.createElement('div');
+        addIDToElement('pageWrapper',pageWrapper);
+
+        var appName = document.createElement('div');
+        appName.setAttribute('id','appName');
+        pageWrapper.appendChild(appName);
+
+        var mainMenu = document.createElement('div');
+        addClassToElement('unselectable',mainMenu);
+        addIDToElement('mainMenu', mainMenu);
+
+        for(var item in redirects){
+            var but = document.createElement('button');
+            addIDToElement(redirects[item],but);
+            but.style.backgroundImage = "url('" + getImage("start-"+redirects[item]) + "')";
+            mainMenu.appendChild(but);
+        }
+        pageWrapper.appendChild(mainMenu);
+
+        var optionsButton = document.createElement('button');
+        addIDToElement('optionsButton',optionsButton);
+        pageWrapper.appendChild(optionsButton);
+
+        var footer = document.createElement('div');
+        addIDToElement('footer',footer);
+
+        for(var item in footerItems){
+            var but = document.createElement('button');
+            addIDToElement(footerItems[item]+'Button',but);
+            addClassToElement("index_footerItem",but);
+            footer.appendChild(but);
+        }
+        pageWrapper.appendChild(footer);
+        
+        document.body.appendChild(pageWrapper);
+        eventListeners();
+    },
+  destructorUI: function = function destructorUI(){
+        document.getElementById('pageWrapper').remove();
+    }
+}
+Line 134 | builderUI | Type: builderUI: function = function builderUI(){
+        currPage.builderUI();
+    }
+Line 138 | currPage.destructorUI(...) | Return: undefined
+Line 138 | currPage | Type: currPage: object = {
+  builderUI: function = function builderUI(){
+        var pageWrapper = document.createElement('div');
+        addIDToElement('pageWrapper',pageWrapper);
+
+        var appName = document.createElement('div');
+        appName.setAttribute('id','appName');
+        pageWrapper.appendChild(appName);
+
+        var mainMenu = document.createElement('div');
+        addClassToElement('unselectable',mainMenu);
+        addIDToElement('mainMenu', mainMenu);
+
+        for(var item in redirects){
+            var but = document.createElement('button');
+            addIDToElement(redirects[item],but);
+            but.style.backgroundImage = "url('" + getImage("start-"+redirects[item]) + "')";
+            mainMenu.appendChild(but);
+        }
+        pageWrapper.appendChild(mainMenu);
+
+        var optionsButton = document.createElement('button');
+        addIDToElement('optionsButton',optionsButton);
+        pageWrapper.appendChild(optionsButton);
+
+        var footer = document.createElement('div');
+        addIDToElement('footer',footer);
+
+        for(var item in footerItems){
+            var but = document.createElement('button');
+            addIDToElement(footerItems[item]+'Button',but);
+            addClassToElement("index_footerItem",but);
+            footer.appendChild(but);
+        }
+        pageWrapper.appendChild(footer);
+        
+        document.body.appendChild(pageWrapper);
+        eventListeners();
+    },
+  destructorUI: function = function destructorUI(){
+        document.getElementById('pageWrapper').remove();
+    }
+}
+Line 138 | destructorUI | Type: destructorUI: function = function destructorUI(){
+        currPage.destructorUI();
+    }
+Line 142 | destructorUI(...) | Return: undefined
+Line 142 | destructorUI | Type: destructorUI: function = function destructorUI(){
+        currPage.destructorUI();
+    }
+Line 144 | currPage | Type: currPage: object = {
+  builderUI: function = function builderUI(){
+        var pageWrapper = document.createElement('div');
+        addIDToElement('pageWrapper',pageWrapper);
+
+        var appName = document.createElement('div');
+        appName.setAttribute('id','appName');
+        pageWrapper.appendChild(appName);
+
+        var mainMenu = document.createElement('div');
+        addClassToElement('unselectable',mainMenu);
+        addIDToElement('mainMenu', mainMenu);
+
+        for(var item in redirects){
+            var but = document.createElement('button');
+            addIDToElement(redirects[item],but);
+            but.style.backgroundImage = "url('" + getImage("start-"+redirects[item]) + "')";
+            mainMenu.appendChild(but);
+        }
+        pageWrapper.appendChild(mainMenu);
+
+        var optionsButton = document.createElement('button');
+        addIDToElement('optionsButton',optionsButton);
+        pageWrapper.appendChild(optionsButton);
+
+        var footer = document.createElement('div');
+        addIDToElement('footer',footer);
+
+        for(var item in footerItems){
+            var but = document.createElement('button');
+            addIDToElement(footerItems[item]+'Button',but);
+            addClassToElement("index_footerItem",but);
+            footer.appendChild(but);
+        }
+        pageWrapper.appendChild(footer);
+        
+        document.body.appendChild(pageWrapper);
+        eventListeners();
+    },
+  destructorUI: function = function destructorUI(){
+        document.getElementById('pageWrapper').remove();
+    }
+}
+Line 144 | IndexPage | Type: IndexPage: function = function IndexPage(){
+    
+    var redirects = ['campaign','selectLevel','achievements','statistics'];
+    var footerItems = ['sound'];
+
+    function eventListeners() {
+        document.getElementById('appName').style.backgroundImage = "url('" + getImage("appName") + "')";
+
+
+        for(var item in redirects){
+            document.getElementById(redirects[item]).addEventListener("click", function (e) {
+                page.pageSwap(e.target.id);
+                return;
+            });
+        }
+
+        document.getElementById('optionsButton').addEventListener("click", function () {
+            if (document.getElementById('footer').style.width == '0px') {
+                document.getElementById('footer').style.width = '80%';
+            } else {
+                document.getElementById('footer').style.width = '0';
+            }
+        });
+
+        if (localStorage.getItem("sound_opt") === "On") document.getElementById('soundButton').style.backgroundImage = 'url("./images/soundOn.png")';
+        else document.getElementById('soundButton').style.backgroundImage = 'url("./images/soundOff.png")';
+
+        document.getElementById('soundButton').addEventListener("click", function () {
+            var element = document.getElementById('soundButton');
+            if (localStorage.getItem("sound_opt") === "On") {
+                element.style.backgroundImage = 'url("./images/soundOff.png")';
+                localStorage.setItem("sound_opt", "Off");
+            } else {
+                element.style.backgroundImage = 'url("./images/soundOn.png")';
+                localStorage.setItem("sound_opt", "On");
+                //mediaPlay(getSound("bell")).play();
+            }
+        });
+    }
+
+    function builderUI(){
+        var pageWrapper = document.createElement('div');
+        addIDToElement('pageWrapper',pageWrapper);
+
+        var appName = document.createElement('div');
+        appName.setAttribute('id','appName');
+        pageWrapper.appendChild(appName);
+
+        var mainMenu = document.createElement('div');
+        addClassToElement('unselectable',mainMenu);
+        addIDToElement('mainMenu', mainMenu);
+
+        for(var item in redirects){
+            var but = document.createElement('button');
+            addIDToElement(redirects[item],but);
+            but.style.backgroundImage = "url('" + getImage("start-"+redirects[item]) + "')";
+            mainMenu.appendChild(but);
+        }
+        pageWrapper.appendChild(mainMenu);
+
+        var optionsButton = document.createElement('button');
+        addIDToElement('optionsButton',optionsButton);
+        pageWrapper.appendChild(optionsButton);
+
+        var footer = document.createElement('div');
+        addIDToElement('footer',footer);
+
+        for(var item in footerItems){
+            var but = document.createElement('button');
+            addIDToElement(footerItems[item]+'Button',but);
+            addClassToElement("index_footerItem",but);
+            footer.appendChild(but);
+        }
+        pageWrapper.appendChild(footer);
+        
+        document.body.appendChild(pageWrapper);
+        eventListeners();
+    }
+
+    function destructorUI(){
+        document.getElementById('pageWrapper').remove();
+    }
+
+    return {
+        builderUI,
+        destructorUI
+    }
+}
+Line 146 | currPage | Type: currPage: object = {
+
+}
+Line 148 | currPage | Type: currPage: object = {
+
+}
+Line 150 | currPage | Type: currPage: object = {
+
+}
+Line 152 | currPage | Type: currPage: object = {
+
+}
+Line 154 | currPage | Type: currPage: object = {
+
+}
+Line 156 | currPage | Type: currPage: object = {
+
+}
+Line 158 | currPage | Type: currPage: object = {
+
+}
+Line 160 | currPage | Type: currPage: object = {
+  builderUI: function = function builderUI(){
+        var pageWrapper = document.createElement('div');
+        addIDToElement('pageWrapper',pageWrapper);
+
+        var appName = document.createElement('div');
+        appName.setAttribute('id','appName');
+        pageWrapper.appendChild(appName);
+
+        var mainMenu = document.createElement('div');
+        addClassToElement('unselectable',mainMenu);
+        addIDToElement('mainMenu', mainMenu);
+
+        for(var item in redirects){
+            var but = document.createElement('button');
+            addIDToElement(redirects[item],but);
+            but.style.backgroundImage = "url('" + getImage("start-"+redirects[item]) + "')";
+            mainMenu.appendChild(but);
+        }
+        pageWrapper.appendChild(mainMenu);
+
+        var optionsButton = document.createElement('button');
+        addIDToElement('optionsButton',optionsButton);
+        pageWrapper.appendChild(optionsButton);
+
+        var footer = document.createElement('div');
+        addIDToElement('footer',footer);
+
+        for(var item in footerItems){
+            var but = document.createElement('button');
+            addIDToElement(footerItems[item]+'Button',but);
+            addClassToElement("index_footerItem",but);
+            footer.appendChild(but);
+        }
+        pageWrapper.appendChild(footer);
+        
+        document.body.appendChild(pageWrapper);
+        eventListeners();
+    },
+  destructorUI: function = function destructorUI(){
+        document.getElementById('pageWrapper').remove();
+    }
+}
+Line 160 | IndexPage | Type: IndexPage: function = function IndexPage(){
+    
+    var redirects = ['campaign','selectLevel','achievements','statistics'];
+    var footerItems = ['sound'];
+
+    function eventListeners() {
+        document.getElementById('appName').style.backgroundImage = "url('" + getImage("appName") + "')";
+
+
+        for(var item in redirects){
+            document.getElementById(redirects[item]).addEventListener("click", function (e) {
+                page.pageSwap(e.target.id);
+                return;
+            });
+        }
+
+        document.getElementById('optionsButton').addEventListener("click", function () {
+            if (document.getElementById('footer').style.width == '0px') {
+                document.getElementById('footer').style.width = '80%';
+            } else {
+                document.getElementById('footer').style.width = '0';
+            }
+        });
+
+        if (localStorage.getItem("sound_opt") === "On") document.getElementById('soundButton').style.backgroundImage = 'url("./images/soundOn.png")';
+        else document.getElementById('soundButton').style.backgroundImage = 'url("./images/soundOff.png")';
+
+        document.getElementById('soundButton').addEventListener("click", function () {
+            var element = document.getElementById('soundButton');
+            if (localStorage.getItem("sound_opt") === "On") {
+                element.style.backgroundImage = 'url("./images/soundOff.png")';
+                localStorage.setItem("sound_opt", "Off");
+            } else {
+                element.style.backgroundImage = 'url("./images/soundOn.png")';
+                localStorage.setItem("sound_opt", "On");
+                //mediaPlay(getSound("bell")).play();
+            }
+        });
+    }
+
+    function builderUI(){
+        var pageWrapper = document.createElement('div');
+        addIDToElement('pageWrapper',pageWrapper);
+
+        var appName = document.createElement('div');
+        appName.setAttribute('id','appName');
+        pageWrapper.appendChild(appName);
+
+        var mainMenu = document.createElement('div');
+        addClassToElement('unselectable',mainMenu);
+        addIDToElement('mainMenu', mainMenu);
+
+        for(var item in redirects){
+            var but = document.createElement('button');
+            addIDToElement(redirects[item],but);
+            but.style.backgroundImage = "url('" + getImage("start-"+redirects[item]) + "')";
+            mainMenu.appendChild(but);
+        }
+        pageWrapper.appendChild(mainMenu);
+
+        var optionsButton = document.createElement('button');
+        addIDToElement('optionsButton',optionsButton);
+        pageWrapper.appendChild(optionsButton);
+
+        var footer = document.createElement('div');
+        addIDToElement('footer',footer);
+
+        for(var item in footerItems){
+            var but = document.createElement('button');
+            addIDToElement(footerItems[item]+'Button',but);
+            addClassToElement("index_footerItem",but);
+            footer.appendChild(but);
+        }
+        pageWrapper.appendChild(footer);
+        
+        document.body.appendChild(pageWrapper);
+        eventListeners();
+    }
+
+    function destructorUI(){
+        document.getElementById('pageWrapper').remove();
+    }
+
+    return {
+        builderUI,
+        destructorUI
+    }
+}
+Line 161 | builderUI(...) | Return: undefined
+Line 161 | builderUI | Type: builderUI: function = function builderUI(){
+        currPage.builderUI();
+    }
+Line 165 | onDeviceReady | Type: onDeviceReady: function = function onDeviceReady(){
+        installPages();
+        document.addEventListener('pause', onPause.bind(this), false);
+        document.addEventListener('resume', onResume.bind(this), false);
+        
+        preLoad(builderUI,false);
+    }
+Line 166 | pageSwap | Type: pageSwap: function = function pageSwap(where){
+        destructorUI();
+        if(where === "index")
+            currPage = new IndexPage();
+        else if(where === "selectLevel")
+            currPage = new SelectLevelPage();
+        else if(where === "achievements")
+            currPage = new AchievementsPage();
+        else if(where === "statistics")
+            currPage = new StatisticsPage();
+        else if(where === "memoryGame")
+            currPage = new MemoryGame();
+        else if(where === "reflexGame")
+            currPage = new ReflexGame();
+        else if(where === "clickGame")
+            currPage = new ClickGame();
+        else if(where === "matchingGame")
+            currPage = new MatchingGame();
+        else 
+            currPage = new IndexPage();
+        builderUI();
+    }
+Line 171 | Decl: page | Type: page: object = {
+  onDeviceReady: function = function onDeviceReady(){
+        installPages();
+        document.addEventListener('pause', onPause.bind(this), false);
+        document.addEventListener('resume', onResume.bind(this), false);
+        
+        preLoad(builderUI,false);
+    },
+  pageSwap: function = function pageSwap(where){
+        destructorUI();
+        if(where === "index")
+            currPage = new IndexPage();
+        else if(where === "selectLevel")
+            currPage = new SelectLevelPage();
+        else if(where === "achievements")
+            currPage = new AchievementsPage();
+        else if(where === "statistics")
+            currPage = new StatisticsPage();
+        else if(where === "memoryGame")
+            currPage = new MemoryGame();
+        else if(where === "reflexGame")
+            currPage = new ReflexGame();
+        else if(where === "clickGame")
+            currPage = new ClickGame();
+        else if(where === "matchingGame")
+            currPage = new MatchingGame();
+        else 
+            currPage = new IndexPage();
+        builderUI();
+    }
+}
+Line 171 | Page | Type: Page: function = function Page(){
+    var currPage = new IndexPage();
+    function installPages(){
+        for(var scr in translator.requiredScripts){
+            var scriptElem = document.createElement('script');
+            scriptElem.setAttribute('type','text/javascript');
+            scriptElem.setAttribute('src', translator.requiredScripts[scr]);
+            document.body.appendChild(scriptElem);
+        }
+        for(var css in translator.requiredCSS){
+            var cssElem = document.createElement('link');
+            cssElem.setAttribute('rel','stylesheet');
+            cssElem.setAttribute('type','text/css');
+            cssElem.setAttribute('href', translator.requiredCSS[css]);
+            document.head.appendChild(cssElem);
+        }
+    }
+
+    function onDeviceReady(){
+        installPages();
+        document.addEventListener('pause', onPause.bind(this), false);
+        document.addEventListener('resume', onResume.bind(this), false);
+        
+        preLoad(builderUI,false);
+    };
+
+    function onPause() {
+        console.log("INDEX PAGE pause");
+        // TODO: This application has been suspended. Save application state here.
+    };
+
+    function onResume() {
+        console.log("INDEX PAGE resume");
+        // TODO: This application has been reactivated. Restore application state here.
+    };
+
+    function builderUI(){
+        currPage.builderUI();
+    }
+
+    function destructorUI(){
+        currPage.destructorUI();
+    }
+
+    function pageSwap(where){
+        destructorUI();
+        if(where === "index")
+            currPage = new IndexPage();
+        else if(where === "selectLevel")
+            currPage = new SelectLevelPage();
+        else if(where === "achievements")
+            currPage = new AchievementsPage();
+        else if(where === "statistics")
+            currPage = new StatisticsPage();
+        else if(where === "memoryGame")
+            currPage = new MemoryGame();
+        else if(where === "reflexGame")
+            currPage = new ReflexGame();
+        else if(where === "clickGame")
+            currPage = new ClickGame();
+        else if(where === "matchingGame")
+            currPage = new MatchingGame();
+        else 
+            currPage = new IndexPage();
+        builderUI();
+    }
+
+    return {
+        onDeviceReady,
+        pageSwap
+    }
+
+}
+Line 172 | document.addEventListener(...) | Return: any
+Line 172 | page | Type: page: object = {
+  onDeviceReady: function = function onDeviceReady(){
+        installPages();
+        document.addEventListener('pause', onPause.bind(this), false);
+        document.addEventListener('resume', onResume.bind(this), false);
+        
+        preLoad(builderUI,false);
+    },
+  pageSwap: function = function pageSwap(where){
+        destructorUI();
+        if(where === "index")
+            currPage = new IndexPage();
+        else if(where === "selectLevel")
+            currPage = new SelectLevelPage();
+        else if(where === "achievements")
+            currPage = new AchievementsPage();
+        else if(where === "statistics")
+            currPage = new StatisticsPage();
+        else if(where === "memoryGame")
+            currPage = new MemoryGame();
+        else if(where === "reflexGame")
+            currPage = new ReflexGame();
+        else if(where === "clickGame")
+            currPage = new ClickGame();
+        else if(where === "matchingGame")
+            currPage = new MatchingGame();
+        else 
+            currPage = new IndexPage();
+        builderUI();
+    }
+}"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for narrowing.js 1`] = `
+"Line 1 | Decl: x | Type: x: number = 1
+Line 2 | x | Type: x: number = 1
+Line 3 | Decl: y | Type: y: number = 11
+Line 3 | x | Type: x: number = 1
+Line 6 | Decl: z | Type: z: undefined
+Line 7 | Math.random(...) | Return: any
+Line 8 | z | Type: z: string = 'string'
+Line 10 | z | Type: z: number = 123
+Line 13 | Decl: finalZ | Type: finalZ: string = 'string' || number = 123
+Line 13 | z | Type: z: string = 'string'"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for non_pure_functions.js 1`] = `
+"Line 1 | Decl: z | Type: z: number = 7
+Line 2 | Decl: w | Type: w: object = {
+
+}
+Line 3 | z | Type: z: array
+Line 5 | z | Type: z: string = 'foo'
+Line 6 | f1(...) | Return: undefined
+Line 6 | f1 | Type: f1: function = function f1 ()   { z = []; }
+Line 7 | f2(...) | Return: undefined
+Line 7 | f2 | Type: f2: function = function f2(a)   { a.x = 10; }
+Line 7 | w | Type: w: object = {
+
+}
+Line 8 | f3(...) | Return: undefined
+Line 8 | f3 | Type: f3: function = function f3(a,b) { a.y = b; z='foo'; }
+Line 8 | w | Type: w: object = {
+  x: number = 10
+}
+Line 9 | z | Type: z: string = 'foo'
+Line 9 | w | Type: w: object = {
+  x: number = 10,
+  y: string = 'bar'
+}
+Line 11 | Decl: x | Type: x: number = 5
+Line 12 | x | Type: x: number = 5
+Line 14 | foo(...) | Return: undefined
+Line 14 | foo | Type: foo: function = function foo() {}
+Line 15 | x | Type: x: number = 5
+Line 17 | foo | Type: foo: function = function() {
+	x = "inside foo";
+	let k = 2;
+	let z = () => { k = "inside z" };
+	z();
+	k;
+}
+Line 18 | x | Type: x: string = 'inside foo'
+Line 19 | Decl: k | Type: k: number = 2
+Line 20 | Decl: z | Type: z: function = () => { k = "inside z" }
+Line 20 | k | Type: k: string = 'inside z'
+Line 21 | z(...) | Return: undefined
+Line 21 | z | Type: z: function = () => { k = "inside z" }
+Line 22 | k | Type: k: string = 'inside z'
+Line 24 | foo(...) | Return: undefined
+Line 24 | foo | Type: foo: function = function() {
+	x = "inside foo";
+	let k = 2;
+	let z = () => { k = "inside z" };
+	z();
+	k;
+}
+Line 25 | x | Type: x: string = 'inside foo'
+Line 27 | x | Type: x: number = 10
+Line 28 | x | Type: x: number = 10
+Line 29 | foo(...) | Return: undefined
+Line 29 | foo | Type: foo: function = function() {
+	x = "inside foo";
+	let k = 2;
+	let z = () => { k = "inside z" };
+	z();
+	k;
+}
+Line 30 | x | Type: x: string = 'inside foo'
+Line 32 | foo | Type: foo: function = () => { x = "inside foo arrow"; }
+Line 32 | x | Type: x: string = 'inside foo arrow'
+Line 33 | foo(...) | Return: undefined
+Line 33 | foo | Type: foo: function = () => { x = "inside foo arrow"; }
+Line 34 | x | Type: x: string = 'inside foo arrow'
+Line 36 | (function () {
+	x;
+	x = 100;
+})(...) | Return: undefined
+Line 37 | x | Type: x: string = 'inside foo arrow'
+Line 38 | x | Type: x: number = 100
+Line 41 | x | Type: x: number = 100
+Line 43 | hoisted(...) | Return: undefined
+Line 43 | hoisted | Type: hoisted: function = function hoisted() {
+	x;
+	x = 50;
+}
+Line 44 | x | Type: x: number = 50
+Line 47 | x | Type: x: number = 50
+Line 48 | x | Type: x: number = 50
+Line 51 | Decl: global | Type: global: object = {
+
+}
+Line 52 | Decl: glob | Type: glob: number = 5"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for objects.js 1`] = `
+"Line 1 | Decl: point | Type: const point: object = {
+  x: number = 10,
+  y: number = 20
+}
+Line 10 | Decl: px | Type: px: number = 10
+Line 10 | point | Type: const point: object = {
+  x: number = 10,
+  y: number = 20
+}
+Line 11 | point.move(...) | Return: any
+Line 11 | point | Type: const point: object = {
+  x: number = 10,
+  y: number = 20
+}
+Line 11 | move | Type: move: function = move(dx, dy) {
+        this.x += dx;
+        this.y += dy;
+    }
+Line 12 | Decl: newPx | Type: newPx: number = 10
+Line 12 | point | Type: const point: object = {
+  x: number = 10,
+  y: number = 20
+}
+Line 14 | Person | Type: Person: class = class Person {
+    constructor(name) {
+        this.name = name;
+    }
+    sayHello() {
+        return 'Hi, I am ' + this.name;
+    }
+}
+Line 23 | Decl: me | Type: const me: Person = {
+  sayHello: function = sayHello() {
+        return 'Hi, I am ' + this.name;
+    },
+  name: string = 'Marios'
+}
+Line 23 | Person | Type: Person: class = class Person {
+    constructor(name) {
+        this.name = name;
+    }
+    sayHello() {
+        return 'Hi, I am ' + this.name;
+    }
+}
+Line 24 | Decl: myName | Type: myName: string = 'Marios'
+Line 24 | me | Type: const me: Person = {
+  sayHello: function = sayHello() {
+        return 'Hi, I am ' + this.name;
+    },
+  name: string = 'Marios'
+}
+Line 25 | Decl: msg | Type: msg: string || number
+Line 25 | me.sayHello(...) | Return: string || number
+Line 25 | me | Type: const me: Person = {
+  sayHello: function = sayHello() {
+        return 'Hi, I am ' + this.name;
+    },
+  name: string = 'Marios'
+}"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for outline.js 1`] = `
+"Line 1 | Decl: global | Type: global: number = 5
+Line 4 | Decl: aaaa | Type: aaaa: number = 2
+Line 7 | f | Type: f: function = () => { 
+    let x = 2;
+}
+Line 8 | Decl: x | Type: x: number = 2
+Line 13 | f(...) | Return: undefined
+Line 13 | f | Type: f: function = () => { 
+    let x = 2;
+}
+Line 14 | Decl: z | Type: z: number = 10
+Line 15 | z | Type: z: number = 10
+Line 18 | point | Type: point: class = class point {
+
+    x;
+    y;
+
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    // FIXME: Hover searches for 'x', should search for 'set x'
+    // TODO: Display parameters in outline?
+    set x(x) {
+        x = 5;
+    }
+
+    get x() {
+        // return this.x;
+    }
+
+    set y(y) {
+        y = 10;
+    }
+
+    get y() {
+
+    }
+
+    computeMagnitude() {
+        const magnitude = x * x + y * y;
+        return magnitude;
+    };
+
+}
+Line 31 | x | Type: x: number = 5
+Line 39 | y | Type: y: number = 10
+Line 47 | Decl: magnitude | Type: const magnitude: number
+Line 48 | magnitude | Type: const magnitude: number
+Line 53 | a(...) | Return: any
+Line 61 | a(...) | Return: any"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for parameter-inference.js 1`] = `
+"Line 3 | a | Type: a: number || string
+Line 3 | b | Type: b: number || string
+Line 11 | a | Type: a: number
+Line 11 | b | Type: b: number
+Line 23 | Decl: x | Type: x: any
+Line 26 | Decl: y | Type: y: string || number
+Line 26 | x | Type: x: any
+Line 38 | Decl: x | Type: x: any
+Line 39 | a | Type: a: any
+Line 39 | x | Type: x: any
+Line 40 | a | Type: a: any
+Line 40 | b | Type: b: number || string"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for return.js 1`] = `
+"Line 6 | a | Type: a: number || string
+Line 6 | b | Type: b: number || string
+Line 6 | f1 | Type: f1: function = function f1(b) {
+    if (b == true) return 'f1';
+    return { flag : b };
+}
+Line 7 | b | Type: b: number || string
+Line 8 | a | Type: a: number || string
+Line 8 | b | Type: b: number || string
+Line 10 | Decl: z | Type: z: string = 'f1' || object = {
+  flag: boolean = false
+}
+Line 10 | f1(...) | Return: string || object
+Line 10 | f1 | Type: f1: function = function f1(b) {
+    if (b == true) return 'f1';
+    return { flag : b };
+}
+Line 11 | z | Type: z: function = function f1(b) {
+    if (b == true) return 'f1';
+    return { flag : b };
+} || array || object = {
+  x: number = 10,
+  y: number = 10
+}
+Line 11 | f2(...) | Return: function || array || object
+Line 11 | f2 | Type: f2: function = function f2(a,b) {
+    if (a+b == 20) return f1;
+    if (b == -1) return [1,2];
+    return { x : a, y : b };
+}
+Line 17 | Decl: x | Type: x: number = 2
+Line 18 | Decl: y | Type: y: number = 7
+Line 18 | x | Type: x: number = 2
+Line 20 | x | Type: x: number = 100
+Line 24 | Decl: x | Type: x: object = {
+  a: number = 2
+}
+Line 24 | get2(...) | Return: object
+Line 24 | get2 | Type: get2: function = function get2(a) {
+    return {
+        a: 2
+    };
+    let x = 2;
+    let y = 5 + x;
+    return 5;
+    x = 100;
+    return 100;
+
+}
+Line 25 | x | Type: x: object = {
+  a: number = 2,
+  b: number = 5
+}
+Line 26 | x | Type: x: object = {
+  a: number = 2,
+  b: number = 5,
+  c: number = 10
+}
+Line 27 | x | Type: x: number = 10
+Line 29 | Decl: zoo | Type: zoo: object = {
+  x: number = 10,
+  a: object = {
+    a: number = 2
+  }
+}
+Line 30 | x | Type: x: number = 10
+Line 31 | get2(...) | Return: object
+Line 31 | get2 | Type: get2: function = function get2(a) {
+    return {
+        a: 2
+    };
+    let x = 2;
+    let y = 5 + x;
+    return 5;
+    x = 100;
+    return 100;
+
+}
+Line 34 | Decl: global | Type: global: number = 5
+Line 37 | global | Type: global: object = {
+  a: number = 2
+}
+Line 37 | get2(...) | Return: object
+Line 37 | get2 | Type: get2: function = function get2(a) {
+    return {
+        a: 2
+    };
+    let x = 2;
+    let y = 5 + x;
+    return 5;
+    x = 100;
+    return 100;
+
+}
+Line 40 | global | Type: global: number = 5"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for self-referential-assignment.js 1`] = `
+"Line 1 | Decl: x | Type: x: number = 2
+Line 2 | x | Type: x: number = 5
+Line 2 | x | Type: x: number = 2
+Line 3 | x | Type: x: number = 8
+Line 3 | x | Type: x: number = 5
+Line 4 | x | Type: x: number = 8
+Line 4 | x | Type: x: number = 8"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for signature_help.js 1`] = `
+"Line 5 | Decl: bar | Type: bar: object = {
+
+}
+Line 7 | foo | Type: foo: function = function foo(a, b) {
+
+}
+Line 8 | bar | Type: bar: object = {
+  b: function = (a, b, c) => {}
+}
+Line 10 | bar | Type: bar: object = {
+  b: function = function foo(a, b) {
+
+}
+}
+Line 10 | foo | Type: foo: function = function foo(a, b) {
+
+}
+Line 14 | bar.b(...) | Return: undefined
+Line 14 | bar | Type: bar: object = {
+  b: function = (a, b, c) => {}  b: function = function foo(a, b) {
+
+}
+}"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for signature-help.js 1`] = `
+"Line 1 | Decl: foo | Type: foo: undefined
+Line 4 | foo | Type: foo: function = function(a, b) {
+        return a + b;
+    }
+Line 5 | a | Type: a: number || string
+Line 5 | b | Type: b: number || string
+Line 8 | foo | Type: foo: function = function(c, d) {
+        return c - d;
+    }
+Line 9 | c | Type: c: number
+Line 9 | d | Type: d: number
+Line 14 | foo(...) | Return: any
+Line 14 | foo | Type: foo: function = function(a, b) {
+        return a + b;
+    }"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for single.js 1`] = `
+"Line 1 | Decl: x | Type: const x: number = 1
+Line 2 | x | Type: const x: number = 2"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for start.js 1`] = `
+"Line 1 | Decl: x | Type: const x: number = 1
+Line 1 | Decl: y | Type: const y: number = 2
+Line 2 | x | Type: const x: number = 3"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for switch-statement.js 1`] = `
+"Line 1 | Decl: x | Type: x: number = 100
+Line 1 | Decl: a | Type: a: undefined
+Line 1 | Decl: b | Type: b: undefined
+Line 2 | a | Type: a: undefined
+Line 4 | x | Type: x: number = 2
+Line 6 | b | Type: b: undefined
+Line 6 | x | Type: x: number = 5
+Line 7 | x | Type: x: string = 'foo'
+Line 8 | x | Type: x: string = 'bar'
+Line 11 | x | Type: x: number = 2"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for temp-test.js 1`] = `
+"Line 346 | Decl: x | Type: x: undefined
+Line 352 | Decl: a | Type: const a: undefined
+Line 352 | x | Type: x: number = 2
+Line 353 | x | Type: x: number = 5
+Line 356 | Decl: b | Type: b: undefined
+Line 358 | Decl: a | Type: const a: undefined
+Line 358 | b | Type: b: number = 100
+Line 359 | b | Type: b: number = 200
+Line 362 | Decl: c | Type: c: undefined
+Line 363 | c | Type: c: number = 2
+Line 364 | c | Type: c: number = 100"
+`;
+
+exports[`Analyzer Snapshot Tests should match snapshot for test.js 1`] = `
+"Line 2 | Decl: a | Type: a: number = 1
+Line 2 | Decl: b | Type: b: number = 2
+Line 4 | Decl: b | Type: b: number = 2
+Line 7 | Decl: c | Type: c: function = function() {}
+Line 8 | Decl: z | Type: z: undefined
+Line 10 | Decl: d | Type: d: number = 4
+Line 11 | Decl: e | Type: const e: number = 5
+Line 13 | x | Type: x: number = 2
+Line 14 | x | Type: x: string = 'hello world'
+Line 15 | x | Type: x: boolean = true
+Line 16 | x | Type: x: undefined
+Line 17 | x | Type: x: null
+Line 18 | x | Type: x: object = {
+
+}
+Line 21 | Decl: jaja | Type: jaja: number = 2
+Line 22 | Decl: a | Type: a: number = 1
+Line 23 | x | Type: x: number = 2
+Line 25 | x | Type: x: number = 2
+Line 28 | Decl: n | Type: n: number = 2
+Line 32 | y | Type: y: number = 2
+Line 32 | x | Type: x: number = 2
+Line 33 | y(...) | Return: any
+Line 33 | y | Type: y: number = 2
+Line 44 | Decl: obj | Type: obj: object = {
+  a: string = 'foo'
+}
+Line 45 | whereToStoreValue | Type: whereToStoreValue: undefined
+Line 45 | obj | Type: obj: object = {
+  a: string = 'foo'
+}
+Line 47 | point | Type: point: class = class point {
+
+	constructor(x, y) {
+		this.setX(x);
+		this.setY(y);
+	};
+	
+	// set x(x) {
+	// 	this.x = x; 
+	// }
+
+	// get x() {
+	// 	return this.x;
+	// }
+
+	// set y(y) {
+	// 	this.y = y;
+	// }
+
+	// get y() {
+	// 	return this.y;
+	// }
+
+	computeMagnitude() {
+		return Math.sqrt(this.x * this.x + this.y * this.y);
+	}
+
+}
+Line 50 | this.setX(...) | Return: any
+Line 51 | this.setY(...) | Return: any
+Line 71 | Math.sqrt(...) | Return: any
+Line 71 | x | Type: x: number = 2
+Line 71 | x | Type: x: number = 2
+Line 71 | y | Type: y: number = 2
+Line 71 | y | Type: y: number = 2
+Line 75 | Decl: p | Type: const p: point = {
+  computeMagnitude: function = computeMagnitude() {
+		return Math.sqrt(this.x * this.x + this.y * this.y);
+	}
+}
+Line 75 | point | Type: point: class = class point {
+
+	constructor(x, y) {
+		this.setX(x);
+		this.setY(y);
+	};
+	
+	// set x(x) {
+	// 	this.x = x; 
+	// }
+
+	// get x() {
+	// 	return this.x;
+	// }
+
+	// set y(y) {
+	// 	this.y = y;
+	// }
+
+	// get y() {
+	// 	return this.y;
+	// }
+
+	computeMagnitude() {
+		return Math.sqrt(this.x * this.x + this.y * this.y);
+	}
+
+}
+Line 76 | p | Type: const p: point = {
+  computeMagnitude: function = computeMagnitude() {
+		return Math.sqrt(this.x * this.x + this.y * this.y);
+	}
+}
+Line 78 | Decl: i | Type: i: number = 0
+Line 78 | i | Type: i: number = 0
+Line 78 | i | Type: i: number = 0
+Line 79 | console.log(...) | Return: any
+Line 79 | i | Type: i: number = 0
+Line 81 | x | Type: x: number = 5
+Line 81 | x | Type: x: number = 5
+Line 81 | x | Type: x: string = ''
+Line 81 | x | Type: x: string = ''"
+`;

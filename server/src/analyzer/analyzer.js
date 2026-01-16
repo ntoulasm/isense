@@ -691,7 +691,6 @@ function analyzePropertyAccessExpression(node) {
     const expressionTypes = TypeCarrier.evaluate(node.expression.carrier);
     const name = node.name.getText();
     const info = [];
-    let typesContainUndefined = false;
 
     for (const type of expressionTypes) {
         if (type.type === TypeInfo.Type.Object && type.hasValue) {
@@ -742,7 +741,7 @@ function analyzeElementAccessExpression(node) {
                     ) {
                         info.push(...expressionType.value[elementTypeString]);
                     } else if (!typesContainUndefined) {
-                        info.push({ id: TypeInfo.Type.Undefined });
+                        info.push(TypeInfo.createUndefined());
                         typesContainUndefined = true;
                     }
                 }
@@ -750,7 +749,7 @@ function analyzeElementAccessExpression(node) {
         }
     }
 
-    TypeCarrier.createConstant(info);
+    node.carrier = TypeCarrier.createConstant(info);
 }
 
 // ----------------------------------------------------------------------------
@@ -816,6 +815,10 @@ function isInOriginalFunction(node) {
  * @param {ts.Node} node
  */
 function getParameterSymbol(node) {
+    console.assert(
+        node && node.carrier,
+        'getParameterSymbol called with node lacking carrier'
+    );
     if (node.carrier.kind !== TypeCarrier.Kind.Variable) {
         return;
     }
