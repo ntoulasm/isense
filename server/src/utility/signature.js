@@ -21,7 +21,7 @@ Signature.compute = (
     node,
     symbol,
     typeInfo,
-    typeSeparator = ' || ',
+    typeSeparator = ' | ',
     computeValues = true
 ) => {
     let signature = isConstant(symbol) ? 'const ' : '';

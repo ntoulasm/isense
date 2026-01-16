@@ -87,7 +87,7 @@ function serializeNode(node, sourceFile) {
             const types = TypeCarrier.evaluate(node.carrier);
             const typeStrings = types
                 .map(t => TypeInfo.typeToString(t))
-                .join(' || ');
+                .join(' | ');
             const expressionText = node.expression.getText(sourceFile);
             return `Line ${displayLine} | ${expressionText}(...) | Return: ${typeStrings}`;
         }

@@ -81,7 +81,7 @@ const computeParametersSignature = callee => {
 
         signature += inducedTypeInfos
             .map(t => TypeInfo.typeToString(t))
-            .join(' || ');
+            .join(' | ');
 
         return signature;
     };
@@ -124,7 +124,7 @@ function computeReturnInfo(callee, call) {
     }
     return TypeCarrier.removeDuplicates(typeInfo)
         .map(t => TypeInfo.typeToString(t))
-        .join(' || ');
+        .join(' | ');
 }
 
 function computeNewExpressionReturnInfo(callee) {
