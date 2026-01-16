@@ -11,7 +11,7 @@ export default [
             'client/',
             'examples/',
             'samples/',
-            'test/fixtures/',
+            'server/test/fixtures/',
         ],
     },
     {
