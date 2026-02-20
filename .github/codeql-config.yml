@@ -1,4 +1,6 @@
 name: 'CodeQL Config'
 
 paths-ignore:
-    - examples
+    - 'examples/**'
+    - 'scripts/**'
+    - 'server/test/**'
