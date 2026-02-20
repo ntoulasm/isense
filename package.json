@@ -67,6 +67,7 @@
         "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
         "update": "cd client && npm update && cd ../server && npm update && cd ..",
         "lint": "eslint .",
+        "check-engines": "node scripts/check-engines.js",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "test": "cd server && npm test && cd .."
