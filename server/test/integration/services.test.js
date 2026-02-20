@@ -155,7 +155,7 @@ describe('Language Server Services Integration', () => {
             expect(hover).toBeDefined();
             const contents = hover.contents;
 
-            let text = '';
+            let text;
             if (Array.isArray(contents)) {
                 text = contents.map(c => c.value || c).join('\n');
             } else if (typeof contents === 'object') {
