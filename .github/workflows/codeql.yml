@@ -26,6 +26,9 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v6
 
+            - name: Build project (dummy)
+              run: echo "No build needed"
+
             - name: Initialize CodeQL
               uses: github/codeql-action/init@v4
               with:
