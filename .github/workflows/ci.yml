@@ -7,16 +7,35 @@ on:
         branches: [main]
 
 jobs:
-    lint:
-        name: Lint
+    validate:
+        name: Validate Environment
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
 
-            - name: Use Node.js 24.13.1
+            - name: Setup Node.js
               uses: actions/setup-node@v6
               with:
-                  node-version: 24.13.1
+                  node-version-file: '.nvmrc'
+                  cache: 'npm'
+
+            - name: Install Dependencies
+              run: npm ci
+
+            - name: Check VS Code Engine Alignment
+              run: npm run check-engines
+
+    lint:
+        name: Lint
+        needs: [validate]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version-file: '.nvmrc'
                   cache: 'npm'
 
             - name: Install Dependencies
@@ -30,14 +49,15 @@ jobs:
 
     test:
         name: Test
+        needs: [validate]
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
 
-            - name: Use Node.js 24.13.1
+            - name: Setup Node.js
               uses: actions/setup-node@v6
               with:
-                  node-version: 24.13.1
+                  node-version-file: '.nvmrc'
                   cache: 'npm'
 
             - name: Install Root Dependencies
