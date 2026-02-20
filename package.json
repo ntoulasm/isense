@@ -20,7 +20,7 @@
         "JavaScript"
     ],
     "engines": {
-        "vscode": "^1.33.0",
+        "vscode": "^1.109.0",
         "node": "24.13.1"
     },
     "activationEvents": [
