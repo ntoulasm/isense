@@ -1,6 +1,10 @@
 name: 'CodeQL Config'
 
+paths:
+    - server/src
+    - client/src
+
 paths-ignore:
     - examples
     - scripts
-    - 'server/test'
+    - server/test
