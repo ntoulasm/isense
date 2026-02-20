@@ -1,5 +1,5 @@
 name: 'CodeQL Config'
 
 paths:
-    - server/src
-    - client/src
+    - server/src/**
+    - client/src/**
