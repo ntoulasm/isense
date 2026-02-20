@@ -7,6 +7,24 @@ on:
         branches: [main]
 
 jobs:
+    validate:
+        name: Validate Environment
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version-file: '.nvmrc'
+                  cache: 'npm'
+
+            - name: Install Dependencies
+              run: npm ci
+
+            - name: Check VS Code Engine Alignment
+              run: npm run check-engines
+
     lint:
         name: Lint
         runs-on: ubuntu-latest
