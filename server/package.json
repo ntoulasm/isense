@@ -26,5 +26,8 @@
         "test:unit": "jest --testPathPattern=unit",
         "test:integration": "jest --testPathPattern=integration",
         "test:performance": "jest --testPathPattern=performance"
+    },
+    "overrides": {
+        "minimatch": "^10.2.1"
     }
 }
