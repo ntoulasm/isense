@@ -22,6 +22,7 @@ class point {
 
     constructor(x, y) {
         this.x = x;
+//           ^hover
         this.y = y;
     }
 
@@ -46,6 +47,7 @@ class point {
     computeMagnitude() {
         const magnitude = x * x + y * y;
         return magnitude;
+//             ^hover
     };
 
 }

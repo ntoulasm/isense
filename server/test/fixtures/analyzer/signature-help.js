@@ -12,3 +12,4 @@ if(a) {
 
 
 foo()
+//^hover

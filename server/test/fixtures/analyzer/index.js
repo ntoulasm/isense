@@ -6,8 +6,10 @@
 "use strict";
 
 function IndexPage(){
+//       ^hover
     
     var redirects = ['campaign','selectLevel','achievements','statistics'];
+//      ^hover
     var footerItems = ['sound'];
 
     function eventListeners() {
@@ -169,4 +171,6 @@ function Page(){
 }
 
 var page = new Page();
+//  ^hover
+//  ^def
 document.addEventListener('deviceready', page.onDeviceReady, false);

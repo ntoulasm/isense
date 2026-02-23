@@ -1,6 +1,8 @@
 /** This function adds 2 numbers */
 function add(a, b) {
     return a + b;
+//         ^hover
+//             ^hover
 }
 
 // function call(a) {
@@ -24,6 +26,7 @@ function inferFromAssignments(a) {
     // x = 2;
     {
         let y = x + 5;
+//              ^hover
     }
 }
 
@@ -38,4 +41,6 @@ function f(a, b) {
 	let x = b;
 	a = x;
 	return a + b;
+//         ^hover
+//             ^hover
 }

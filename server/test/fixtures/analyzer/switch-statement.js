@@ -9,3 +9,4 @@ switch (a) {
 }
 
 x
+//^hover

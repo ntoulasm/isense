@@ -2,11 +2,15 @@ let x = {
     a : -1,
     b : "sqr",
     c : false 
-};                  
-x.d = {};
-x.d.foo = 3.14;
-x.d.bar = "world";
+};
+//^hover
 
+x.d = {};
+//^hover
+x.d.foo = 3.14;
+//  ^hover
+x.d.bar = "world";
+//  ^hover
 /*let x = {
     a: 2
 };

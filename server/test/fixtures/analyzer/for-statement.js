@@ -1,10 +1,17 @@
 // For statement
 let b = [], c = {}, e;
 for (let i = 0; i < n; ++i) {
+//       ^hover
+//       ^def
     b[i] = i * n;
+//  ^hover
+//    ^hover
+//    ^def
     c["x" + i] = b[i];
+//  ^hover
 }
 c.x2 = 2;
+//^hover
 /*
 let i = 10;
 

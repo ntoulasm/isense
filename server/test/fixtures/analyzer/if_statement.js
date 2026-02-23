@@ -26,7 +26,7 @@ if(true) {
 } else if(false) {
   y = "";
 } else y = {a: 2};
-y;
-x;  // 2 || 5 || 10 || 50 || 2
-
-
+  y;
+//^hover
+  x; // 2 || 5 || 10 || 50 || 2
+//^hover

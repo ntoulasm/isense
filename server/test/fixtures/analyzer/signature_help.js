@@ -12,3 +12,4 @@ if(foo) {
 
 // bar.b(
 bar.b()
+//  ^hover

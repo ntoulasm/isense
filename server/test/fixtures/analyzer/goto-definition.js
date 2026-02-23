@@ -1,19 +1,19 @@
 // let x = 2;
-
+// 
 // function foo() {
 //     let x = 2;
 // }
-
+// 
 // let y = () => {
 //     let zzzz = 'haha';
 // };
-
+// 
 // foo();
-
+// 
 // x;
-
+// 
 // y;
-
+// 
 function createPoint(x, y) {
     
     const point = {};
@@ -144,4 +144,7 @@ function createDog (name, age, breed) {
     };
 }
 const goodBoy = createDog('Scooby', 2, 'Great Dance');
-goodBoy.bark()
+goodBoy.bark();
+//      ^complete
+//      ^def
+//      ^hover

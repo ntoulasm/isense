@@ -2,6 +2,8 @@
     const x = 5 + 2, y = 2;
 
     x = 5;
+//  ^hover
+//  ^def
 }
 
 
@@ -9,6 +11,8 @@
     const x = 1, y = 2;
 
     y = 10;
+//  ^hover
+//  ^def
 }
 
 {

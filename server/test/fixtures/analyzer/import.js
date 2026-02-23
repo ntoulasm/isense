@@ -1,4 +1,5 @@
 import defaultExport1 from "a";
+//     ^hover
 import * as namedImports1 from "b";
 import {export1} from "";
 import {export2, export3} from "";

@@ -8,7 +8,8 @@ function f2(a,b) {
     return { x : a, y : b };
 }
 let z = f1(false);
-z = f2(10,10);
+  z = f2(10,10);
+//^hover
 
 function get2(a) {
     return {
@@ -22,7 +23,8 @@ function get2(a) {
 
 }
 let x = get2();
-x.b = 5;
+  x.b = 5;
+//^hover
 (((x.c))) = 10;
 (x) = 10;;
 
@@ -30,6 +32,7 @@ let zoo = {
     x,
     a: get2()
 };
+//^hover
 
 let global = 5;
 
@@ -37,4 +40,5 @@ function foo() {
     global = get2();
 }
 
-global;
+  global;
+//^hover
