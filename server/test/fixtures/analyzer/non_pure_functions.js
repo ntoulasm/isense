@@ -6,13 +6,19 @@ function f3(a,b) { a.y = b; z='foo'; }
 f1();
 f2(w);
 f3(w, 'bar');
-z; w;
+  z; 
+//^hover
+  w;
+//^hover
 
 let x = 5;
-x;
+  x;
+//^hover
+//^def
 function foo() {}
 foo();
-x;
+  x;
+//^hover
 
 foo = function() {
 	x = "inside foo";
@@ -22,29 +28,35 @@ foo = function() {
 	k;
 };;
 foo();
-x;
+  x;
+//^hover
 
 x = 10;
 x;
 foo();
-x;
+  x;
+//^hover
 
 foo = () => { x = "inside foo arrow"; };
 foo();
-x;
+  x;
+//^hover
 
 (function () {
-	x;
+	  x;
+//  ^hover
 	x = 100;
 })();
 
-x;
+  x;
+//^hover
 
 hoisted();
 x;
 
 function hoisted() {
-	x;
+	  x;
+//  ^hover
 	x = 50;
 }
 

@@ -352,14 +352,20 @@ let x;
 for(const a of (x = 2)) {
     x = 5;
 }
+  x;
+//^hover
 
 let b;
 
 for(const a in (b = 100)) {
     b = 200
 }
+  b;
+//^hover
 
 let c;
 while(c = 2) {
     c = 100
 }
+  c;
+//^hover

@@ -22,7 +22,8 @@ x = {};
 	let a = 1;
 	x = 2;
 };
-x
+  x
+//^hover
 
 function y(a, {z: b, c, d},  [e, f, ...g],  {h, i, j, k: {l, m}}) {
 	let n = 2;
@@ -30,9 +31,11 @@ function y(a, {z: b, c, d},  [e, f, ...g],  {h, i, j, k: {l, m}}) {
 }
 // y();  // TODO: fix destructuring
 y = x;
-y(); // y is now a number
+  y(); // y is now a number
+//^hover
 
 const [a, b, ...rest] = [1, 2, 3, 4, 5];
+//           ^hover
 let {aa, bb, ...rrest} = {
     aa: 2,
     bb: 3,
@@ -73,10 +76,12 @@ class point {
 
 }
 const p = new point();
-p;
+  p;
+//^hover
 
 for(let i = 0; i < 5; ++i) {
 	console.log(i);
 }
 (x = 5) + x + (x = "") + x;
-
+//        ^hover
+//                       ^hover

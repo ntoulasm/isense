@@ -1,6 +1,9 @@
 const Person = (firstName, lastName, age) => {
 
   this.firstName = firstName;
+//     ^hover
+//                 ^hover
+//                 ^def
   this.lastName = lastName;
   this.age = age;
 
@@ -9,6 +12,9 @@ const Person = (firstName, lastName, age) => {
 };
 
 let person = new Person("marios", "ntoulas", 24);;
+//  ^hover
+//               ^hover
+//               ^def
 
 function dog(breed, age) {
 	this.breed = breed;
@@ -17,6 +23,9 @@ function dog(breed, age) {
 
 const cat = dog;
 const goodBoy1 = new dog('Beagle', 1);
+//    ^hover
+//                   ^hover
+//                   ^def
 const goodBoy2 = new cat('Beagle', 2);
 
 class x {

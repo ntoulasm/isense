@@ -8,8 +8,14 @@ const point = {
 };
 
 let px = point.x;
+//  ^hover
+//       ^hover
+//             ^hover
 point.move(5, 5);
+//    ^hover
+//    ^def
 let newPx = point.x;
+//  ^hover
 
 class Person {
     constructor(name) {
@@ -21,5 +27,13 @@ class Person {
 }
 
 const me = new Person('Marios');
+//    ^hover
+//    ^def
+//             ^hover
 let myName = me.name;
+//  ^hover
+//           ^hover
 let msg = me.sayHello();
+//  ^hover
+//           ^hover
+//           ^def

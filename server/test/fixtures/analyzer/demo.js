@@ -1,16 +1,21 @@
 let global = 100;
 function nonPure() {
     global;
+//  ^hover
+//  ^def
     global = '';
 }
 nonPure();
 global;
+//^hover
 
 function add(a, b) {
     return a + b;
 }
 
 let x = add(1, 4);
+//      ^hover
+//      ^def
 
 function foo(a) {
     if(true) {
@@ -32,6 +37,8 @@ function point(x, y) {
 
     me.computeMagnitude = () => {
         return sqrt(me.x * me.x + me.y * me.y);
+//                  ^hover
+//                     ^hover
     }
 
     return me;

@@ -1,14 +1,19 @@
 const a = 2;
 const b = 5;
 const c = a + b;
+//    ^hover
+//    ^def
 
 const d = "d";
 const e = "e";
 let w = d + e;
+//  ^hover
+//  ^def
 
 let f = true;
 let g = false;
 let h = f + g;
+//  ^hover
 f = null;
 h = f + f;
 f = undefined;
@@ -20,6 +25,7 @@ let x = 2;
 let y = "";
 
 let z = x + y;
+//  ^hover
 z = 2 + true;
 z = 2 + false;
 z = 2 + [];
@@ -27,6 +33,7 @@ z = 2 + {};
 
 x = {a: 2};
 z = x + 2;
+//  ^hover
 z = x + "aaa";
 z = x + true;
 z = x + false;
@@ -37,6 +44,7 @@ z = x + undefined;
 x = () => {};
 y = function() {};
 z = x + y;
+//  ^hover
 
 /* Unary + */
 z = +2;
@@ -69,6 +77,7 @@ z = -undefined;
 /* Prefix ++ */
 x = 2;
 z = ++x;
+//  ^hover
 
 /* Prefix -- */
 z = --x;
@@ -144,6 +153,7 @@ z = 5 == "5";
 z = 5 == 6;
 
 const shorthandProperty = "shorthandProperty";
+//    ^hover
 let computed;
 if(true) {
     computed = 'computed1';
