@@ -1,0 +1,1180 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Marker Driven Snapshots basic.js 1`] = `
+"[1] let x = 1;
+        ^hover -> x: number = 1 at line 1 (up to here)
+        ^def -> basic.js:1:5
+
+[4] const y = 'hello';
+          ^hover -> const y: string = 'hello' at line 4 (up to here)
+
+[10] let d = x + 1;
+             ^hover -> x: number = 1 at line 1 (up to here)
+
+[12] let e = y + ' world';
+             ^hover -> const y: string = 'hello' at line 4 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots block.js 1`] = `
+"[2] y = x + 5;
+        ^hover
+        | x: number = 2 at line 1 (up to here)
+        | ---
+        | x: string = 'hello' at line 5
+        ^def -> block.js:1:5
+
+[6] let  y  = x + 5;
+         ^hover
+         | y: number = 7 at line 2 
+         | ---
+         | y: string = 'hello5' at line 6 (up to here)
+              ^hover
+              | x: number = 2 at line 1 
+              | ---
+              | x: string = 'hello' at line 5 (up to here)
+              ^def -> block.js:1:5"
+`;
+
+exports[`Marker Driven Snapshots code-action.js 1`] = `
+"[4]     x = 5;
+        ^hover
+        | const x: number = 7 at line 2 
+        | ---
+        | const x: number = 5 at line 4 (up to here)
+        ^def -> code-action.js:2:11
+
+[13]     y = 10;
+         ^hover
+         | const y: number = 2 at line 11 
+         | ---
+         | const y: number = 10 at line 13 (up to here)
+         ^def -> code-action.js:11:18"
+`;
+
+exports[`Marker Driven Snapshots completion_extra.js 1`] = `
+"[3]     localV
+        ^complete -> Array, ArrayBuffer, Boolean, Collator, DataView, Date, DateTimeFormat, Error, EvalError, Float32Array, Float64Array, Function, Infinity, Int16Array, Int32Array, Int8Array, JSON, Math, NaN, Number, NumberFormat, Object, RangeError, ReferenceError, RegExp, String, SyntaxError, TypeError, URIError, Uint16Array, Uint32Array, Uint8Array, Uint8ClampedArray, decodeURI, decodeURIComponent, encodeURI, encodeURIComponent, escape, eval, isFinite, isNaN, localVariable, parseFloat, parseInt, test, this, unescape"
+`;
+
+exports[`Marker Driven Snapshots constructors.js 1`] = `
+"[3]   this.firstName = firstName;
+           ^hover -> firstName: any at line 3 (up to here)
+                       ^hover -> firstName: string = 'marios' at line 1
+                       ^def -> constructors.js:1:17
+
+[14] let person = new Person("marios", "ntoulas", 24);;
+         ^hover
+         | person: object = {
+         |   firstName: string = 'marios',
+         |   lastName: string = 'ntoulas',
+         |   age: number = 24,
+         |   getFullName: function = () => { this.firstName + this.lastName }
+         | } at line 14 (up to here)
+                      ^hover
+                      | const Person: function = (firstName, lastName, age) => {
+                      | 
+                      |   this.firstName = firstName;
+                      | //     ^hover
+                      | //                 ^hover
+                      | //                 ^def
+                      |   this.lastName = lastName;
+                      |   this.age = age;
+                      | 
+                      |   this.getFullName = () => { this.firstName + this.lastName };
+                      | 
+                      | } at line 1 (up to here)
+                      ^def -> constructors.js:1:7
+
+[25] const goodBoy1 = new dog('Beagle', 1);
+           ^hover
+           | const goodBoy1: dog = {
+           |   breed: string = 'Beagle',
+           |   age: number = 1
+           | } at line 25 (up to here)
+                          ^hover
+                          | dog: function = function dog(breed, age) {
+                          | 	this.breed = breed;
+                          | 	this.age = age;
+                          | } at line 1 (up to here)
+                          ^def -> constructors.js:19:1"
+`;
+
+exports[`Marker Driven Snapshots demo.js 1`] = `
+"[3]     global;
+        ^hover
+        | global: number = 100 at line 1 (up to here)
+        | ---
+        | global: string = '' at line 6 
+        | ---
+        | global: string = '' at line 6
+        ^def -> demo.js:1:5
+
+[9] global;
+      ^hover
+      | global: number = 100 at line 1 
+      | ---
+      | global: string = '' at line 6 
+      | ---
+      | global: string = '' at line 6 (up to here)
+
+[16] let x = add(1, 4);
+             ^hover
+             | add: function = function add(a, b) {
+             |     return a + b;
+             | } at line 1 (up to here)
+             ^def -> demo.js:12:1
+
+[39]         return sqrt(me.x * me.x + me.y * me.y);
+                         ^hover
+                         | const me: object = {
+                         |   x: any,
+                         |   y: any
+                         | } at line 31 (up to here)
+                            ^hover -> x: any at line 33 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots dynamic_properties.js 1`] = `
+"[5] };
+      ^hover -> 
+
+[8] x.d = {};
+      ^hover
+      | d: object = {
+      | 
+      | } at line 8 (up to here)
+
+[10] x.d.foo = 3.14;
+         ^hover -> foo: number = 3.14 at line 10 (up to here)
+
+[12] x.d.bar = "world";
+         ^hover -> bar: string = 'world' at line 12 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots expressions.js 1`] = `
+"[3] const c = a + b;
+          ^hover -> const c: number = 7 at line 3 (up to here)
+          ^def -> expressions.js:3:7
+
+[9] let w = d + e;
+        ^hover -> w: string = 'de' at line 9 (up to here)
+        ^def -> expressions.js:9:5
+
+[15] let h = f + g;
+         ^hover
+         | h: number = 1 at line 15 (up to here)
+         | ---
+         | h: number at line 18 
+         | ---
+         | h: number at line 20
+
+[27] let z = x + y;
+         ^hover
+         | z: string = '2' at line 27 (up to here)
+         | ---
+         | z: number = 3 at line 29 
+         | ---
+         | z: number = 2 at line 30 
+         | ---
+         | z: string at line 31 
+         | ---
+         | z: string = '2[object Object]' at line 32 
+         | ---
+         | z: string = '[object Object]2' at line 35 
+         | ---
+         | z: string = '[object Object]aaa' at line 37 
+         | ---
+         | z: string = '[object Object]true' at line 38 
+         | ---
+         | z: string = '[object Object]false' at line 39 
+         | ---
+         | z: string at line 40 
+         | ---
+         | z: string at line 41 
+         | ---
+         | z: string at line 42 
+         | ---
+         | z: string = '() => {}function() {}' at line 46 
+         | ---
+         | z: number = 2 at line 50 
+         | ---
+         | z: number = 2 at line 51 
+         | ---
+         | z: number = 0 at line 52 
+         | ---
+         | z: number = NaN at line 53 
+         | ---
+         | z: number = 1 at line 54 
+         | ---
+         | z: number = 0 at line 55 
+         | ---
+         | z: number = NaN at line 56 
+         | ---
+         | z: number = NaN at line 57 
+         | ---
+         | z: number = NaN at line 58 
+         | ---
+         | z: number = NaN at line 59 
+         | ---
+         | z: number = 0 at line 60 
+         | ---
+         | z: number = NaN at line 61 
+         | ---
+         | z: number = -2 at line 64 
+         | ---
+         | z: number = -2 at line 65 
+         | ---
+         | z: number = 0 at line 66 
+         | ---
+         | z: number = NaN at line 67 
+         | ---
+         | z: number = -1 at line 68 
+         | ---
+         | z: number = 0 at line 69 
+         | ---
+         | z: number = NaN at line 70 
+         | ---
+         | z: number = NaN at line 71 
+         | ---
+         | z: number = NaN at line 72 
+         | ---
+         | z: number = NaN at line 73 
+         | ---
+         | z: number = 0 at line 74 
+         | ---
+         | z: number = NaN at line 75 
+         | ---
+         | z: number = 3 at line 79 
+         | ---
+         | z: number = 2 at line 83 
+         | ---
+         | z: undefined at line 85 
+         | ---
+         | z: string = 'number' at line 87 
+         | ---
+         | z: string = 'string' at line 88 
+         | ---
+         | z: string = 'boolean' at line 89 
+         | ---
+         | z: string = 'boolean' at line 90 
+         | ---
+         | z: string = 'object' at line 91 
+         | ---
+         | z: string = 'object' at line 92 
+         | ---
+         | z: string = 'function' at line 93 
+         | ---
+         | z: string = 'function' at line 94 
+         | ---
+         | z: string = 'object' at line 95 
+         | ---
+         | z: string = 'object' at line 96 
+         | ---
+         | z: string = 'undefined' at line 97 
+         | ---
+         | z: number = -5 at line 105 
+         | ---
+         | z: number = 3 at line 107 
+         | ---
+         | z: number = NaN at line 109 
+         | ---
+         | z: number = 4 at line 110 
+         | ---
+         | z: number = 5 at line 111 
+         | ---
+         | z: number at line 112 
+         | ---
+         | z: number = NaN at line 113 
+         | ---
+         | z: number = NaN at line 114 
+         | ---
+         | z: number = NaN at line 115 
+         | ---
+         | z: number at line 116 
+         | ---
+         | z: number at line 117 
+         | ---
+         | z: number = 9 at line 120 
+         | ---
+         | z: number = NaN at line 122 
+         | ---
+         | z: number = 0 at line 127 
+         | ---
+         | z: number = 0 at line 128 
+         | ---
+         | z: number = 2 at line 132 
+         | ---
+         | z: number = 2 at line 133 
+         | ---
+         | z: number = 0 at line 138 
+         | ---
+         | z: number = 7 at line 139 
+         | ---
+         | z: number = 1 at line 140 
+         | ---
+         | z: boolean = true at line 143 
+         | ---
+         | z: boolean = false at line 144 
+         | ---
+         | z: boolean = true at line 146 
+         | ---
+         | z: boolean = true at line 147 
+         | ---
+         | z: boolean = false at line 148 
+         | ---
+         | z: boolean = true at line 151 
+         | ---
+         | z: boolean = true at line 152 
+         | ---
+         | z: boolean = false at line 153
+
+[35] z = x + 2;
+         ^hover
+         | x: number = 2 at line 24 
+         | ---
+         | x: object = {
+         |   a: number = 2
+         | } at line 34 (up to here)
+         | ---
+         | x: function = () => {} at line 44 
+         | ---
+         | x: number = 2 at line 78 
+         | ---
+         | x: number = 5 at line 102
+
+[46] z = x + y;
+         ^hover
+         | x: number = 2 at line 24 
+         | ---
+         | x: object = {
+         |   a: number = 2
+         | } at line 34 
+         | ---
+         | x: function = () => {} at line 44 (up to here)
+         | ---
+         | x: number = 2 at line 78 
+         | ---
+         | x: number = 5 at line 102
+
+[79] z = ++x;
+         ^hover -> 
+
+[155] const shorthandProperty = "shorthandProperty";
+            ^hover -> const shorthandProperty: string = 'shorthandProperty' at line 155 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots for-statement.js 1`] = `
+"[3] for (let i = 0; i < n; ++i) {
+             ^hover -> i: number = 0 at line 3 (up to here)
+             ^def -> for-statement.js:3:10
+
+[6]     b[i] = i * n;
+        ^hover -> b: array at line 2 (up to here)
+          ^hover -> i: number = 0 at line 3 (up to here)
+          ^def -> for-statement.js:3:10
+
+[10]     c["x" + i] = b[i];
+         ^hover
+         | c: object = {
+         | 
+         | } at line 2 (up to here)
+
+[13] c.x2 = 2;
+       ^hover -> x2: number = 2 at line 13 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots functions.js 1`] = `
+"[5] let sum = add(1, 2);
+        ^hover -> sum: number = 3 at line 5 (up to here)
+              ^hover
+              | add: function = function add(a, b) {
+              |     return a + b;
+              | } at line 1 (up to here)
+              ^def -> functions.js:1:1
+
+[9] let greeting = add('hello', ' world');
+        ^hover -> greeting: string = 'hello world' at line 9 (up to here)
+                   ^hover
+                   | add: function = function add(a, b) {
+                   |     return a + b;
+                   | } at line 1 (up to here)
+
+[14] let product = multiply(3, 4);
+         ^hover -> product: undefined at line 14 (up to here)
+                   ^hover -> const multiply: function = (x, y) => x * y at line 13 (up to here)
+
+[22]   greet();
+       ^hover
+       | greet: function = function greet(name = 'Guest') {
+       |     return 'Hello ' + name;
+       | } at line 1 (up to here)
+
+[24]   greet('Marios');
+       ^hover
+       | greet: function = function greet(name = 'Guest') {
+       |     return 'Hello ' + name;
+       | } at line 1 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots goto-definition.js 1`] = `
+"[147] goodBoy.bark();
+              ^complete -> age, bark, breed, name
+              ^def -> goto-definition.js:143:9
+              ^hover -> bark: function = (id)=>"Woof " + n + "!" at line 143 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots if_statement.js 1`] = `
+"[29]   y;
+       ^hover
+       | y: number = 10 at line 7 (up to here)
+       | ---
+       | y: number = 5 at line 13 (up to here)
+       | ---
+       | y: number = 12 at line 18 (up to here)
+       | ---
+       | y: string = '' at line 27 (up to here)
+       | ---
+       | y: object = {
+       |   a: number = 2
+       | } at line 28 (up to here)
+
+[31]   x; // 2 || 5 || 10 || 50 || 2
+       ^hover
+       | x: number = 2 at line 6 (up to here)
+       | ---
+       | x: number = 2 at line 11 
+       | ---
+       | x: number = 5 at line 12 (up to here)
+       | ---
+       | x: number = 10 at line 17 (up to here)
+       | ---
+       | x: number = 50 at line 22 (up to here)
+       | ---
+       | x: number = 2 at line 25 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots import.js 1`] = `
+"[1] import defaultExport1 from "a";
+           ^hover -> defaultExport1: any at line 1 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots index.js 1`] = `
+"[8] function IndexPage(){
+             ^hover
+             | IndexPage: function = function IndexPage(){
+             | //       ^hover
+             |     
+             |     var redirects = ['campaign','selectLevel','achievements','statistics'];
+             | //      ^hover
+             |     var footerItems = ['sound'];
+             | 
+             |     function eventListeners() {
+             |         document.getElementById('appName').style.backgroundImage = "url('" + getImage("appName") + "')";
+             | 
+             | 
+             |         for(var item in redirects){
+             |             document.getElementById(redirects[item]).addEventListener("click", function (e) {
+             |                 page.pageSwap(e.target.id);
+             |                 return;
+             |             });
+             |         }
+             | 
+             |         document.getElementById('optionsButton').addEventListener("click", function () {
+             |             if (document.getElementById('footer').style.width == '0px') {
+             |                 document.getElementById('footer').style.width = '80%';
+             |             } else {
+             |                 document.getElementById('footer').style.width = '0';
+             |             }
+             |         });
+             | 
+             |         if (localStorage.getItem("sound_opt") === "On") document.getElementById('soundButton').style.backgroundImage = 'url("./images/soundOn.png")';
+             |         else document.getElementById('soundButton').style.backgroundImage = 'url("./images/soundOff.png")';
+             | 
+             |         document.getElementById('soundButton').addEventListener("click", function () {
+             |             var element = document.getElementById('soundButton');
+             |             if (localStorage.getItem("sound_opt") === "On") {
+             |                 element.style.backgroundImage = 'url("./images/soundOff.png")';
+             |                 localStorage.setItem("sound_opt", "Off");
+             |             } else {
+             |                 element.style.backgroundImage = 'url("./images/soundOn.png")';
+             |                 localStorage.setItem("sound_opt", "On");
+             |                 //mediaPlay(getSound("bell")).play();
+             |             }
+             |         });
+             |     }
+             | 
+             |     function builderUI(){
+             |         var pageWrapper = document.createElement('div');
+             |         addIDToElement('pageWrapper',pageWrapper);
+             | 
+             |         var appName = document.createElement('div');
+             |         appName.setAttribute('id','appName');
+             |         pageWrapper.appendChild(appName);
+             | 
+             |         var mainMenu = document.createElement('div');
+             |         addClassToElement('unselectable',mainMenu);
+             |         addIDToElement('mainMenu', mainMenu);
+             | 
+             |         for(var item in redirects){
+             |             var but = document.createElement('button');
+             |             addIDToElement(redirects[item],but);
+             |             but.style.backgroundImage = "url('" + getImage("start-"+redirects[item]) + "')";
+             |             mainMenu.appendChild(but);
+             |         }
+             |         pageWrapper.appendChild(mainMenu);
+             | 
+             |         var optionsButton = document.createElement('button');
+             |         addIDToElement('optionsButton',optionsButton);
+             |         pageWrapper.appendChild(optionsButton);
+             | 
+             |         var footer = document.createElement('div');
+             |         addIDToElement('footer',footer);
+             | 
+             |         for(var item in footerItems){
+             |             var but = document.createElement('button');
+             |             addIDToElement(footerItems[item]+'Button',but);
+             |             addClassToElement("index_footerItem",but);
+             |             footer.appendChild(but);
+             |         }
+             |         pageWrapper.appendChild(footer);
+             |         
+             |         document.body.appendChild(pageWrapper);
+             |         eventListeners();
+             |     }
+             | 
+             |     function destructorUI(){
+             |         document.getElementById('pageWrapper').remove();
+             |     }
+             | 
+             |     return {
+             |         builderUI,
+             |         destructorUI
+             |     }
+             | } at line 6 (up to here)
+
+[11]     var redirects = ['campaign','selectLevel','achievements','statistics'];
+             ^hover
+             | redirects: undefined at line 8 
+             | ---
+             | redirects: array at line 11 (up to here)
+
+[173] var page = new Page();
+          ^hover
+          | page: undefined at line 6 
+          | ---
+          | page: object = {
+          |   onDeviceReady: function = function onDeviceReady(){
+          |         installPages();
+          |         document.addEventListener('pause', onPause.bind(this), false);
+          |         document.addEventListener('resume', onResume.bind(this), false);
+          |         
+          |         preLoad(builderUI,false);
+          |     },
+          |   pageSwap: function = function pageSwap(where){
+          |         destructorUI();
+          |         if(where === "index")
+          |             currPage = new IndexPage();
+          |         else if(where === "selectLevel")
+          |             currPage = new SelectLevelPage();
+          |         else if(where === "achievements")
+          |             currPage = new AchievementsPage();
+          |         else if(where === "statistics")
+          |             currPage = new StatisticsPage();
+          |         else if(where === "memoryGame")
+          |             currPage = new MemoryGame();
+          |         else if(where === "reflexGame")
+          |             currPage = new ReflexGame();
+          |         else if(where === "clickGame")
+          |             currPage = new ClickGame();
+          |         else if(where === "matchingGame")
+          |             currPage = new MatchingGame();
+          |         else 
+          |             currPage = new IndexPage();
+          |         builderUI();
+          |     }
+          | } at line 173 (up to here)
+          ^def -> index.js:173:5"
+`;
+
+exports[`Marker Driven Snapshots narrowing.js 1`] = `
+"[3]     let y = x + 10;
+            ^hover -> y: number = 11 at line 3 (up to here)
+
+[14] let finalZ = z;
+         ^hover -> finalZ: string = 'string' || number = 123 at line 14 (up to here)
+                  ^hover
+                  | z: undefined at line 7 
+                  | ---
+                  | z: string = 'string' at line 9 (up to here)
+                  | ---
+                  | z: number = 123 at line 11 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots non_pure_functions.js 1`] = `
+"[9]   z; 
+      ^hover
+      | z: number = 7 at line 1 
+      | ---
+      | z: array at line 3 
+      | ---
+      | z: string = 'foo' at line 5 
+      | ---
+      | z: array at line 3 
+      | ---
+      | z: string = 'foo' at line 5 (up to here)
+
+[11]   w;
+       ^hover
+       | w: object = {
+       |   x: number = 10,
+       |   y: string = 'bar'
+       | } at line 2 (up to here)
+
+[15]   x;
+       ^hover
+       | x: number = 5 at line 14 (up to here)
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: number = 10 at line 34 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 50 at line 60 
+       | ---
+       | x: number = 50 at line 60
+       ^def -> non_pure_functions.js:14:5
+
+[20]   x;
+       ^hover
+       | x: number = 5 at line 14 (up to here)
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: number = 10 at line 34 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 50 at line 60 
+       | ---
+       | x: number = 50 at line 60
+
+[31]   x;
+       ^hover
+       | x: number = 5 at line 14 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo' at line 24 (up to here)
+       | ---
+       | x: number = 10 at line 34 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 50 at line 60 
+       | ---
+       | x: number = 50 at line 60
+
+[37]   x;
+       ^hover
+       | x: number = 5 at line 14 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: number = 10 at line 34 
+       | ---
+       | x: string = 'inside foo' at line 24 (up to here)
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 50 at line 60 
+       | ---
+       | x: number = 50 at line 60
+
+[42]   x;
+       ^hover
+       | x: number = 5 at line 14 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: number = 10 at line 34 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 (up to here)
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 50 at line 60 
+       | ---
+       | x: number = 50 at line 60
+
+[46] 	  x;
+         ^hover
+         | x: number = 5 at line 14 
+         | ---
+         | x: string = 'inside foo' at line 24 
+         | ---
+         | x: string = 'inside foo' at line 24 
+         | ---
+         | x: number = 10 at line 34 
+         | ---
+         | x: string = 'inside foo' at line 24 
+         | ---
+         | x: string = 'inside foo arrow' at line 40 
+         | ---
+         | x: string = 'inside foo arrow' at line 40 (up to here)
+         | ---
+         | x: number = 100 at line 48 
+         | ---
+         | x: number = 100 at line 48 
+         | ---
+         | x: number = 50 at line 60 
+         | ---
+         | x: number = 50 at line 60
+
+[51]   x;
+       ^hover
+       | x: number = 5 at line 14 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: number = 10 at line 34 
+       | ---
+       | x: string = 'inside foo' at line 24 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: string = 'inside foo arrow' at line 40 
+       | ---
+       | x: number = 100 at line 48 
+       | ---
+       | x: number = 100 at line 48 (up to here)
+       | ---
+       | x: number = 50 at line 60 
+       | ---
+       | x: number = 50 at line 60
+
+[58] 	  x;
+         ^hover
+         | x: number = 5 at line 14 
+         | ---
+         | x: string = 'inside foo' at line 24 
+         | ---
+         | x: string = 'inside foo' at line 24 
+         | ---
+         | x: number = 10 at line 34 
+         | ---
+         | x: string = 'inside foo' at line 24 
+         | ---
+         | x: string = 'inside foo arrow' at line 40 
+         | ---
+         | x: string = 'inside foo arrow' at line 40 
+         | ---
+         | x: number = 100 at line 48 
+         | ---
+         | x: number = 100 at line 48 
+         | ---
+         | x: number = 50 at line 60 (up to here)
+         | ---
+         | x: number = 50 at line 60"
+`;
+
+exports[`Marker Driven Snapshots objects.js 1`] = `
+"[10] let px = point.x;
+         ^hover -> px: number = 10 at line 10 (up to here)
+              ^hover
+              | const point: object = {
+              |   x: number = 10,
+              |   y: number = 20
+              | } at line 1 (up to here)
+                    ^hover -> x: number = 10 at line 2 (up to here)
+
+[14] point.move(5, 5);
+           ^hover -> move: any
+           ^def -> null
+
+[17] let newPx = point.x;
+         ^hover -> newPx: number = 10 at line 17 (up to here)
+
+[29] const me = new Person('Marios');
+           ^hover
+           | const me: Person = {
+           |   sayHello: function = sayHello() {
+           |         return 'Hi, I am ' + this.name;
+           |     },
+           |   name: string = 'Marios'
+           | } at line 29 (up to here)
+           ^def -> objects.js:29:7
+                    ^hover
+                    | Person: class = class Person {
+                    |     constructor(name) {
+                    |         this.name = name;
+                    |     }
+                    |     sayHello() {
+                    |         return 'Hi, I am ' + this.name;
+                    |     }
+                    | } at line 20 (up to here)
+
+[33] let myName = me.name;
+         ^hover -> myName: string = 'Marios' at line 33 (up to here)
+                  ^hover
+                  | const me: Person = {
+                  |   sayHello: function = sayHello() {
+                  |         return 'Hi, I am ' + this.name;
+                  |     },
+                  |   name: string = 'Marios'
+                  | } at line 29 (up to here)
+
+[36] let msg = me.sayHello();
+         ^hover -> msg: string || number at line 36 (up to here)
+                  ^hover
+                  | sayHello: function = sayHello() {
+                  |         return 'Hi, I am ' + this.name;
+                  |     } at line 24 (up to here)
+                  ^def -> objects.js:24:5"
+`;
+
+exports[`Marker Driven Snapshots outline.js 1`] = `
+"[24]         this.x = x;
+                  ^hover -> x: any at line 24 (up to here)
+
+[49]         return magnitude;
+                    ^hover -> const magnitude: number at line 48 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots parameter-inference.js 1`] = `
+"[3]     return a + b;
+               ^hover -> a: number || string at line 3 (up to here)
+                   ^hover -> b: number || string at line 3 (up to here)
+
+[28]         let y = x + 5;
+                     ^hover -> x: any at line 25 (up to here)
+
+[43] 	return a + b;
+                ^hover -> 
+                    ^hover -> "
+`;
+
+exports[`Marker Driven Snapshots return.js 1`] = `
+"[11]   z = f2(10,10);
+       ^hover
+       | z: string = 'f1' || object = {
+       |   flag: boolean = false
+       | } at line 10 
+       | ---
+       | z: function = function f1(b) {
+       |     if (b == true) return 'f1';
+       |     return { flag : b };
+       | } || array || object = {
+       |   x: number = 10,
+       |   y: number = 10
+       | } at line 11 (up to here)
+
+[26]   x.b = 5;
+       ^hover
+       | x: object = {
+       |   a: number = 2,
+       |   b: number = 5
+       | } at line 25 (up to here)
+       | ---
+       | x: number = 10 at line 29
+
+[34] };
+       ^hover -> 
+
+[43]   global;
+       ^hover
+       | global: number = 5 at line 37 (up to here)
+       | ---
+       | global: object = {
+       | 
+       | } at line 40"
+`;
+
+exports[`Marker Driven Snapshots self-referential-assignment.js 1`] = `
+"[2] x = 3 + x;
+            ^hover
+            | x: number = 2 at line 1 (up to here)
+            | ---
+            | x: number = 5 at line 2 
+            | ---
+            | x: number = 8 at line 4 
+            | ---
+            | x: number = 8 at line 6
+
+[4] x = x + 3;
+        ^hover
+        | x: number = 2 at line 1 
+        | ---
+        | x: number = 5 at line 2 (up to here)
+        | ---
+        | x: number = 8 at line 4 
+        | ---
+        | x: number = 8 at line 6
+
+[6] x = x;
+        ^hover
+        | x: number = 2 at line 1 
+        | ---
+        | x: number = 5 at line 2 
+        | ---
+        | x: number = 8 at line 4 (up to here)
+        | ---
+        | x: number = 8 at line 6"
+`;
+
+exports[`Marker Driven Snapshots signature_help.js 1`] = `
+"[14] bar.b()
+         ^hover
+         | b: function = (a, b, c) => {} at line 8 (up to here)
+         | ---
+         | b: function = function foo(a, b) {
+         | 
+         | } at line 10 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots signature-help.js 1`] = `
+"[14] foo()
+       ^hover
+       | foo: undefined at line 1 
+       | ---
+       | foo: function = function(a, b) {
+       |         return a + b;
+       |     } at line 4 (up to here)
+       | ---
+       | foo: function = function(c, d) {
+       |         return c - d;
+       |     } at line 8 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots single.js 1`] = `
+"[1] const x = 1;
+          ^hover
+          | const x: number = 1 at line 1 (up to here)
+          | ---
+          | const x: number = 2 at line 3
+
+[3] x = 2;
+      ^hover -> "
+`;
+
+exports[`Marker Driven Snapshots start.js 1`] = `
+"[1] const x = 1, y = 2;
+          ^hover
+          | const x: number = 1 at line 1 (up to here)
+          | ---
+          | const x: number = 3 at line 4
+                 ^hover -> const y: number = 2 at line 1 (up to here)
+
+[4] x = 3;
+      ^hover -> "
+`;
+
+exports[`Marker Driven Snapshots switch-statement.js 1`] = `
+"[11] x
+       ^hover
+       | x: number = 100 at line 1 (up to here)
+       | ---
+       | x: number = 2 at line 4 (up to here)
+       | ---
+       | x: number = 5 at line 6 (up to here)
+       | ---
+       | x: string = 'foo' at line 7 
+       | ---
+       | x: string = 'bar' at line 8 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots temp-test.js 1`] = `
+"[355]   x;
+        ^hover
+        | x: undefined at line 346 
+        | ---
+        | x: number = 2 at line 352 (up to here)
+        | ---
+        | x: number = 5 at line 353 (up to here)
+
+[363]   b;
+        ^hover
+        | b: undefined at line 358 
+        | ---
+        | b: number = 100 at line 360 (up to here)
+        | ---
+        | b: number = 200 at line 361 (up to here)
+
+[370]   c;
+        ^hover
+        | c: undefined at line 366 
+        | ---
+        | c: number = 2 at line 367 (up to here)
+        | ---
+        | c: number = 100 at line 368 (up to here)"
+`;
+
+exports[`Marker Driven Snapshots test.js 1`] = `
+"[25]   x
+       ^hover
+       | x: function = function x() {
+       | 	var a = 1, b = 2;
+       | 	{
+       | 		var b = 2;
+       | 	}
+       | 	function z() {
+       | 		var c = function() {};
+       | 		{var z;}
+       | 	}
+       | 	var d = 4;
+       | 	const e = 5;
+       | } at line 1 
+       | ---
+       | x: number = 2 at line 13 
+       | ---
+       | x: string = 'hello world' at line 14 
+       | ---
+       | x: boolean = true at line 15 
+       | ---
+       | x: undefined at line 16 
+       | ---
+       | x: null at line 17 
+       | ---
+       | x: object = {
+       | 
+       | } at line 18 
+       | ---
+       | x: number = 2 at line 23 (up to here)
+       | ---
+       | x: number = 5 at line 85 
+       | ---
+       | x: string = '' at line 85
+
+[34]   y(); // y is now a number
+       ^hover
+       | y: function = function y(a, {z: b, c, d},  [e, f, ...g],  {h, i, j, k: {l, m}}) {
+       | 	let n = 2;
+       | 	// global = 5;
+       | } at line 1 
+       | ---
+       | y: number = 2 at line 33 (up to here)
+
+[37] const [a, b, ...rest] = [1, 2, 3, 4, 5];
+                  ^hover -> 
+
+[79]   p;
+       ^hover
+       | const p: point = {
+       |   computeMagnitude: function = computeMagnitude() {
+       | 		return Math.sqrt(this.x * this.x + this.y * this.y);
+       | 	}
+       | } at line 78 (up to here)
+
+[85] (x = 5) + x + (x = "") + x;
+               ^hover
+               | x: function = function x() {
+               | 	var a = 1, b = 2;
+               | 	{
+               | 		var b = 2;
+               | 	}
+               | 	function z() {
+               | 		var c = function() {};
+               | 		{var z;}
+               | 	}
+               | 	var d = 4;
+               | 	const e = 5;
+               | } at line 1 
+               | ---
+               | x: number = 2 at line 13 
+               | ---
+               | x: string = 'hello world' at line 14 
+               | ---
+               | x: boolean = true at line 15 
+               | ---
+               | x: undefined at line 16 
+               | ---
+               | x: null at line 17 
+               | ---
+               | x: object = {
+               | 
+               | } at line 18 
+               | ---
+               | x: number = 2 at line 23 
+               | ---
+               | x: number = 5 at line 85 (up to here)
+               | ---
+               | x: string = '' at line 85
+                              ^hover
+                              | x: function = function x() {
+                              | 	var a = 1, b = 2;
+                              | 	{
+                              | 		var b = 2;
+                              | 	}
+                              | 	function z() {
+                              | 		var c = function() {};
+                              | 		{var z;}
+                              | 	}
+                              | 	var d = 4;
+                              | 	const e = 5;
+                              | } at line 1 
+                              | ---
+                              | x: number = 2 at line 13 
+                              | ---
+                              | x: string = 'hello world' at line 14 
+                              | ---
+                              | x: boolean = true at line 15 
+                              | ---
+                              | x: undefined at line 16 
+                              | ---
+                              | x: null at line 17 
+                              | ---
+                              | x: object = {
+                              | 
+                              | } at line 18 
+                              | ---
+                              | x: number = 2 at line 23 
+                              | ---
+                              | x: number = 5 at line 85 
+                              | ---
+                              | x: string = '' at line 85 (up to here)"
+`;
