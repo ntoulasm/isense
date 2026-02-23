@@ -25,7 +25,9 @@
         "test:coverage": "jest --coverage",
         "test:unit": "jest --testPathPattern=unit",
         "test:integration": "jest --testPathPattern=integration",
-        "test:performance": "jest --testPathPattern=performance"
+        "test:performance": "jest --testPathPattern=performance",
+        "test:analyzer:snapshot": "jest --testPathPatterns=analyzer-snapshot",
+        "test:services:snapshot": "jest --testPathPatterns=services-snapshot"
     },
     "overrides": {
         "minimatch": "^10.2.1"
